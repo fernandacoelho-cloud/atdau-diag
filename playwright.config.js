@@ -17,6 +17,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: /sweep/,
+    },
+    {
+      // Varredura pesada (~4-6 min, todos os block-maps): npm run test:sweep
+      name: 'sweep',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /sweep/,
+      timeout: 600000,
     },
   ],
 });

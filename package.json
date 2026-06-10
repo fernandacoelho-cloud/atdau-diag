@@ -4,9 +4,10 @@
   "description": "Suite ATDAU - DIAG (Ferramenta de Diagnostico para Pre-Projeto Arquitetonico)",
   "type": "module",
   "scripts": {
-    "test": "playwright test",
+    "test": "playwright test --project=chromium",
+    "test:sweep": "playwright test --project=sweep",
     "test:ui": "playwright test --ui",
-    "test:headed": "playwright test --headed"
+    "test:headed": "playwright test --headed --project=chromium"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0"
