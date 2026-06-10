@@ -6,6 +6,9 @@ test-results/
 playwright-report/
 playwright/.cache/
 
+# Scripts/evidências de verificação ad-hoc (Claude Code)
+verify-tmp/
+
 # Backups locais
 *.bak
 *.bak.html

@@ -70,7 +70,8 @@ test.describe('ATDAU DIAG — sistema básico', () => {
     await page.waitForTimeout(1500);
 
     // Navegar para uma aba com block-map (aba 1 - Contexto Urbano)
-    const aba1 = page.locator('[onclick*="irPara(1)"], [data-panel="1"]').first();
+    // #nav-1 direto: '[onclick*="irPara(1)"]' casava antes com irPara(11,...)
+    const aba1 = page.locator('#nav-1');
     if (await aba1.count() > 0) {
       await aba1.click();
       await page.waitForTimeout(800);

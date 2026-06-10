@@ -1840,38 +1840,6 @@ select option{background:var(--bg3)}
         </div>
       </div>
 
-      <div class="block-map-wrap" data-theme="viario">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>⛰️ Morfologia regional e bacia visual</span>
-          <a class="block-map-link" onclick="goToFullMap('viario')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
-
-      <div class="block-map-wrap" data-theme="risco">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🏭 ZAS, ZSS, GEU e zonas de impacto</span>
-          <a class="block-map-link" onclick="goToFullMap('risco')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
-
-      <div class="block-map-wrap" data-theme="lynch">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>📜 Marcos históricos e elementos da memória</span>
-          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
-
-      <div class="block-map-wrap" data-theme="lynch">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🏛️ Bens tombados e referências culturais</span>
-          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
-
       <div class="block-photos-wrap" data-block-id="b-sistema-viario-e-mobilidade">
         <div class="photos-header">
           <button class="add-photo-btn" onclick="triggerPhotoInput('b-sistema-viario-e-mobilidade')">+ Adicionar fotos</button>
@@ -11682,8 +11650,12 @@ function mlAddSources() {
 }
 
 function mlGetFC(layerId) {
+  // _fid nas properties: o MapLibre descarta id de feature não numérico
+  // (ex.: 'bm-...' dos block-maps), então o id real precisa viajar nas
+  // properties para o popup de edição encontrar a feature de volta.
   const fs = (_mlFeatures[layerId]||[]).map(f => ({
-    type:'Feature', id: f.id, geometry: f.geom, properties: f.props||{}
+    type:'Feature', id: f.id, geometry: f.geom,
+    properties: Object.assign({}, f.props||{}, { _fid: f.id })
   }));
   return { type:'FeatureCollection', features: fs };
 }
@@ -12120,8 +12092,9 @@ function mlHandleFeatureClick(e) {
   const layerDef = ML_LAYERS.find(l=>l.id===lid);
   if (!layerDef) return;
   const props = f.properties;
-  // Renderizar popup editável
-  mlOpenFeaturePopup(lid, f.id, props, e.lngLat, layerDef);
+  // Renderizar popup editável (f.id é undefined quando o id original é string)
+  const fid = (props._fid !== undefined) ? props._fid : f.id;
+  mlOpenFeaturePopup(lid, fid, props, e.lngLat, layerDef);
 }
 
 function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
@@ -13992,6 +13965,8 @@ function toggleBlockMap(btn) {
   const open = wrap.classList.toggle('open');
   btn.classList.toggle('open', open);
   btn.textContent = open ? '📍 Ocultar mapa' : '📍 Mostrar mapa';
+  // Bloco recolhido esconde o wrap: sem expandir, o mapa inicializa invisível (canvas 0x0)
+  if (open && block && !block.classList.contains('block-open')) block.classList.add('block-open');
   if (open && !wrap.dataset.init) {
     initBlockMap(wrap);
     wrap.dataset.init = '1';
