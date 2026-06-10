@@ -61,7 +61,7 @@
   --radius:10px; --trans:.15s;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:13px}
+html{scroll-behavior:smooth;font-size:16px} /* base 16px (era 13px) — legibilidade P0 */
 body{
   background:var(--bg);color:var(--t1);font-family:var(--f);min-height:100vh;
   display:grid;
@@ -1141,6 +1141,38 @@ select option{background:var(--bg3)}
   padding:6px 10px; box-shadow:0 2px 10px rgba(30,30,40,.12); display:flex; align-items:center; gap:5px;
 }
 .ml-leg-toggle-btn:hover{ background:#fff; }
+
+/* ═══ P0 · PISO TIPOGRÁFICO — texto de leitura/interação ≥ 12px (.75rem) ═══
+   Regras no fim do stylesheet para vencer as declarações anteriores;
+   !important apenas onde o tamanho original é inline (gerado via JS). */
+.form-field label{font-size:.75rem}
+.form-field input,.form-field select,.form-field textarea,
+.block-body textarea,.block-body input[type=text],.block-body select{font-size:.8rem}
+.block-title{font-size:.8rem}
+.sec-nav-item{font-size:.78rem}
+.cat-title{font-size:.78rem}
+.block-map-toggle,.block-photos-toggle{font-size:.75rem}
+.instr-btn{font-size:.75rem!important}
+.add-btn,.toolbar-btn{font-size:.75rem}
+.rating-group label,.rating-group span{font-size:.72rem}
+.subtab{font-size:.75rem}
+/* mapa de análise: sidebar de camadas e botões de desenho */
+#ml-layer-list label,.ml-layer-item label{font-size:.75rem}
+.ml-draw-btn{font-size:.7rem!important}
+/* barra de desenho dos block-maps (estilos inline via JS) */
+.bm-draw-btn,.bm-style-btn{font-size:.75rem!important}
+.bm-import-btn,.bm-clear-btn{font-size:.72rem!important}
+.bm-layer-select{font-size:.72rem!important}
+/* popups de edição de feição (inline via JS) */
+.ml-popup label{font-size:.7rem!important}
+.ml-popup input,.ml-popup textarea,.ml-popup button{font-size:.72rem!important}
+/* legenda flutuante e editor de estilo */
+.ml-leg-label{font-size:.72rem}
+.ml-leg-title{font-size:.72rem}
+.ml-leg-toggle-btn{font-size:.72rem}
+.ml-style-pop h4{font-size:.75rem}
+.ml-style-row{font-size:.7rem}
+.ml-style-row select{font-size:.7rem}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
 
@@ -11555,6 +11587,7 @@ function mlInit() {
     mlAddSources();
     mlBuildSidebar();
     mlLoadState();
+    mlRestoreImports(); // camadas importadas persistidas + importadas via block-map antes do init
     mlRenderUseLegend();
     addNorthArrow(_mlMap, 'ml-map');
     mlAplicarTodosEstilos();
@@ -11700,11 +11733,19 @@ function mlAplicarTodosEstilos() {
 
 // itens da legenda: só camadas que têm ao menos uma feição desenhada
 function mlLegendItems() {
-  return ML_LAYERS.filter(l => (_mlFeatures[l.id]||[]).length>0).map(l=>{
+  const itens = ML_LAYERS.filter(l => (_mlFeatures[l.id]||[]).length>0).map(l=>{
     const n = (_mlFeatures[l.id]||[]).length;
     const geomPrincipal = l.geom.includes('polygon') ? 'polygon' : (l.geom.includes('polyline') ? 'polyline' : 'point');
     return { id:l.id, label:(l.icon?l.icon+' ':'')+l.name, geom:geomPrincipal, count:n, style: mlGetEstilo(l.id) };
   });
+  // camadas importadas também entram na legenda, com nome e cor próprios
+  if (typeof _mlImportedLayers !== 'undefined') _mlImportedLayers.forEach(l => {
+    const gt = l.geomTypes || [];
+    const geom = gt.some(g=>/Polygon/.test(g)) ? 'polygon' : gt.some(g=>/LineString/.test(g)) ? 'polyline' : 'point';
+    itens.push({ id:l.id, label:'📂 '+l.name, geom, count:l.featureCount,
+      style:{ fillColor:l.color, lineColor:l.color, fillOpacity:l.fillOpacity!=null?l.fillOpacity:0.3, lineWidth:1.5, lineStyle:'solid' } });
+  });
+  return itens;
 }
 
 function mlSetupLegenda() {
@@ -11713,8 +11754,20 @@ function mlSetupLegenda() {
     mapKey:'analise', containerId:'ml-map', title:'Legenda · Mapa de Análise',
     editable:true, fixedDestId:'ml-legenda-dock',
     getItems: mlLegendItems,
-    getStyle: mlGetEstilo,
+    getStyle: (id) => {
+      const imp = (typeof _mlImportedLayers !== 'undefined') && _mlImportedLayers.find(l=>l.id===id);
+      if (imp) return { fillColor:imp.color, lineColor:imp.color, fillOpacity:imp.fillOpacity!=null?imp.fillOpacity:0.3, lineWidth:1.5, lineStyle:'solid' };
+      return mlGetEstilo(id);
+    },
     onStyleChange:(id,novo)=>{
+      // camadas importadas: estilo é da camada inteira (cor/opacidade)
+      const imp = (typeof _mlImportedLayers !== 'undefined') && _mlImportedLayers.find(l=>l.id===id);
+      if (imp) {
+        const cor = novo.fillColor || novo.lineColor;
+        if (cor) mlRecolorImported(id, cor);
+        if (novo.fillOpacity != null) mlSetImportOpacity(id, novo.fillOpacity);
+        return;
+      }
       if(!state.ml_estilos) state.ml_estilos={};
       state.ml_estilos[id]=novo;
       mlAplicarEstilo(id, Object.assign(mlGetEstilo(id), novo));
@@ -11725,7 +11778,11 @@ function mlSetupLegenda() {
   setTimeout(() => { try { MapLegend.hide('analise'); } catch(e){} }, 100);
 }
 
-function mlRefreshLegenda(){ if(typeof MapLegend!=='undefined') MapLegend.refresh('analise'); }
+function mlRefreshLegenda(){
+  if(typeof MapLegend!=='undefined') MapLegend.refresh('analise');
+  // legenda fixa de usos acompanha as feições (some quando não há manchas)
+  if(typeof mlRenderUseLegend==='function') mlRenderUseLegend();
+}
 
 // ── Legenda do SIDRA: classes da coropleta (não editável — é dado) ──
 function sidraSetupLegenda() {
@@ -12077,6 +12134,11 @@ const ML_PICTOGRAMAS = [
 ];
 
 function mlHandleFeatureClick(e) {
+  // Camadas importadas ficam por cima (adicionadas depois): checar primeiro
+  if (typeof mlFindImportFeatureAt === 'function') {
+    const imp = mlFindImportFeatureAt(_mlMap, e.point);
+    if (imp) { mlOpenImportPopup(_mlMap, imp.entry, imp.feature, e.lngLat); return; }
+  }
   // Verificar se clicou em alguma feature para popup/delete
   const layers = ML_LAYERS.flatMap(l => {
     const ids = [];
@@ -12441,9 +12503,12 @@ function mlSyncTerrainArea(area) {
 function mlRenderUseLegend() {
   const el = document.getElementById('ml-uso-legend-items');
   if (!el) return;
-  document.getElementById('ml-uso-legend').style.display='block';
+  // Só faz sentido quando há manchas de uso desenhadas
+  const temUso = (_mlFeatures['uso']||[]).length > 0;
+  document.getElementById('ml-uso-legend').style.display = temUso ? 'block' : 'none';
+  if (!temUso) { el.innerHTML=''; return; }
   el.innerHTML = ML_USO_CATS.map(u=>`
-    <div style="display:flex;align-items:center;gap:5px;font-size:.65rem;color:var(--t2)">
+    <div style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--t2)">
       <div style="width:14px;height:14px;background:${u.color};border-radius:2px;opacity:.8"></div>
       ${u.label}
     </div>`).join('');
@@ -12990,52 +13055,11 @@ async function mlHandleImport(input) {
     }
 
     let totalFeatures = 0;
-    const colors = ['#f58b40','#a07cf0','#5cc8f0','#f0bf3a','#1ecfa4','#e0506a','#4f9bf8'];
-
-    collections.forEach((fc, i) => {
+    collections.forEach(fc => {
       if (!fc.features || !fc.features.length) return;
-      const layerId = `import-${Date.now()}-${i}`;
-      const layerName = fc.fileName || `Importação ${_mlImportedLayers.length + i + 1}`;
-      const color = colors[(_mlImportedLayers.length + i) % colors.length];
-
-      _mlImportedLayers.push({
-        id: layerId, name: layerName, color,
-        featureCount: fc.features.length,
-        geomTypes: [...new Set(fc.features.map(f=>f.geometry?.type).filter(Boolean))]
-      });
-
-      // Adicionar source MapLibre
-      if (_mlMap.getSource(`src-${layerId}`)) _mlMap.removeSource(`src-${layerId}`);
-      _mlMap.addSource(`src-${layerId}`, { type:'geojson', data: fc });
-
-      const hasPolygon    = fc.features.some(f=>['Polygon','MultiPolygon'].includes(f.geometry?.type));
-      const hasLine       = fc.features.some(f=>['LineString','MultiLineString'].includes(f.geometry?.type));
-      const hasPoint      = fc.features.some(f=>['Point','MultiPoint'].includes(f.geometry?.type));
-
-      if (hasPolygon) {
-        _mlMap.addLayer({ id:`fill-imp-${layerId}`, type:'fill', source:`src-${layerId}`,
-          filter:['in',['geometry-type'],['literal',['Polygon','MultiPolygon']]],
-          paint:{ 'fill-color':color, 'fill-opacity':0.3 } });
-        _mlMap.addLayer({ id:`line-imp-${layerId}`, type:'line', source:`src-${layerId}`,
-          filter:['in',['geometry-type'],['literal',['Polygon','MultiPolygon']]],
-          paint:{ 'line-color':color, 'line-width':1.5 } });
-      }
-      if (hasLine) {
-        _mlMap.addLayer({ id:`pline-imp-${layerId}`, type:'line', source:`src-${layerId}`,
-          filter:['in',['geometry-type'],['literal',['LineString','MultiLineString']]],
-          paint:{ 'line-color':color, 'line-width':2 } });
-      }
-      if (hasPoint) {
-        _mlMap.addLayer({ id:`circ-imp-${layerId}`, type:'circle', source:`src-${layerId}`,
-          filter:['in',['geometry-type'],['literal',['Point','MultiPoint']]],
-          paint:{ 'circle-color':color, 'circle-radius':5,
-                  'circle-stroke-color':'#fff', 'circle-stroke-width':1.5 } });
-      }
-
-      totalFeatures += fc.features.length;
+      const entry = mlAddImportedLayer(fc, fc.fileName);
+      totalFeatures += entry.featureCount;
     });
-
-    mlUpdateImportedSidebar();
 
     // Zoom para o conteúdo importado
     if (collections[0]?.features?.length) mlFitToFC(collections[0]);
@@ -13049,6 +13073,119 @@ async function mlHandleImport(input) {
   }
 }
 
+// ── Camadas importadas como objetos de primeira classe ────────────────
+// 1 arquivo importado = 1 camada nomeada, com cor própria, renomeável,
+// clicável, presente na legenda e persistida no projeto (state['ml-imports']).
+const ML_IMPORT_COLORS = ['#f58b40','#a07cf0','#5cc8f0','#f0bf3a','#1ecfa4','#e0506a','#4f9bf8'];
+
+function _mlAllMaps() {
+  const maps = [];
+  if (typeof _mlMap !== 'undefined' && _mlMap) maps.push(_mlMap);
+  if (typeof _blockMaps !== 'undefined') Object.values(_blockMaps).forEach(m => { if (m) maps.push(m); });
+  return maps;
+}
+
+const _mlImportLayerIds = (id) => [`fill-imp-${id}`,`line-imp-${id}`,`pline-imp-${id}`,`circ-imp-${id}`];
+
+function mlAddImportedLayer(fc, name, extraMap) {
+  const entry = {
+    id: `import-${Date.now()}-${_mlImportedLayers.length}`,
+    name: (name || `Importação ${_mlImportedLayers.length + 1}`).trim(),
+    color: ML_IMPORT_COLORS[_mlImportedLayers.length % ML_IMPORT_COLORS.length],
+    fillOpacity: 0.3,
+    visible: true,
+    featureCount: (fc.features || []).length,
+    geomTypes: [...new Set((fc.features || []).map(f => f.geometry?.type).filter(Boolean))],
+    fc
+  };
+  _mlImportedLayers.push(entry);
+  if (typeof _mlMap !== 'undefined' && _mlMap) _mlAddImportLayersToMap(_mlMap, entry);
+  if (extraMap && extraMap !== _mlMap) _mlAddImportLayersToMap(extraMap, entry);
+  mlUpdateImportedSidebar();
+  if (typeof mlRefreshLegenda === 'function') mlRefreshLegenda();
+  mlSaveImports();
+  return entry;
+}
+
+function _mlAddImportLayersToMap(map, entry) {
+  if (!map || !entry.fc) return;
+  try {
+    if (!map.getSource(`src-${entry.id}`)) map.addSource(`src-${entry.id}`, { type:'geojson', data: entry.fc });
+  } catch(e) { return; } // estilo do mapa ainda não está pronto
+  const feats = entry.fc.features || [];
+  const hasPolygon = feats.some(f=>['Polygon','MultiPolygon'].includes(f.geometry?.type));
+  const hasLine    = feats.some(f=>['LineString','MultiLineString'].includes(f.geometry?.type));
+  const hasPoint   = feats.some(f=>['Point','MultiPoint'].includes(f.geometry?.type));
+  const vis = entry.visible === false ? 'none' : 'visible';
+  const op = entry.fillOpacity != null ? entry.fillOpacity : 0.3;
+  try {
+    if (hasPolygon && !map.getLayer(`fill-imp-${entry.id}`)) {
+      map.addLayer({ id:`fill-imp-${entry.id}`, type:'fill', source:`src-${entry.id}`,
+        filter:['in',['geometry-type'],['literal',['Polygon','MultiPolygon']]],
+        layout:{ visibility:vis },
+        paint:{ 'fill-color':entry.color, 'fill-opacity':op } });
+      map.addLayer({ id:`line-imp-${entry.id}`, type:'line', source:`src-${entry.id}`,
+        filter:['in',['geometry-type'],['literal',['Polygon','MultiPolygon']]],
+        layout:{ visibility:vis },
+        paint:{ 'line-color':entry.color, 'line-width':1.5 } });
+    }
+    if (hasLine && !map.getLayer(`pline-imp-${entry.id}`)) {
+      map.addLayer({ id:`pline-imp-${entry.id}`, type:'line', source:`src-${entry.id}`,
+        filter:['in',['geometry-type'],['literal',['LineString','MultiLineString']]],
+        layout:{ visibility:vis },
+        paint:{ 'line-color':entry.color, 'line-width':2 } });
+    }
+    if (hasPoint && !map.getLayer(`circ-imp-${entry.id}`)) {
+      map.addLayer({ id:`circ-imp-${entry.id}`, type:'circle', source:`src-${entry.id}`,
+        filter:['in',['geometry-type'],['literal',['Point','MultiPoint']]],
+        layout:{ visibility:vis },
+        paint:{ 'circle-color':entry.color, 'circle-radius':5,
+                'circle-stroke-color':'#fff', 'circle-stroke-width':1.5 } });
+    }
+  } catch(e) { console.warn('import layers:', e.message); }
+}
+
+// Persistência: guarda as camadas no state (vai junto no autosave e no Export JSON).
+// Guarda de tamanho: localStorage tem ~5MB; acima de ~3MB de GeoJSON a camada
+// continua na sessão mas não é gravada (aviso ao usuário).
+function mlSaveImports() {
+  try {
+    let total = 0, omitidas = 0;
+    state['ml-imports'] = _mlImportedLayers.map(l => {
+      const tam = l.fc ? JSON.stringify(l.fc).length : 0;
+      total += tam;
+      const cabe = l.fc && total <= 3000000;
+      if (l.fc && !cabe) omitidas++;
+      return { id:l.id, name:l.name, color:l.color, fillOpacity:l.fillOpacity,
+               visible:l.visible !== false, featureCount:l.featureCount,
+               geomTypes:l.geomTypes, fc: cabe ? l.fc : null };
+    });
+    if (omitidas && typeof mostrarStatus === 'function')
+      mostrarStatus(`⚠ ${omitidas} camada(s) importada(s) muito grande(s) para salvar no navegador — use o Export JSON para guardá-las`);
+    autoSave();
+  } catch(e) { console.warn('mlSaveImports:', e); }
+}
+
+function mlRestoreImports() {
+  const saved = state['ml-imports'];
+  if (Array.isArray(saved)) {
+    saved.forEach(s => {
+      if (!s || !s.fc) return;
+      if (_mlImportedLayers.some(l => l.id === s.id)) return;
+      _mlImportedLayers.push({
+        id:s.id, name:s.name, color:s.color,
+        fillOpacity:s.fillOpacity != null ? s.fillOpacity : 0.3,
+        visible:s.visible !== false,
+        featureCount:s.featureCount || (s.fc.features || []).length,
+        geomTypes:s.geomTypes || [...new Set((s.fc.features || []).map(f => f.geometry?.type).filter(Boolean))],
+        fc:s.fc
+      });
+    });
+  }
+  _mlImportedLayers.forEach(e => _mlAddImportLayersToMap(_mlMap, e));
+  mlUpdateImportedSidebar();
+}
+
 function mlUpdateImportedSidebar() {
   const list = document.getElementById('ml-layer-list');
   if (!list) return;
@@ -13059,18 +13196,19 @@ function mlUpdateImportedSidebar() {
   section.className='ml-import-section';
   section.style.cssText='margin-top:10px;padding-top:8px;border-top:1px solid var(--line)';
   section.innerHTML = `
-    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:6px">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:6px">
       📂 Importações (${_mlImportedLayers.length})
     </div>` +
   _mlImportedLayers.map(l=>`
-    <div class="ml-layer-item" style="margin-bottom:5px">
-      <label>
-        <input type="checkbox" checked onchange="mlToggleImported('${l.id}',this.checked)">
-        <span class="ml-dot" style="background:${l.color}"></span>
-        <span style="font-size:.63rem;word-break:break-word">${l.name}</span>
+    <div class="ml-layer-item" style="margin-bottom:6px" data-import-id="${l.id}">
+      <label style="display:flex;align-items:center;gap:5px">
+        <input type="checkbox" ${l.visible!==false?'checked':''} onchange="mlToggleImported('${l.id}',this.checked)">
+        <input type="color" value="${l.color}" title="Cor da camada" onchange="mlRecolorImported('${l.id}',this.value)" style="width:20px;height:18px;padding:0;border:1px solid var(--line2);border-radius:3px;cursor:pointer;background:none;flex:none">
+        <span class="ml-import-name" style="font-size:.75rem;word-break:break-word;flex:1">${escHtml(l.name)}</span>
+        <button class="ml-draw-btn" title="Renomear camada" onclick="event.preventDefault();mlRenameImported('${l.id}')">✎</button>
       </label>
-      <div style="margin-left:20px;margin-top:2px;font-size:.58rem;color:var(--t3)">
-        ${l.featureCount} feição(ões) · ${l.geomTypes.join(', ')}
+      <div style="margin-left:20px;margin-top:2px;font-size:.7rem;color:var(--t3)">
+        ${l.featureCount} feição(ões) · ${(l.geomTypes||[]).join(', ')}${l.fc?'':' · <em>não salva (muito grande)</em>'}
       </div>
       <div style="display:flex;gap:4px;margin:3px 0 0 20px">
         <button class="ml-draw-btn" onclick="mlFocusImported('${l.id}')">🔍 Zoom</button>
@@ -13080,20 +13218,146 @@ function mlUpdateImportedSidebar() {
   list.appendChild(section);
 }
 
-function mlToggleImported(layerId, visible) {
-  const vis = visible?'visible':'none';
-  [`fill-imp-${layerId}`,`line-imp-${layerId}`,`pline-imp-${layerId}`,`circ-imp-${layerId}`].forEach(id=>{
-    if (_mlMap.getLayer(id)) _mlMap.setLayoutProperty(id,'visibility',vis);
+function mlRenameImported(layerId) {
+  const entry = _mlImportedLayers.find(l=>l.id===layerId); if (!entry) return;
+  const span = document.querySelector(`.ml-layer-item[data-import-id="${layerId}"] .ml-import-name`);
+  if (!span) return;
+  const input = document.createElement('input');
+  input.type='text'; input.value=entry.name;
+  input.style.cssText='flex:1;font-size:.75rem;padding:2px 4px;border:1px solid var(--teal);border-radius:3px;min-width:0';
+  input.onkeydown = e => {
+    if (e.key==='Enter') input.blur();
+    if (e.key==='Escape'){ input.value=entry.name; input.blur(); }
+  };
+  input.onblur = () => {
+    const v = input.value.trim();
+    if (v) entry.name = v;
+    mlUpdateImportedSidebar();
+    if (typeof mlRefreshLegenda==='function') mlRefreshLegenda();
+    mlSaveImports();
+  };
+  span.replaceWith(input);
+  input.focus(); input.select();
+}
+
+function mlRecolorImported(layerId, color) {
+  const entry = _mlImportedLayers.find(l=>l.id===layerId); if (!entry) return;
+  entry.color = color;
+  _mlAllMaps().forEach(map => {
+    try {
+      if (map.getLayer(`fill-imp-${layerId}`))  map.setPaintProperty(`fill-imp-${layerId}`,'fill-color',color);
+      if (map.getLayer(`line-imp-${layerId}`))  map.setPaintProperty(`line-imp-${layerId}`,'line-color',color);
+      if (map.getLayer(`pline-imp-${layerId}`)) map.setPaintProperty(`pline-imp-${layerId}`,'line-color',color);
+      if (map.getLayer(`circ-imp-${layerId}`))  map.setPaintProperty(`circ-imp-${layerId}`,'circle-color',color);
+    } catch(e){}
   });
+  mlUpdateImportedSidebar();
+  if (typeof mlRefreshLegenda==='function') mlRefreshLegenda();
+  mlSaveImports();
+}
+
+function mlSetImportOpacity(layerId, op) {
+  const entry = _mlImportedLayers.find(l=>l.id===layerId); if (!entry) return;
+  entry.fillOpacity = op;
+  _mlAllMaps().forEach(map => {
+    try { if (map.getLayer(`fill-imp-${layerId}`)) map.setPaintProperty(`fill-imp-${layerId}`,'fill-opacity',op); } catch(e){}
+  });
+  mlSaveImports();
+}
+
+function mlToggleImported(layerId, visible) {
+  const entry = _mlImportedLayers.find(l=>l.id===layerId);
+  if (entry) entry.visible = visible;
+  const vis = visible?'visible':'none';
+  _mlAllMaps().forEach(map => {
+    _mlImportLayerIds(layerId).forEach(id=>{
+      try { if (map.getLayer(id)) map.setLayoutProperty(id,'visibility',vis); } catch(e){}
+    });
+  });
+  mlSaveImports();
 }
 
 function mlRemoveImported(layerId) {
-  [`fill-imp-${layerId}`,`line-imp-${layerId}`,`pline-imp-${layerId}`,`circ-imp-${layerId}`].forEach(id=>{
-    if (_mlMap.getLayer(id)) _mlMap.removeLayer(id);
+  _mlAllMaps().forEach(map => {
+    _mlImportLayerIds(layerId).forEach(id=>{
+      try { if (map.getLayer(id)) map.removeLayer(id); } catch(e){}
+    });
+    try { if (map.getSource(`src-${layerId}`)) map.removeSource(`src-${layerId}`); } catch(e){}
   });
-  if (_mlMap.getSource(`src-${layerId}`)) _mlMap.removeSource(`src-${layerId}`);
   _mlImportedLayers = _mlImportedLayers.filter(l=>l.id!==layerId);
   mlUpdateImportedSidebar();
+  if (typeof mlRefreshLegenda==='function') mlRefreshLegenda();
+  mlSaveImports();
+}
+
+// Clique numa feição importada (em qualquer mapa) → popup da camada
+function mlFindImportFeatureAt(map, point) {
+  const ids = [];
+  _mlImportedLayers.forEach(l => ['fill-imp-','pline-imp-','circ-imp-'].forEach(p => {
+    try { if (map.getLayer(p + l.id)) ids.push(p + l.id); } catch(e){}
+  }));
+  if (!ids.length) return null;
+  const feats = map.queryRenderedFeatures(point, { layers: ids });
+  if (!feats.length) return null;
+  const lid = feats[0].layer.id.replace(/^(fill|pline|circ)-imp-/, '');
+  const entry = _mlImportedLayers.find(l => l.id === lid);
+  return entry ? { entry, feature: feats[0] } : null;
+}
+
+function _impFitToLayer(map, entry) {
+  if (!map || !entry.fc) return;
+  let [minLng,maxLng,minLat,maxLat]=[180,-180,90,-90];
+  const walk = c => {
+    if (!Array.isArray(c[0])) { minLng=Math.min(minLng,c[0]); maxLng=Math.max(maxLng,c[0]); minLat=Math.min(minLat,c[1]); maxLat=Math.max(maxLat,c[1]); }
+    else c.forEach(walk);
+  };
+  (entry.fc.features||[]).forEach(f=>{ if(f.geometry?.coordinates) walk(f.geometry.coordinates); });
+  if (minLng<=maxLng && minLat<=maxLat) map.fitBounds([[minLng,minLat],[maxLng,maxLat]],{padding:40,maxZoom:16});
+}
+
+function mlOpenImportPopup(map, entry, feature, lngLat) {
+  const props = feature.properties || {};
+  const linhas = Object.keys(props).filter(k => k !== '_fid').slice(0, 10).map(k =>
+    `<tr><td style="padding:1px 8px 1px 0;color:var(--t3);vertical-align:top;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis">${escHtml(k)}</td><td style="padding:1px 0;word-break:break-word">${escHtml(String(props[k]).slice(0,120))}</td></tr>`).join('');
+  const opPct = Math.round((entry.fillOpacity != null ? entry.fillOpacity : 0.3) * 100);
+  const content = `
+    <div style="min-width:240px;max-width:320px">
+      <div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:7px">
+        <span style="width:12px;height:12px;border-radius:3px;background:${entry.color};display:inline-block;flex:none"></span>
+        <input type="text" id="imp-pop-nome" value="${escHtml(entry.name)}" title="Nome da camada — edite para renomear" style="flex:1;font-weight:700;border:1px solid transparent;border-radius:3px;padding:2px 4px;min-width:0">
+      </div>
+      ${linhas ? `<table style="font-size:.7rem;border-collapse:collapse;margin-bottom:7px">${linhas}</table>` : '<div style="font-size:.7rem;color:var(--t3);margin-bottom:7px">Sem atributos.</div>'}
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+        <label style="font-size:.7rem;color:var(--t3);font-weight:600">COR DA CAMADA</label>
+        <input type="color" id="imp-pop-cor" value="${entry.color}" style="width:30px;height:22px;padding:0;border:1px solid var(--line2);border-radius:3px;cursor:pointer">
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+        <label style="font-size:.7rem;color:var(--t3);font-weight:600">OPACIDADE</label>
+        <input type="range" id="imp-pop-op" min="5" max="100" step="5" value="${opPct}" style="flex:1">
+        <span id="imp-pop-op-val" style="font-size:.7rem;min-width:30px;text-align:right">${opPct}%</span>
+      </div>
+      <div style="display:flex;gap:5px">
+        <button id="imp-pop-zoom" style="flex:1;padding:5px 8px;border:1px solid var(--line2);background:white;border-radius:3px;cursor:pointer">🔍 Zoom na camada</button>
+        <button id="imp-pop-del" style="padding:5px 8px;background:rgba(224,80,106,.1);border:1px solid #e0506a;color:#e0506a;border-radius:3px;cursor:pointer">🗑 Remover</button>
+      </div>
+    </div>`;
+  const popup = new maplibregl.Popup({ className:'ml-popup', maxWidth:'340px' })
+    .setLngLat(lngLat).setHTML(content).addTo(map);
+  setTimeout(() => {
+    const el = popup.getElement(); if (!el) return;
+    const nome = el.querySelector('#imp-pop-nome');
+    nome.onchange = () => {
+      const v = nome.value.trim();
+      if (v) { entry.name = v; mlUpdateImportedSidebar(); if (typeof mlRefreshLegenda==='function') mlRefreshLegenda(); mlSaveImports(); }
+    };
+    el.querySelector('#imp-pop-cor').oninput = e => mlRecolorImported(entry.id, e.target.value);
+    const op = el.querySelector('#imp-pop-op'), opVal = el.querySelector('#imp-pop-op-val');
+    op.oninput = () => { opVal.textContent = op.value + '%'; mlSetImportOpacity(entry.id, parseFloat(op.value)/100); };
+    el.querySelector('#imp-pop-zoom').onclick = () => _impFitToLayer(map, entry);
+    el.querySelector('#imp-pop-del').onclick = () => {
+      if (confirm(`Remover a camada "${entry.name}"?`)) { mlRemoveImported(entry.id); popup.remove(); }
+    };
+  }, 50);
 }
 
 function mlFocusImported(layerId) {
@@ -14356,6 +14620,11 @@ function _blockMapCancelDraw(wrap, map) {
 function _blockMapOnClick(wrap, map, themeId, e) {
   const st = _blockMapDrawState.get(wrap);
   if(!st || st.mode !== 'drawing') {
+    // Feição de camada importada? → popup da camada (renomear/cor/opacidade)
+    if (typeof mlFindImportFeatureAt === 'function') {
+      const imp = mlFindImportFeatureAt(map, e.point);
+      if (imp) { mlOpenImportPopup(map, imp.entry, imp.feature, e.lngLat); return; }
+    }
     // Não está desenhando: verificar se clicou em uma feature de tombamento
     const theme = ML_THEMES[themeId];
     if(!theme) return;
@@ -14522,23 +14791,12 @@ async function _blockMapImportShape(file, layerId, map) {
     alert('Arquivo vazio ou inválido.');
     return;
   }
-  // Adicionar cada feature ao _mlFeatures[layerId]
-  fc.features.forEach((f, i) => {
-    if(!f.geometry) return;
-    _mlFeatures[layerId].push({
-      id: 'imp-' + Date.now() + '-' + i,
-      geom: f.geometry,
-      props: Object.assign({ origem: 'import-shape', arquivo: file.name }, f.properties || {})
-    });
-  });
-  _blockMapRefreshSource(map, layerId);
-  if(_mlMap){
-    const mainSrc = _mlMap.getSource(`src-${layerId}`);
-    if(mainSrc) mainSrc.setData(mlGetFC(layerId));
-    mlRefreshLegenda();
-  }
-  mlSaveState();
-  mostrarStatus && mostrarStatus(`✓ ${fc.features.length} feições importadas em ${layerId} (${file.name})`);
+  // Cada arquivo vira uma CAMADA NOMEADA própria (cor distinta, renomeável),
+  // em vez de despejar na camada temática — IEPHA e municipal não se misturam mais.
+  const nome = file.name.replace(/\.\w+$/, '');
+  const entry = mlAddImportedLayer(fc, nome, map);
+  _impFitToLayer(map, entry);
+  mostrarStatus && mostrarStatus(`✓ Camada "${entry.name}" criada — ${entry.featureCount} feição(ões), visível aqui e no Mapa de Análise`);
 }
 
 // Injeta o controle de rótulos/basemap no canto superior-esquerdo do mini-mapa
