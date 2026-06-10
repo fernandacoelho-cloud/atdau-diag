@@ -1,0 +1,27 @@
+# Dependências
+node_modules/
+
+# Resultados de teste
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Backups locais
+*.bak
+*.bak.html
+backup_*/
+/tmp/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Estados temporários do Claude Code
+.claude/

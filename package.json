@@ -1,0 +1,16 @@
+{
+  "name": "atdau-diag",
+  "version": "0.1.0",
+  "description": "Suite ATDAU - DIAG (Ferramenta de Diagnostico para Pre-Projeto Arquitetonico)",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  },
+  "private": true,
+  "author": "Fernanda Fonseca de Melo Coelho",
+  "license": "CC-BY-NC-SA-4.0"
+}
