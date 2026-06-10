@@ -1173,6 +1173,35 @@ select option{background:var(--bg3)}
 .ml-style-pop h4{font-size:.75rem}
 .ml-style-row{font-size:.7rem}
 .ml-style-row select{font-size:.7rem}
+
+/* ═══ P1 · NAVEGAÇÃO AGRUPADA POR FASE + COMPLETUDE ═══ */
+.sec-nav-group{
+  font-family:var(--mono);font-size:.6rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.11em;color:var(--t3);
+  padding:14px 20px 5px;margin-top:2px;
+  display:flex;align-items:center;gap:7px;user-select:none;
+}
+.sec-nav-group:first-of-type{margin-top:0}
+.sec-nav-group::after{content:'';flex:1;height:1px;background:var(--line)}
+.sec-nav-item{flex-wrap:wrap}
+/* barra de completude por aba (sob o rótulo) */
+.nav-prog{
+  flex-basis:100%;height:3px;border-radius:2px;background:var(--line2);
+  margin:5px 0 0 17px;overflow:hidden;
+}
+.nav-prog > i{display:block;height:100%;background:var(--grn);width:0;transition:width .3s}
+.nav-prog.empty{opacity:.45}
+.nav-pct{font-size:.6rem;color:var(--t3);font-weight:600;margin-left:auto;font-variant-numeric:tabular-nums}
+.sec-nav-item.active .nav-pct{color:var(--teal)}
+/* badge de completude no cabeçalho de cada bloco */
+.block-progress{
+  font-family:var(--mono);font-size:.62rem;font-weight:600;
+  color:var(--t3);background:var(--bg4);border:1px solid var(--line2);
+  border-radius:10px;padding:1px 8px;margin-left:auto;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.block-progress.full{color:var(--grn);border-color:var(--grn);background:rgba(60,160,90,.08)}
+.block-progress.empty{opacity:.55}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
 
@@ -1195,47 +1224,56 @@ select option{background:var(--bg3)}
 
 <!-- SECTION NAV -->
 <div class="sec-nav">
+  <div class="sec-nav-group">Preparação</div>
   <div class="sec-nav-item active" onclick="irPara(0,this)" id="nav-0">
-    <div class="dot"></div>Identificação
+    <div class="dot"></div>Identificação<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(11,this)" id="nav-11">
-    <div class="dot"></div>Viabilidade preliminar
+    <div class="dot"></div>Viabilidade preliminar<div class="nav-prog"><i></i></div>
   </div>
+
+  <div class="sec-nav-group">Diagnóstico</div>
   <div class="sec-nav-item" onclick="irPara(1,this)" id="nav-1">
-    <div class="dot"></div>01 · Contexto Urbano
+    <div class="dot"></div>01 · Contexto Urbano<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(2,this)" id="nav-2">
-    <div class="dot"></div>02 · Legislação
+    <div class="dot"></div>02 · Legislação<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(3,this)" id="nav-3">
-    <div class="dot"></div>03 · Condicionantes Ambientais
+    <div class="dot"></div>03 · Condicionantes Ambientais<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(4,this)" id="nav-4">
-    <div class="dot"></div>04 · Paisagem e Morfologia
+    <div class="dot"></div>04 · Paisagem e Morfologia<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(5,this)" id="nav-5">
-    <div class="dot"></div>05 · Ocupação e Usos
+    <div class="dot"></div>05 · Ocupação e Usos<div class="nav-prog"><i></i></div>
   </div>
+
+  <div class="sec-nav-group">Coleta &amp; Referências</div>
   <div class="sec-nav-item" onclick="irPara(9,this)" id="nav-9">
-    <div class="dot"></div>06 · Instrumentos de Coleta
+    <div class="dot"></div>06 · Instrumentos de Coleta<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(12,this)" id="nav-12">
-    <div class="dot"></div>07 · Obras Análogas
+    <div class="dot"></div>07 · Obras Análogas<div class="nav-prog"><i></i></div>
   </div>
+
+  <div class="sec-nav-group">Mapas</div>
   <div class="sec-nav-item" onclick="irPara(6,this)" id="nav-6">
-    <div class="dot"></div>08 · Mapa de Análise
+    <div class="dot"></div>08 · Mapa de Análise<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(10,this)" id="nav-10">
-    <div class="dot"></div>09 · Mapa-Síntese
+    <div class="dot"></div>09 · Mapa-Síntese<div class="nav-prog"><i></i></div>
   </div>
+
+  <div class="sec-nav-group">Síntese &amp; Entrega</div>
   <div class="sec-nav-item" onclick="irPara(7,this)" id="nav-7">
-    <div class="dot"></div>Síntese SWOT
+    <div class="dot"></div>Síntese SWOT<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(13,this)" id="nav-13">
-    <div class="dot"></div>Programação Arquitetônica
+    <div class="dot"></div>Programação Arquitetônica<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(8,this)" id="nav-8">
-    <div class="dot"></div>Diretrizes
+    <div class="dot"></div>Diretrizes<div class="nav-prog"><i></i></div>
   </div>
 </div>
 
@@ -7676,6 +7714,12 @@ window.addEventListener('DOMContentLoaded',()=>{
   setupInfoBoxes();
   // Catálogo IPEA/IBGE — render inicial (com UF=MG default)
   if(typeof renderCatalogoIpea==='function') renderCatalogoIpea();
+  atualizarCompletude();
+  // completude reage a qualquer edição de campo (delegado, fora dos mapas)
+  document.querySelector('.main')?.addEventListener('input', e=>{
+    if(e.target.closest('.block-map-wrap, .maplibregl-popup')) return;
+    agendarCompletude();
+  });
 });
 
 // ══════════════════════════════════════════════════
@@ -8288,6 +8332,7 @@ function irPara(n, el){
   if(n===13) renderProgramacao();
   if(n===9 && typeof renderUserProfiles==='function'){ renderUserProfiles('mapa-comportamental'); renderUserProfiles('stationary-mapping'); }
   if(n===0 && typeof renderValores==='function') renderValores();
+  if(typeof atualizarCompletude==='function') atualizarCompletude();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function abrirMapaSinteseNovaAba(){
@@ -8450,6 +8495,7 @@ function toggleRating(id, val, btn){
   btn.classList.add('active');
   state.ratings[id]=val;
   autoSave();
+  if(typeof agendarCompletude==='function') agendarCompletude();
 }
 
 // ══════════════════════════════════════════════════
@@ -10668,6 +10714,77 @@ function marcarNavComDados(){
     if(nav) nav.classList.toggle('has-data', state.findings[s]&&state.findings[s].length>0);
   });
 }
+
+// ══════════════════════════════════════════════════
+// COMPLETUDE — quanto de cada bloco/aba está preenchido
+// (heurística: campos de texto/seleção + ratings que existem vs. preenchidos)
+// ══════════════════════════════════════════════════
+function _contarPreenchimento(scope){
+  let total=0, ok=0;
+  const ehCampo = el => {
+    if(!el.id && !el.name) return false;
+    if(['file','hidden','button','submit','reset','color','range','checkbox','radio'].includes(el.type)) return false;
+    if(el.closest('.module-block:not(.mod-active)')) return false; // módulo desativado: fora de escopo
+    if(el.closest('.block-map-wrap')) return false;                // controles do mapa não são diagnóstico
+    if(el.closest('.subpanel:not(.active)')) return false;         // subaba inativa
+    if(el.disabled) return false;
+    return true;
+  };
+  scope.querySelectorAll('input, select, textarea').forEach(el=>{
+    if(!ehCampo(el)) return;
+    total++;
+    if(String(el.value||'').trim()!=='') ok++;
+  });
+  scope.querySelectorAll('.rating-group').forEach(g=>{
+    if(g.closest('.module-block:not(.mod-active)')) return;
+    total++;
+    if(g.querySelector('.r-btn.active')) ok++;
+  });
+  return {total, ok};
+}
+
+function atualizarCompletude(){
+  // por bloco (badge no cabeçalho)
+  document.querySelectorAll('.block').forEach(block=>{
+    if(block.classList.contains('module-block') && !block.classList.contains('mod-active')) {
+      const b=block.querySelector(':scope > .block-header .block-progress'); if(b) b.remove();
+      return;
+    }
+    const header=block.querySelector(':scope > .block-header');
+    if(!header) return;
+    let badge=header.querySelector(':scope > .block-progress');
+    const {total,ok}=_contarPreenchimento(block);
+    if(total===0){ if(badge) badge.remove(); return; }
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='block-progress';
+      const chev=header.querySelector('.block-chevron');
+      if(chev) header.insertBefore(badge, chev); else header.appendChild(badge);
+    }
+    badge.textContent=`${ok}/${total}`;
+    badge.classList.toggle('full', ok>=total);
+    badge.classList.toggle('empty', ok===0);
+    badge.title=`${ok} de ${total} campos preenchidos neste bloco`;
+  });
+  // por aba (barra + % na nav)
+  document.querySelectorAll('.panel').forEach(panel=>{
+    const m=/^panel-(\d+)$/.exec(panel.id); if(!m) return;
+    const nav=document.getElementById('nav-'+m[1]); if(!nav) return;
+    const {total,ok}=_contarPreenchimento(panel);
+    const prog=nav.querySelector('.nav-prog'); const bar=prog && prog.querySelector('i');
+    const pct = total? Math.round(ok/total*100) : 0;
+    if(bar) bar.style.width = pct+'%';
+    if(prog) prog.classList.toggle('empty', ok===0);
+    let pctEl=nav.querySelector('.nav-pct');
+    if(total){
+      if(!pctEl){ pctEl=document.createElement('span'); pctEl.className='nav-pct'; if(prog) prog.before(pctEl); else nav.appendChild(pctEl); }
+      pctEl.textContent=pct+'%';
+    } else if(pctEl){ pctEl.remove(); }
+    nav.title=`${ok} de ${total} campos preenchidos`;
+  });
+}
+let _compTimer=null;
+function agendarCompletude(){ clearTimeout(_compTimer); _compTimer=setTimeout(atualizarCompletude,300); }
 
 // ══════════════════════════════════════════════════
 // EXPORT
@@ -14204,6 +14321,7 @@ function setModule(moduleId) {
   if (sc && scopeMap[moduleId]) sc.value = scopeMap[moduleId];
 
   autoSave();
+  if(typeof atualizarCompletude==='function') atualizarCompletude();
 }
 
 // Restaurar módulo salvo ao carregar
@@ -18025,6 +18143,7 @@ function subTab(panelNum, tabId, btn) {
       else maInitMap();
     }, 100);
   }
+  if(typeof atualizarCompletude==='function') atualizarCompletude();
 }
 
 // Hook em irPara: inicializar mapa anotado ao chegar no panel-9
