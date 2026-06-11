@@ -1215,6 +1215,24 @@ select option{background:var(--bg3)}
 .ml-layer-item.active-draw .ml-row{background:rgba(31,111,92,.12);box-shadow:inset 0 0 0 1px rgba(31,111,92,.35)}
 .ml-row-draw-hint{font-size:.6rem;color:var(--teal);margin-left:auto;opacity:0}
 .ml-layer-item.active-draw .ml-row-draw-hint{opacity:1}
+
+/* ═══ P2 · Dashboard de entrada (panorama do progresso) ═══ */
+.dash{background:var(--bg3);border:1px solid var(--line2);border-radius:10px;padding:14px 16px;margin-bottom:18px}
+.dash-top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.dash-ring{flex:none}
+.dash-top-txt{flex:1;min-width:0}
+.dash-title{font-size:.78rem;font-weight:700;color:var(--t1);display:flex;align-items:center;gap:6px}
+.dash-sub{font-size:.7rem;color:var(--t3);margin-top:2px}
+.dash-phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.dash-phase{background:var(--bg1);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+.dash-phase-head{font-family:var(--mono);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:7px;display:flex;justify-content:space-between}
+.dash-aba{display:flex;align-items:center;gap:7px;padding:3px 4px;border-radius:5px;cursor:pointer;font-size:.72rem;color:var(--t2)}
+.dash-aba:hover{background:var(--bg4);color:var(--t1)}
+.dash-aba-bar{flex:none;width:46px;height:5px;border-radius:3px;background:var(--line2);overflow:hidden}
+.dash-aba-bar > i{display:block;height:100%;background:var(--grn);width:0}
+.dash-aba-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-aba-pct{font-size:.62rem;color:var(--t3);font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+.dash-aba.is-map .dash-aba-pct{color:var(--teal)}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
 
@@ -1295,6 +1313,9 @@ select option{background:var(--bg3)}
 <!-- ════════════════════ PANEL 0: IDENTIFICAÇÃO ════════════════════ -->
 <div class="panel active" id="panel-0">
   <div class="sec-title">Identificação do Projeto <div class="sec-line"></div></div>
+
+  <!-- Dashboard de entrada: panorama do progresso por fase (P2) -->
+  <div id="diag-dashboard"></div>
 
   <div class="info-box">
     <strong>As etapas que antecedem o projeto.</strong> A ABNT NBR 13532:1995 (e a NBR 13531:1995) fixam a sequência das etapas do projeto de arquitetura: <em>levantamento de dados → programa de necessidades → estudo de viabilidade → estudo preliminar → anteprojeto → projeto legal → projeto básico → projeto para execução</em>. Esta ferramenta cobre as etapas <strong>anteriores ao projeto</strong>: levantamento e diagnóstico, viabilidade, estudo de referências projetuais e programação. Na prática, porém, o processo não é estritamente linear: o programa de necessidades <strong>retroalimenta-se com o diagnóstico</strong> e com as diretrizes — amadurecem juntos ao longo do percurso (KOWALTOWSKI et al., 2011). A ordem das abas é uma referência, não uma camisa de força.
@@ -10803,9 +10824,78 @@ function atualizarCompletude(){
     } else if(pctEl){ pctEl.remove(); }
     nav.title=`${ok} de ${total} campos preenchidos`;
   });
+  if(typeof renderDashboard==='function') renderDashboard();
 }
 let _compTimer=null;
 function agendarCompletude(){ clearTimeout(_compTimer); _compTimer=setTimeout(atualizarCompletude,300); }
+
+// ══════════════════════════════════════════════════
+// DASHBOARD DE ENTRADA — panorama do progresso por fase (P2)
+// ══════════════════════════════════════════════════
+const DASH_FASES = [
+  { nome:'Preparação',           panels:[0,11] },
+  { nome:'Diagnóstico',          panels:[1,2,3,4,5] },
+  { nome:'Coleta & Referências', panels:[9,12] },
+  { nome:'Mapas',                panels:[6,10] },
+  { nome:'Síntese & Entrega',    panels:[7,13,8] },
+];
+const DASH_MAP_PANELS = new Set([6,10]);
+
+function _navLabel(n){
+  const nav=document.getElementById('nav-'+n); if(!nav) return 'Painel '+n;
+  const c=nav.cloneNode(true);
+  c.querySelectorAll('.dot,.nav-pct,.nav-prog').forEach(e=>e.remove());
+  return c.textContent.trim();
+}
+
+function renderDashboard(){
+  const host=document.getElementById('diag-dashboard');
+  if(!host) return;
+  // só renderiza quando o painel de entrada está ativo (evita trabalho à toa)
+  const p0=document.getElementById('panel-0');
+  if(!p0 || !p0.classList.contains('active')) return;
+
+  let gOk=0, gTot=0;
+  const fasesHtml = DASH_FASES.map(f=>{
+    let fOk=0, fTot=0;
+    const abas = f.panels.map(n=>{
+      if(DASH_MAP_PANELS.has(n)){
+        const nf = (typeof _mlFeatures!=='undefined') ? Object.values(_mlFeatures).reduce((s,a)=>s+(a||[]).length,0) : 0;
+        const txt = n===6 ? (nf ? nf+' feições' : '🗺 mapa') : '🗺 mapa';
+        return `<div class="dash-aba is-map" onclick="irPara(${n},document.getElementById('nav-${n}'))"><span class="dash-aba-nome">${_navLabel(n)}</span><span class="dash-aba-pct">${txt}</span></div>`;
+      }
+      const panel=document.getElementById('panel-'+n);
+      const {total,ok}= panel ? _contarPreenchimento(panel) : {total:0,ok:0};
+      fOk+=ok; fTot+=total; gOk+=ok; gTot+=total;
+      const pct = total? Math.round(ok/total*100):0;
+      return `<div class="dash-aba" onclick="irPara(${n},document.getElementById('nav-${n}'))" title="${ok} de ${total} campos essenciais">
+        <span class="dash-aba-bar"><i style="width:${pct}%"></i></span>
+        <span class="dash-aba-nome">${_navLabel(n)}</span>
+        <span class="dash-aba-pct">${total?pct+'%':'—'}</span></div>`;
+    }).join('');
+    const fpct = fTot? Math.round(fOk/fTot*100):0;
+    return `<div class="dash-phase"><div class="dash-phase-head"><span>${f.nome}</span><span>${fTot?fpct+'%':''}</span></div>${abas}</div>`;
+  }).join('');
+
+  const gpct = gTot? Math.round(gOk/gTot*100):0;
+  const R=26, C=2*Math.PI*R, off=C*(1-gpct/100);
+  host.innerHTML = `
+    <div class="dash">
+      <div class="dash-top">
+        <svg class="dash-ring" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="${R}" fill="none" stroke="var(--line2)" stroke-width="7"/>
+          <circle cx="32" cy="32" r="${R}" fill="none" stroke="var(--teal)" stroke-width="7" stroke-linecap="round"
+            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 32 32)"/>
+          <text x="32" y="37" text-anchor="middle" font-size="15" font-weight="700" fill="var(--t1)">${gpct}%</text>
+        </svg>
+        <div class="dash-top-txt">
+          <div class="dash-title">📊 Progresso do diagnóstico</div>
+          <div class="dash-sub">${gOk} de ${gTot} campos essenciais preenchidos · clique numa etapa para ir até ela</div>
+        </div>
+      </div>
+      <div class="dash-phases">${fasesHtml}</div>
+    </div>`;
+}
 
 // ══════════════════════════════════════════════════
 // EXPORT
