@@ -1233,6 +1233,22 @@ select option{background:var(--bg3)}
 .dash-aba-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dash-aba-pct{font-size:.62rem;color:var(--t3);font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
 .dash-aba.is-map .dash-aba-pct{color:var(--teal)}
+
+/* ═══ P2 · Modo Campo (fontes maiores + alvos de toque p/ tablet/celular) ═══ */
+html.modo-campo{font-size:19px}                 /* tudo escala ~19% (sizes em rem) */
+html.modo-campo input[type=checkbox]{width:18px;height:18px}
+html.modo-campo .sec-nav-item{padding:13px 16px}
+html.modo-campo .form-field input,
+html.modo-campo .form-field select,
+html.modo-campo .form-field textarea{padding:9px 11px}
+html.modo-campo .r-btn{padding:7px 10px}
+html.modo-campo .block-header{padding:12px 16px}
+html.modo-campo .ml-draw-btn{padding:6px 11px}
+html.modo-campo .add-btn,
+html.modo-campo .tb-save,
+html.modo-campo .tb-export,
+html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
+#btn-modo.modo-on{background:rgba(31,111,92,.12)!important;border-color:var(--teal)!important;color:var(--teal)!important}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
 
@@ -1250,6 +1266,7 @@ select option{background:var(--bg3)}
   <button class="tb-export" onclick="salvarProjeto()" title="Salvar todo o projeto em um arquivo para reabrir depois, em qualquer computador">📁 Salvar projeto</button>
   <input type="file" id="proj-file-input" accept=".json,.atdau.json" style="display:none" onchange="abrirProjeto(this)">
   <button class="tb-save" id="btn-save" onclick="salvar()" title="Salvar rascunho neste navegador (rápido, mas não é arquivo)">💾 Salvar</button>
+  <button class="tb-save" id="btn-modo" onclick="toggleModoCampo()" title="Alternar entre Escritório (denso) e Campo (fontes maiores, alvos de toque) — útil em tablet/celular" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">🏢 Escritório</button>
   <button class="tb-save" onclick="abrirTutorial()" title="Veja como percorrer a ferramenta" style="background:transparent;border:1px solid var(--teal);color:var(--teal)">🎯 Como usar</button>
 </div>
 
@@ -7750,6 +7767,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   setupInfoBoxes();
   // Catálogo IPEA/IBGE — render inicial (com UF=MG default)
   if(typeof renderCatalogoIpea==='function') renderCatalogoIpea();
+  aplicarModoCampo(!!state.modo_campo); // restaura preferência salva
   atualizarCompletude();
   // completude reage a qualquer edição de campo (delegado, fora dos mapas)
   document.querySelector('.main')?.addEventListener('input', e=>{
@@ -10895,6 +10913,30 @@ function renderDashboard(){
       </div>
       <div class="dash-phases">${fasesHtml}</div>
     </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// MODO CAMPO / ESCRITÓRIO (P2) — fontes maiores + alvos de toque
+// ══════════════════════════════════════════════════
+function aplicarModoCampo(on){
+  document.documentElement.classList.toggle('modo-campo', !!on);
+  const btn=document.getElementById('btn-modo');
+  if(btn){
+    btn.classList.toggle('modo-on', !!on);
+    btn.textContent = on ? '🌲 Campo' : '🏢 Escritório';
+  }
+  // mapas precisam recalcular tamanho após a mudança de escala do layout
+  setTimeout(()=>{
+    try{ if(typeof _mlMap!=='undefined' && _mlMap) _mlMap.resize(); }catch(e){}
+    try{ if(typeof _blockMaps!=='undefined') Object.values(_blockMaps).forEach(m=>m&&m.resize()); }catch(e){}
+  }, 60);
+}
+
+function toggleModoCampo(){
+  const on = !document.documentElement.classList.contains('modo-campo');
+  state.modo_campo = on;
+  aplicarModoCampo(on);
+  autoSave();
 }
 
 // ══════════════════════════════════════════════════
