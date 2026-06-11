@@ -12234,7 +12234,11 @@ function maSetupLegenda() {
 }
 function maLegendItems() {
   if (typeof MA_CATEGORIES==='undefined') return [];
-  const data = (typeof MapaAnotadoStore!=='undefined' && MapaAnotadoStore.data) ? MapaAnotadoStore.data : [];
+  // BUG corrigido: MapaAnotadoStore.data é {annotations,activeCategories} — o
+  // array está em .annotations. Iterar o objeto lançava "data.forEach is not a
+  // function", quebrando maRenderMarkers (markers não apareciam e o "adicionar"
+  // abortava antes do modal).
+  const data = (typeof MapaAnotadoStore!=='undefined' && typeof MapaAnotadoStore.getAll==='function') ? MapaAnotadoStore.getAll() : [];
   const usadas = {};
   data.forEach(a=>{ usadas[a.category]=(usadas[a.category]||0)+1; });
   return MA_CATEGORIES.filter(c=>usadas[c.id]).map(c=>({
