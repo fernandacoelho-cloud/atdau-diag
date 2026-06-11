@@ -12142,8 +12142,16 @@ function mlLegendItems() {
   if (typeof _mlImportedLayers !== 'undefined') _mlImportedLayers.forEach(l => {
     const gt = l.geomTypes || [];
     const geom = gt.some(g=>/Polygon/.test(g)) ? 'polygon' : gt.some(g=>/LineString/.test(g)) ? 'polyline' : 'point';
-    itens.push({ id:l.id, label:'📂 '+l.name, geom, count:l.featureCount,
-      style:{ fillColor:l.color, lineColor:l.color, fillOpacity:l.fillOpacity!=null?l.fillOpacity:0.3, lineWidth:1.5, lineStyle:'solid' } });
+    if (l.categoria && l.categoria.valores && l.categoria.valores.length) {
+      // categorizada: uma entrada por valor (como o Categorizado do QGIS)
+      itens.push({ id:'imp-'+l.id+'-hdr', label:'📂 '+l.name+' · por '+l.categoria.campo, geom, count:null, muted:true,
+        style:{ fillColor:l.color, lineColor:l.color, fillOpacity:.15, lineWidth:1, lineStyle:'solid' } });
+      l.categoria.valores.forEach(o=> itens.push({ id:'imp-'+l.id+'-'+o.v, label:'   '+o.v, geom, count:o.n,
+        style:{ fillColor:o.cor, lineColor:o.cor, fillOpacity:l.fillOpacity!=null?l.fillOpacity:0.3, lineWidth:1.5, lineStyle:'solid' } }));
+    } else {
+      itens.push({ id:l.id, label:'📂 '+l.name, geom, count:l.featureCount,
+        style:{ fillColor:l.color, lineColor:l.color, fillOpacity:l.fillOpacity!=null?l.fillOpacity:0.3, lineWidth:1.5, lineStyle:'solid' } });
+    }
   });
   return itens;
 }
@@ -12160,7 +12168,7 @@ function mlSetupLegenda() {
       return mlGetEstilo(id);
     },
     onStyleChange:(id,novo)=>{
-      if (String(id).startsWith('esf-')) return; // esferas de tombamento: cor é fixa, não editável
+      if (String(id).startsWith('esf-') || String(id).startsWith('imp-')) return; // esferas/categorias: cor fixa
       // camadas importadas: estilo é da camada inteira (cor/opacidade)
       const imp = (typeof _mlImportedLayers !== 'undefined') && _mlImportedLayers.find(l=>l.id===id);
       if (imp) {
@@ -13586,6 +13594,7 @@ function _mlAddImportLayersToMap(map, entry) {
         paint:{ 'circle-color':entry.color, 'circle-radius':5,
                 'circle-stroke-color':'#fff', 'circle-stroke-width':1.5 } });
     }
+    if (entry.categoria) _mlApplyCategoria(map, entry); // restaura cor por atributo
   } catch(e) { console.warn('import layers:', e.message); }
 }
 
@@ -13602,7 +13611,7 @@ function mlSaveImports() {
       if (l.fc && !cabe) omitidas++;
       return { id:l.id, name:l.name, color:l.color, fillOpacity:l.fillOpacity,
                visible:l.visible !== false, featureCount:l.featureCount,
-               geomTypes:l.geomTypes, fc: cabe ? l.fc : null };
+               geomTypes:l.geomTypes, categoria:l.categoria||null, fc: cabe ? l.fc : null };
     });
     if (omitidas && typeof mostrarStatus === 'function')
       mostrarStatus(`⚠ ${omitidas} camada(s) importada(s) muito grande(s) para salvar no navegador — use o Export JSON para guardá-las`);
@@ -13622,6 +13631,7 @@ function mlRestoreImports() {
         visible:s.visible !== false,
         featureCount:s.featureCount || (s.fc.features || []).length,
         geomTypes:s.geomTypes || [...new Set((s.fc.features || []).map(f => f.geometry?.type).filter(Boolean))],
+        categoria:s.categoria || undefined,
         fc:s.fc
       });
     });
@@ -13643,22 +13653,37 @@ function mlUpdateImportedSidebar() {
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:6px">
       📂 Importações (${_mlImportedLayers.length})
     </div>` +
-  _mlImportedLayers.map(l=>`
+  _mlImportedLayers.map(l=>{
+    const attrs = (typeof _mlImportAttrs==='function') ? _mlImportAttrs(l) : [];
+    const catSel = attrs.length ? `
+      <div style="margin:4px 0 0 20px;display:flex;align-items:center;gap:5px">
+        <span style="font-size:.62rem;color:var(--t3)">🎨</span>
+        <select onchange="mlCategorizeImported('${l.id}', this.value)" title="Colorir por valor de um atributo (como o Categorizado do QGIS)" style="flex:1;min-width:0;font-size:.68rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:3px 4px">
+          <option value="">Cor única</option>
+          ${attrs.map(a=>`<option value="${escHtml(a)}" ${l.categoria&&l.categoria.campo===a?'selected':''}>por: ${escHtml(a)}</option>`).join('')}
+        </select>
+      </div>` : '';
+    const catLegenda = (l.categoria && l.categoria.valores) ? `
+      <div style="margin:3px 0 0 24px;display:flex;flex-direction:column;gap:1px">
+        ${l.categoria.valores.map(o=>`<div style="display:flex;align-items:center;gap:5px;font-size:.64rem;color:var(--t2)"><span style="width:9px;height:9px;border-radius:2px;background:${o.cor};flex:none"></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(o.v)}</span><span style="color:var(--t3)">${o.n}</span></div>`).join('')}
+      </div>` : '';
+    return `
     <div class="ml-layer-item" style="margin-bottom:6px" data-import-id="${l.id}">
       <label style="display:flex;align-items:center;gap:5px">
         <input type="checkbox" ${l.visible!==false?'checked':''} onchange="mlToggleImported('${l.id}',this.checked)">
-        <input type="color" value="${l.color}" title="Cor da camada" onchange="mlRecolorImported('${l.id}',this.value)" style="width:20px;height:18px;padding:0;border:1px solid var(--line2);border-radius:3px;cursor:pointer;background:none;flex:none">
+        <input type="color" value="${l.color}" title="${l.categoria?'Cor base / fallback (use o seletor 🎨 p/ cor única)':'Cor da camada'}" onchange="mlRecolorImported('${l.id}',this.value)" style="width:20px;height:18px;padding:0;border:1px solid var(--line2);border-radius:3px;cursor:pointer;background:none;flex:none">
         <span class="ml-import-name" style="font-size:.75rem;word-break:break-word;flex:1">${escHtml(l.name)}</span>
         <button class="ml-draw-btn" title="Renomear camada" onclick="event.preventDefault();mlRenameImported('${l.id}')">✎</button>
       </label>
       <div style="margin-left:20px;margin-top:2px;font-size:.7rem;color:var(--t3)">
         ${l.featureCount} feição(ões) · ${(l.geomTypes||[]).join(', ')}${l.fc?'':' · <em>não salva (muito grande)</em>'}
       </div>
+      ${catSel}${catLegenda}
       <div style="display:flex;gap:4px;margin:3px 0 0 20px">
         <button class="ml-draw-btn" onclick="mlFocusImported('${l.id}')">🔍 Zoom</button>
         <button class="ml-draw-btn" onclick="mlRemoveImported('${l.id}')" style="color:var(--red);border-color:rgba(224,80,106,.3)">✕</button>
       </div>
-    </div>`).join('');
+    </div>`;}).join('');
   list.appendChild(section);
 }
 
@@ -13688,6 +13713,8 @@ function mlRecolorImported(layerId, color) {
   const entry = _mlImportedLayers.find(l=>l.id===layerId); if (!entry) return;
   entry.color = color;
   _mlAllMaps().forEach(map => {
+    // se categorizada, a cor base vira o fallback do match; senão, cor única
+    if (entry.categoria) { _mlApplyCategoria(map, entry); return; }
     try {
       if (map.getLayer(`fill-imp-${layerId}`))  map.setPaintProperty(`fill-imp-${layerId}`,'fill-color',color);
       if (map.getLayer(`line-imp-${layerId}`))  map.setPaintProperty(`line-imp-${layerId}`,'line-color',color);
@@ -13698,6 +13725,63 @@ function mlRecolorImported(layerId, color) {
   mlUpdateImportedSidebar();
   if (typeof mlRefreshLegenda==='function') mlRefreshLegenda();
   mlSaveImports();
+}
+
+// ── Estilo por atributo (Categorizado, como o QGIS) ──────────────────
+// Colore as feições de uma camada importada por valor de uma coluna do shape
+// (ex.: zoneamento, esfera, tipo, estado de conservação). Gera cores e legenda.
+const ML_CAT_PALETTE = ['#4f9bf8','#f58b40','#1ecfa4','#e0506a','#a07cf0','#f0bf3a','#3f7d8c','#b5462e','#7E5A9B','#22c474','#c9923b','#5cc8f0','#e06ab0','#8a8a8a'];
+
+function _mlImportAttrs(entry){
+  const keys=new Set();
+  (entry.fc?.features||[]).forEach(f=>Object.keys(f.properties||{}).forEach(k=>{ if(k!=='_fid') keys.add(k); }));
+  return [...keys];
+}
+
+function _mlCatValores(entry, campo){
+  const counts=new Map();
+  (entry.fc?.features||[]).forEach(f=>{
+    const raw=(f.properties||{})[campo];
+    const v=String(raw==null?'':raw).trim() || '(vazio)';
+    counts.set(v,(counts.get(v)||0)+1);
+  });
+  return [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,14)
+    .map(([v,n],i)=>({ v, n, cor: ML_CAT_PALETTE[i % ML_CAT_PALETTE.length] }));
+}
+
+function _mlCatColorExpr(entry){
+  const cat=entry.categoria;
+  if(!cat || !cat.valores || !cat.valores.length) return entry.color;
+  const expr=['match', ['to-string', ['coalesce', ['get', cat.campo], '']]];
+  cat.valores.forEach(o=> expr.push(o.v==='(vazio)' ? '' : o.v, o.cor));
+  expr.push(entry.color || '#8a8a8a'); // fallback: valores fora do top-14
+  return expr;
+}
+
+function _mlApplyCategoria(map, entry){
+  const expr=_mlCatColorExpr(entry);
+  try{
+    if(map.getLayer(`fill-imp-${entry.id}`))  map.setPaintProperty(`fill-imp-${entry.id}`,'fill-color',expr);
+    if(map.getLayer(`line-imp-${entry.id}`))  map.setPaintProperty(`line-imp-${entry.id}`,'line-color',expr);
+    if(map.getLayer(`pline-imp-${entry.id}`)) map.setPaintProperty(`pline-imp-${entry.id}`,'line-color',expr);
+    if(map.getLayer(`circ-imp-${entry.id}`))  map.setPaintProperty(`circ-imp-${entry.id}`,'circle-color',expr);
+  }catch(e){}
+}
+
+function mlCategorizeImported(layerId, campo){
+  const entry=_mlImportedLayers.find(l=>l.id===layerId); if(!entry) return;
+  if(!campo){ mlClearCategoria(layerId); return; }
+  entry.categoria={ campo, valores:_mlCatValores(entry, campo) };
+  _mlAllMaps().forEach(m=>_mlApplyCategoria(m, entry));
+  mlUpdateImportedSidebar();
+  if(typeof mlRefreshLegenda==='function') mlRefreshLegenda();
+  mlSaveImports();
+}
+
+function mlClearCategoria(layerId){
+  const entry=_mlImportedLayers.find(l=>l.id===layerId); if(!entry) return;
+  delete entry.categoria;
+  mlRecolorImported(layerId, entry.color); // volta à cor única (atualiza sidebar/legenda/save)
 }
 
 function mlSetImportOpacity(layerId, op) {
