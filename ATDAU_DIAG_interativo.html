@@ -1202,6 +1202,19 @@ select option{background:var(--bg3)}
 }
 .block-progress.full{color:var(--grn);border-color:var(--grn);background:rgba(60,160,90,.08)}
 .block-progress.empty{opacity:.55}
+
+/* ═══ P1.7 · Barra de desenho contextual + lista de camadas enxuta ═══ */
+.ml-drawbar{position:sticky;top:0;z-index:3;background:var(--bg4);border-bottom:1px solid var(--line);padding:8px}
+.ml-drawbar-none{font-size:.7rem;color:var(--t3);line-height:1.4}
+.ml-drawbar-head{display:flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;color:var(--t1);margin-bottom:6px}
+.ml-drawbar-head .ml-dot{flex:none}
+.ml-drawbar-geoms{display:flex;gap:5px;flex-wrap:wrap}
+.ml-drawbar-extra{margin-top:6px}
+.ml-layer-item .ml-row{cursor:pointer;border-radius:6px;padding:2px 3px}
+.ml-layer-item .ml-row:hover{background:var(--bg5)}
+.ml-layer-item.active-draw .ml-row{background:rgba(31,111,92,.12);box-shadow:inset 0 0 0 1px rgba(31,111,92,.35)}
+.ml-row-draw-hint{font-size:.6rem;color:var(--teal);margin-left:auto;opacity:0}
+.ml-layer-item.active-draw .ml-row-draw-hint{opacity:1}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
 
@@ -5376,6 +5389,8 @@ select option{background:var(--bg3)}
     <!-- SIDEBAR DE CAMADAS -->
     <div id="ml-sidebar" style="width:210px;flex-shrink:0;background:var(--bg3);border:1px solid var(--line2);border-radius:8px;overflow:hidden">
       <div style="background:var(--bg4);padding:8px 12px;border-bottom:1px solid var(--line);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--t2)">Camadas de análise</div>
+      <!-- Barra de desenho contextual: age na camada ativa (selecionada na lista) -->
+      <div id="ml-drawbar"></div>
       <div id="ml-layer-list" style="padding:8px"></div>
     </div>
 
@@ -12123,29 +12138,59 @@ function mlBuildSidebar() {
       const l = byId[layerId];
       if (!l) return;
       const div = document.createElement('div');
-      div.className = 'ml-layer-item';
+      div.className = 'ml-layer-item' + (l.id === _mlSelLayer ? ' active-draw' : '');
       div.id = `layer-item-${l.id}`;
 
       const colorSwatch = l.color ? `background:${l.color}` : 'background:linear-gradient(135deg,#f9d26b,#e0506a,#22c474)';
       const nFeats = (_mlFeatures[l.id]||[]).length;
       const countBadge = nFeats > 0 ? `<span style="font-size:.5rem;color:var(--teal);background:rgba(31,111,92,.15);padding:1px 5px;border-radius:6px;margin-left:auto">${nFeats}</span>` : '';
 
+      // Linha enxuta: clicar seleciona a camada ativa (a barra de desenho age nela);
+      // os botões de desenho saíram daqui para a barra contextual única no topo.
       div.innerHTML = `
-        <label title="${l.desc}" style="display:flex;align-items:center;gap:5px">
-          <input type="checkbox" checked onchange="mlToggleLayer('${l.id}',this.checked)">
+        <div class="ml-row" title="${l.desc} — clique para desenhar nesta camada" style="display:flex;align-items:center;gap:5px" onclick="mlSetActiveLayer('${l.id}')">
+          <input type="checkbox" checked onclick="event.stopPropagation()" onchange="mlToggleLayer('${l.id}',this.checked)">
           <span class="ml-dot" style="${colorSwatch};border-radius:${l.geom[0]==='point'?'50%':'2px'}"></span>
           <span style="flex:1">${l.icon} ${l.name}</span>
           ${countBadge}
-        </label>
-        <div style="display:flex;gap:4px;margin-top:4px;margin-left:22px;flex-wrap:wrap">
-          ${l.geom.map(g=>`<button class="ml-draw-btn" id="btn-draw-${l.id}-${g}" onclick="mlSelectDraw('${l.id}','${g}')" title="Desenhar ${g==='polygon'?'polígono':g==='polyline'?'linha':'ponto'}">${{polygon:'▦ Polígono',polyline:'╱ Linha',point:'● Ponto'}[g]}</button>`).join('')}
-          ${l.id==='equip'?`<button class="ml-draw-btn" onclick="mlShowEquipForm()" style="color:var(--yel);border-color:rgba(240,191,58,.3)">⚙ Configurar</button>`:''}
-          ${l.id==='uso'?`<select id="uso-cat-sel" onchange="_mlSelUso=this.value" style="font-size:.57rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:2px 4px;margin-top:2px">${ML_USO_CATS.map(u=>`<option value="${u.id}">${u.label}</option>`).join('')}</select>`:''}
+          <span class="ml-row-draw-hint">✏️</span>
         </div>`;
       groupEl.appendChild(div);
     });
     list.appendChild(groupEl);
   });
+  mlRenderDrawBar();
+}
+
+// Barra de desenho contextual — única, age na camada selecionada (_mlSelLayer)
+function mlRenderDrawBar() {
+  const bar = document.getElementById('ml-drawbar');
+  if (!bar) return;
+  const l = ML_LAYERS.find(x => x.id === _mlSelLayer);
+  if (!l) {
+    bar.innerHTML = `<div class="ml-drawbar-none">Selecione uma camada na lista para desenhar nela.</div>`;
+    return;
+  }
+  const geomLabel = { polygon:'▦ Polígono', polyline:'╱ Linha', point:'● Ponto' };
+  const swatch = l.color ? `background:${l.color}` : 'background:linear-gradient(135deg,#f9d26b,#e0506a,#22c474)';
+  const extra =
+    l.id==='uso' ? `<div class="ml-drawbar-extra"><select id="uso-cat-sel" onchange="_mlSelUso=this.value" style="width:100%;font-size:.7rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:3px 5px">${ML_USO_CATS.map(u=>`<option value="${u.id}"${_mlSelUso===u.id?' selected':''}>${u.label}</option>`).join('')}</select></div>` :
+    l.id==='equip' ? `<div class="ml-drawbar-extra"><button class="ml-draw-btn" onclick="mlShowEquipForm()" style="color:var(--yel);border-color:rgba(240,191,58,.3)">⚙ Configurar equipamento</button></div>` : '';
+  bar.innerHTML = `
+    <div class="ml-drawbar-head"><span class="ml-dot" style="${swatch};border-radius:${l.geom[0]==='point'?'50%':'2px'}"></span>Desenhar em: ${l.icon} ${l.name}</div>
+    <div class="ml-drawbar-geoms">
+      ${l.geom.map(g=>`<button class="ml-draw-btn" id="btn-draw-${l.id}-${g}" onclick="mlSelectDraw('${l.id}','${g}')" title="Desenhar ${g==='polygon'?'polígono':g==='polyline'?'linha':'ponto'}">${geomLabel[g]}</button>`).join('')}
+    </div>${extra}`;
+}
+
+// Seleciona a camada ativa para desenho (sem iniciar o desenho ainda)
+function mlSetActiveLayer(layerId) {
+  if (!ML_LAYERS.some(l => l.id === layerId)) return;
+  mlCancelDraw();
+  _mlSelLayer = layerId;
+  document.querySelectorAll('#ml-layer-list .ml-layer-item').forEach(el =>
+    el.classList.toggle('active-draw', el.id === `layer-item-${layerId}`));
+  mlRenderDrawBar();
 }
 
 function mlToggleLayer(layerId, visible) {
@@ -12166,6 +12211,14 @@ function mlToggleLayer(layerId, visible) {
 // ── Desenho ───────────────────────────────────────────────────────────
 function mlSelectDraw(layerId, geomType) {
   mlCancelDraw();
+  // Garante que a barra contextual e a linha ativa reflitam esta camada
+  // (caso a chamada venha de fora da barra, ex.: configurar equipamento)
+  if (_mlSelLayer !== layerId || !document.getElementById(`btn-draw-${layerId}-${geomType}`)) {
+    _mlSelLayer = layerId;
+    document.querySelectorAll('#ml-layer-list .ml-layer-item').forEach(el =>
+      el.classList.toggle('active-draw', el.id === `layer-item-${layerId}`));
+    if (typeof mlRenderDrawBar === 'function') mlRenderDrawBar();
+  }
   _mlSelLayer = layerId;
   _mlSelGeom  = geomType;
   _mlDraw = { mode:'drawing', layerId, geomType, pts:[] };
