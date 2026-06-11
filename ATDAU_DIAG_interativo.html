@@ -11688,7 +11688,9 @@ function mlInit() {
 
   _mlMap = new maplibregl.Map({
     container: 'ml-map',
-    style: { version:8, sources:{}, layers:[
+    style: { version:8,
+      glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf', // necessário p/ rótulos e contagem dos clusters
+      sources:{}, layers:[
       { id:'background', type:'background', paint:{'background-color':'#f0eeeb'} }
     ]},
     center: [-43.85, -19.77], zoom: 14,
@@ -11702,6 +11704,7 @@ function mlInit() {
   _mlMap.on('load', () => {
     mlSetBasemap('positron_nl');
     mlAddSources();
+    mlSetupPatrimCluster(); // pontos de tombamento clusterizados (após sources, antes do estado)
     mlBuildSidebar();
     mlLoadState();
     mlRestoreImports(); // camadas importadas persistidas + importadas via block-map antes do init
@@ -11758,8 +11761,14 @@ function mlAddSources() {
       });
     }
     if (l.geom.includes('point')) {
+      // patrim: bens tombados (csv) saem dos pontos individuais — vão para o
+      // source clusterizado (mlSetupPatrimCluster), evitando a "chuva de confete"
+      // sintaxe legacy (combina com '$type'): chave é string direta, não ['get',...]
+      const pointFilter = l.id==='patrim'
+        ? ['all',['==','$type','Point'],['!=','origem','csv-tombamento']]
+        : ['==','$type','Point'];
       _mlMap.addLayer({ id:`circle-${l.id}`, type:'circle', source:`src-${l.id}`,
-        filter:['==','$type','Point'],
+        filter:pointFilter,
         paint: {
           'circle-color': ['case',
             ['has','corOverride'], ['get','corOverride'],
@@ -11770,7 +11779,7 @@ function mlAddSources() {
       });
       // Layer adicional para pictograma + rótulo (texto sobre pontos)
       _mlMap.addLayer({ id:`label-${l.id}`, type:'symbol', source:`src-${l.id}`,
-        filter:['==','$type','Point'],
+        filter:pointFilter,
         layout: {
           'text-field': ['case',
             ['has','pictograma'],
@@ -11808,6 +11817,111 @@ function mlGetFC(layerId) {
     properties: Object.assign({}, f.props||{}, { _fid: f.id })
   }));
   return { type:'FeatureCollection', features: fs };
+}
+
+// ── Clustering dos bens tombados (Patrimônio) ─────────────────────────
+// 6 mil+ pontos viram "confete"; agrupamos em clusters e coloramos os
+// pontos individuais por esfera de proteção (federal/estadual/municipal).
+const ML_ESFERA_CORES = { federal:'#b5462e', estadual:'#c9923b', municipal:'#3f7d8c', outra:'#8a8a8a' };
+const ML_ESFERA_LABEL = { federal:'Federal (IPHAN)', estadual:'Estadual (IEPHA)', municipal:'Municipal', outra:'Outra / não informada' };
+
+function _patrimEsferaKey(e){
+  const s = String(e||'').toLowerCase();
+  if(/federal|iphan|uni[aã]o/.test(s)) return 'federal';
+  if(/estad|iepha/.test(s)) return 'estadual';
+  if(/municip|conselho/.test(s)) return 'municipal';
+  return 'outra';
+}
+
+function _patrimTombFeatures(){
+  return (_mlFeatures.patrim||[]).filter(f =>
+    f.props && f.props.origem==='csv-tombamento' && f.geom && f.geom.type==='Point');
+}
+
+function mlBuildPatrimClusterFC(){
+  return { type:'FeatureCollection', features: _patrimTombFeatures().map(f => ({
+    type:'Feature', geometry:f.geom,
+    properties: Object.assign({}, f.props, { _fid:f.id, _esf:_patrimEsferaKey(f.props.esfera) })
+  }))};
+}
+
+// quais esferas estão presentes (para a legenda)
+function mlPatrimEsferasPresentes(){
+  const set = new Set(_patrimTombFeatures().map(f => _patrimEsferaKey(f.props.esfera)));
+  return ['federal','estadual','municipal','outra'].filter(k => set.has(k));
+}
+
+let _patrimClusterWired = false;
+
+// (re)cria source + camadas do cluster. IMPORTANTE: em MapLibre 4.7.1, criar
+// um source clusterizado vazio e depois fazer setData não reindexa os clusters
+// (erro "Unimplemented type: 4", clusters não renderizam). Recriar o source do
+// zero a cada atualização funciona — e patrim muda raramente (import/limpar/load).
+function _mlRebuildPatrimClusterLayers(){
+  if(!_mlMap) return;
+  ['patrim-clusters','patrim-cluster-count','patrim-points'].forEach(id=>{
+    try{ if(_mlMap.getLayer(id)) _mlMap.removeLayer(id); }catch(e){}
+  });
+  try{ if(_mlMap.getSource('src-patrim-cluster')) _mlMap.removeSource('src-patrim-cluster'); }catch(e){}
+  _mlMap.addSource('src-patrim-cluster', {
+    type:'geojson', data: mlBuildPatrimClusterFC(),
+    cluster:true, clusterRadius:48, clusterMaxZoom:14
+  });
+  // clusters (círculo proporcional + contagem)
+  _mlMap.addLayer({ id:'patrim-clusters', type:'circle', source:'src-patrim-cluster',
+    filter:['has','point_count'],
+    paint:{
+      'circle-color':'#9a6b1e', 'circle-opacity':0.88,
+      'circle-radius':['step',['get','point_count'], 13, 25,17, 100,22, 500,30],
+      'circle-stroke-width':2, 'circle-stroke-color':'#fff'
+    }});
+  _mlMap.addLayer({ id:'patrim-cluster-count', type:'symbol', source:'src-patrim-cluster',
+    filter:['has','point_count'],
+    // sem text-font explícito: usa o fontstack default que o glyphs server (demotiles) serve;
+    // 'Open Sans Bold' dá 404 no demotiles e quebra a renderização dos clusters
+    layout:{ 'text-field':['get','point_count_abbreviated'], 'text-size':12 },
+    paint:{ 'text-color':'#fff' }});
+  // pontos individuais, coloridos por esfera
+  _mlMap.addLayer({ id:'patrim-points', type:'circle', source:'src-patrim-cluster',
+    filter:['!',['has','point_count']],
+    paint:{
+      'circle-color':['match',['get','_esf'],
+        'federal',ML_ESFERA_CORES.federal,'estadual',ML_ESFERA_CORES.estadual,
+        'municipal',ML_ESFERA_CORES.municipal, ML_ESFERA_CORES.outra],
+      'circle-radius':5, 'circle-stroke-width':1.5, 'circle-stroke-color':'#fff'
+    }});
+}
+
+function mlSetupPatrimCluster(){
+  if(!_mlMap) return;
+  _mlRebuildPatrimClusterLayers();
+  if(_patrimClusterWired) return; // handlers são por id de camada e sobrevivem à recriação
+  _patrimClusterWired = true;
+  // cluster → zoom de expansão (MapLibre v4: getClusterExpansionZoom retorna Promise)
+  _mlMap.on('click','patrim-clusters', e=>{
+    const f = e.features[0]; const id = f.properties.cluster_id;
+    const src = _mlMap.getSource('src-patrim-cluster'); if(!src) return;
+    Promise.resolve(src.getClusterExpansionZoom(id))
+      .then(zoom => _mlMap.easeTo({ center:f.geometry.coordinates, zoom:(zoom||_mlMap.getZoom())+0.2 }))
+      .catch(()=>{});
+  });
+  // ponto → popup de bem tombado (reusa o builder com 10 atalhos de pesquisa)
+  _mlMap.on('click','patrim-points', e=>{
+    const f = e.features[0]; const props = f.properties;
+    if(typeof window._patrimPopupBuilder !== 'function') return;
+    const html = window._patrimPopupBuilder('patrim', props._fid, props, e.lngLat, ML_LAYERS.find(l=>l.id==='patrim'));
+    if(html) new maplibregl.Popup({ className:'ml-popup', maxWidth:'360px' }).setLngLat(e.lngLat).setHTML(html).addTo(_mlMap);
+  });
+  ['patrim-clusters','patrim-points'].forEach(id=>{
+    _mlMap.on('mouseenter',id,()=>{ _mlMap.getCanvas().style.cursor='pointer'; });
+    _mlMap.on('mouseleave',id,()=>{ _mlMap.getCanvas().style.cursor=''; });
+  });
+}
+
+function mlRefreshPatrimCluster(){
+  if(!_mlMap) return;
+  if(_mlMap.getSource('src-patrim-cluster') || _patrimClusterWired) _mlRebuildPatrimClusterLayers();
+  else mlSetupPatrimCluster();
 }
 
 // ── Estilo editável por camada (Mapa de Análise) ──
@@ -11850,11 +11964,27 @@ function mlAplicarTodosEstilos() {
 
 // itens da legenda: só camadas que têm ao menos uma feição desenhada
 function mlLegendItems() {
-  const itens = ML_LAYERS.filter(l => (_mlFeatures[l.id]||[]).length>0).map(l=>{
-    const n = (_mlFeatures[l.id]||[]).length;
-    const geomPrincipal = l.geom.includes('polygon') ? 'polygon' : (l.geom.includes('polyline') ? 'polyline' : 'point');
-    return { id:l.id, label:(l.icon?l.icon+' ':'')+l.name, geom:geomPrincipal, count:n, style: mlGetEstilo(l.id) };
+  const itens = [];
+  ML_LAYERS.filter(l => (_mlFeatures[l.id]||[]).length>0).forEach(l=>{
+    const todas = _mlFeatures[l.id]||[];
+    // patrim: bens tombados viram itens por esfera (não o item genérico)
+    const naoTomb = l.id==='patrim'
+      ? todas.filter(f => !(f.props && f.props.origem==='csv-tombamento')).length
+      : todas.length;
+    if (naoTomb>0) {
+      const geomPrincipal = l.geom.includes('polygon') ? 'polygon' : (l.geom.includes('polyline') ? 'polyline' : 'point');
+      itens.push({ id:l.id, label:(l.icon?l.icon+' ':'')+l.name, geom:geomPrincipal, count:naoTomb, style: mlGetEstilo(l.id) });
+    }
   });
+  // bens tombados (clusterizados): uma entrada por esfera presente
+  if (typeof mlPatrimEsferasPresentes==='function') {
+    const tomb = _patrimTombFeatures();
+    mlPatrimEsferasPresentes().forEach(k=>{
+      const n = tomb.filter(f => _patrimEsferaKey(f.props.esfera)===k).length;
+      itens.push({ id:'esf-'+k, label:'🏛️ '+ML_ESFERA_LABEL[k], geom:'point', count:n, muted:false,
+        style:{ fillColor:ML_ESFERA_CORES[k], lineColor:ML_ESFERA_CORES[k], fillOpacity:1, lineWidth:1.5, lineStyle:'solid' } });
+    });
+  }
   // camadas importadas também entram na legenda, com nome e cor próprios
   if (typeof _mlImportedLayers !== 'undefined') _mlImportedLayers.forEach(l => {
     const gt = l.geomTypes || [];
@@ -11877,6 +12007,7 @@ function mlSetupLegenda() {
       return mlGetEstilo(id);
     },
     onStyleChange:(id,novo)=>{
+      if (String(id).startsWith('esf-')) return; // esferas de tombamento: cor é fixa, não editável
       // camadas importadas: estilo é da camada inteira (cor/opacidade)
       const imp = (typeof _mlImportedLayers !== 'undefined') && _mlImportedLayers.find(l=>l.id===id);
       if (imp) {
@@ -11945,6 +12076,7 @@ function maRefreshLegenda(){ if(typeof MapLegend!=='undefined') MapLegend.refres
 function mlRefreshSource(layerId) {
   const src = _mlMap.getSource(`src-${layerId}`);
   if (src) src.setData(mlGetFC(layerId));
+  if (layerId==='patrim') mlRefreshPatrimCluster(); // mantém os clusters em sincronia
   mlUpdateAreaInfo();
   mlUpdateEquipPanel();
   mlSaveState();
@@ -12251,6 +12383,10 @@ const ML_PICTOGRAMAS = [
 ];
 
 function mlHandleFeatureClick(e) {
+  // Cluster/ponto de patrimônio sob o cursor? Os handlers dedicados cuidam —
+  // evita popup duplo quando um bem tombado fica sobre um polígono desenhado.
+  const patrimIds = ['patrim-clusters','patrim-points'].filter(id => _mlMap.getLayer(id));
+  if (patrimIds.length && _mlMap.queryRenderedFeatures(e.point, { layers: patrimIds }).length) return;
   // Camadas importadas ficam por cima (adicionadas depois): checar primeiro
   if (typeof mlFindImportFeatureAt === 'function') {
     const imp = mlFindImportFeatureAt(_mlMap, e.point);
