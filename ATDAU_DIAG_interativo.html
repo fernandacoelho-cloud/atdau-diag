@@ -11864,6 +11864,7 @@ function mlInit() {
     mlRenderUseLegend();
     addNorthArrow(_mlMap, 'ml-map');
     mlAplicarTodosEstilos();
+    mlApplyAllLayerCats(); // restaura categorização por atributo das camadas desenhadas
     mlSetupLegenda();
   });
 
@@ -12126,7 +12127,16 @@ function mlLegendItems() {
       : todas.length;
     if (naoTomb>0) {
       const geomPrincipal = l.geom.includes('polygon') ? 'polygon' : (l.geom.includes('polyline') ? 'polyline' : 'point');
-      itens.push({ id:l.id, label:(l.icon?l.icon+' ':'')+l.name, geom:geomPrincipal, count:naoTomb, style: mlGetEstilo(l.id) });
+      const cat = state.ml_cat && state.ml_cat[l.id];
+      if (cat && cat.valores && cat.valores.length) {
+        // camada desenhada categorizada por atributo: uma entrada por valor
+        itens.push({ id:'cat-'+l.id+'-hdr', label:(l.icon?l.icon+' ':'')+l.name+' · por '+cat.campo, geom:geomPrincipal, count:null, muted:true,
+          style:{ fillColor:l.color||'#888', lineColor:l.color||'#888', fillOpacity:.15, lineWidth:1, lineStyle:'solid' } });
+        cat.valores.forEach(o=> itens.push({ id:'cat-'+l.id+'-'+o.v, label:'   '+o.v, geom:geomPrincipal, count:o.n,
+          style:{ fillColor:o.cor, lineColor:o.cor, fillOpacity:(geomPrincipal==='point'?1:0.35), lineWidth:1.5, lineStyle:'solid' } }));
+      } else {
+        itens.push({ id:l.id, label:(l.icon?l.icon+' ':'')+l.name, geom:geomPrincipal, count:naoTomb, style: mlGetEstilo(l.id) });
+      }
     }
   });
   // bens tombados (clusterizados): uma entrada por esfera presente
@@ -12168,7 +12178,7 @@ function mlSetupLegenda() {
       return mlGetEstilo(id);
     },
     onStyleChange:(id,novo)=>{
-      if (String(id).startsWith('esf-') || String(id).startsWith('imp-')) return; // esferas/categorias: cor fixa
+      if (String(id).startsWith('esf-') || String(id).startsWith('imp-') || String(id).startsWith('cat-')) return; // esferas/categorias: cor fixa
       // camadas importadas: estilo é da camada inteira (cor/opacidade)
       const imp = (typeof _mlImportedLayers !== 'undefined') && _mlImportedLayers.find(l=>l.id===id);
       if (imp) {
@@ -12238,6 +12248,8 @@ function mlRefreshSource(layerId) {
   const src = _mlMap.getSource(`src-${layerId}`);
   if (src) src.setData(mlGetFC(layerId));
   if (layerId==='patrim') mlRefreshPatrimCluster(); // mantém os clusters em sincronia
+  if (state.ml_cat && state.ml_cat[layerId]) mlRecomputeLayerCat(layerId); // novos valores entram na categorização
+  if (layerId===_mlSelLayer && typeof mlRenderDrawBar==='function') mlRenderDrawBar(); // "Colorir por" reflete novos atributos
   mlUpdateAreaInfo();
   mlUpdateEquipPanel();
   mlSaveState();
@@ -12316,11 +12328,23 @@ function mlRenderDrawBar() {
   const extra =
     l.id==='uso' ? `<div class="ml-drawbar-extra"><select id="uso-cat-sel" onchange="_mlSelUso=this.value" style="width:100%;font-size:.7rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:3px 5px">${ML_USO_CATS.map(u=>`<option value="${u.id}"${_mlSelUso===u.id?' selected':''}>${u.label}</option>`).join('')}</select></div>` :
     l.id==='equip' ? `<div class="ml-drawbar-extra"><button class="ml-draw-btn" onclick="mlShowEquipForm()" style="color:var(--yel);border-color:rgba(240,191,58,.3)">⚙ Configurar equipamento</button></div>` : '';
+  // Colorir por atributo (tipo/estado/pictograma) — só se houver feições com atributos
+  const attrs = (typeof mlLayerAttrs==='function') ? mlLayerAttrs(l.id) : [];
+  const catAtual = state.ml_cat && state.ml_cat[l.id];
+  const catSel = attrs.length ? `
+    <div class="ml-drawbar-extra" style="display:flex;align-items:center;gap:5px">
+      <span style="font-size:.62rem;color:var(--t3)">🎨</span>
+      <select onchange="mlCategorizeLayer('${l.id}', this.value)" title="Colorir as feições desta camada por um atributo" style="flex:1;min-width:0;font-size:.68rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:3px 5px">
+        <option value="">Cor padrão</option>
+        ${attrs.map(a=>`<option value="${escHtml(a)}" ${catAtual&&catAtual.campo===a?'selected':''}>por: ${escHtml(a)}</option>`).join('')}
+      </select>
+    </div>
+    ${catAtual&&catAtual.valores ? `<div class="ml-drawbar-extra" style="display:flex;flex-direction:column;gap:1px">${catAtual.valores.map(o=>`<div style="display:flex;align-items:center;gap:5px;font-size:.64rem;color:var(--t2)"><span style="width:9px;height:9px;border-radius:50%;background:${o.cor};flex:none"></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(o.v)}</span><span style="color:var(--t3)">${o.n}</span></div>`).join('')}</div>` : ''}` : '';
   bar.innerHTML = `
     <div class="ml-drawbar-head"><span class="ml-dot" style="${swatch};border-radius:${l.geom[0]==='point'?'50%':'2px'}"></span>Desenhar em: ${l.icon} ${l.name}</div>
     <div class="ml-drawbar-geoms">
       ${l.geom.map(g=>`<button class="ml-draw-btn" id="btn-draw-${l.id}-${g}" onclick="mlSelectDraw('${l.id}','${g}')" title="Desenhar ${g==='polygon'?'polígono':g==='polyline'?'linha':'ponto'}">${geomLabel[g]}</button>`).join('')}
-    </div>${extra}`;
+    </div>${extra}${catSel}`;
 }
 
 // Seleciona a camada ativa para desenho (sem iniciar o desenho ainda)
@@ -12559,6 +12583,9 @@ function mlCriarAchadoDeDesenho(featId, layerId) {
 }
 
 // ── Interação com features existentes ────────────────────────────────
+// Sugestões de tipo (mobiliário/equipamentos) e estados de conservação
+const ML_TIPO_SUGESTOES = ['Banco / assento','Lixeira','Paraciclo / bicicletário','Poste de iluminação','Abrigo de ônibus','Telefone público','Bebedouro','Totem de informação','Parquímetro','Floreira / jardineira','Obra de arte / monumento','Sinalização','Mesa / equipamento de lazer','Hidrante'];
+const ML_ESTADOS = ['Bom','Regular','Ruim','Péssimo'];
 // Pictogramas comuns por categoria (Sub-passo Fase 3)
 const ML_PICTOGRAMAS = [
   { cat:'Equipamentos', items:[
@@ -12628,7 +12655,13 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
   const pictograma = props.pictograma || '';
   const corOverride = props.corOverride || '';
   const obs = props.obs || '';
-  const isPoint = layerDef.geom.includes('point') && !layerDef.geom.includes('polygon');
+  const tipo = props.tipo || '';
+  const estado = props.estado || '';
+  // isPoint pela geometria REAL da feição (todas as camadas aceitam polygon,
+  // então gating por layerDef.geom escondia pictograma/raio de pontos desenhados)
+  const _feat = (_mlFeatures[lid]||[]).find(x => x.id===fid || String(x.id)===String(fid));
+  const isPoint = (_feat && _feat.geom) ? _feat.geom.type === 'Point'
+                : (layerDef.geom.includes('point') && !layerDef.geom.includes('polygon'));
 
   // grupos de pictogramas
   const grupos = ML_PICTOGRAMAS.map(g =>
@@ -12659,6 +12692,21 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
 
       <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:6px;font-weight:600">RÓTULO</label>
       <input type="text" id="popup-rotulo" value="${(rotulo||'').replace(/"/g,'&quot;')}" placeholder="Ex.: UBS Centro" style="width:100%;padding:5px 7px;font-size:.62rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <div style="flex:1;min-width:0">
+          <label style="display:block;font-size:.55rem;color:var(--t3);font-weight:600">TIPO / CLASSIFICAÇÃO</label>
+          <input type="text" id="popup-tipo" list="popup-tipo-list" value="${escHtml(tipo)}" placeholder="Ex.: Banco, Lixeira…" style="width:100%;padding:4px 7px;font-size:.6rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+          <datalist id="popup-tipo-list">${ML_TIPO_SUGESTOES.map(t=>`<option value="${escHtml(t)}">`).join('')}</datalist>
+        </div>
+        <div style="flex:none;width:96px">
+          <label style="display:block;font-size:.55rem;color:var(--t3);font-weight:600">ESTADO</label>
+          <select id="popup-estado" style="width:100%;padding:4px 5px;font-size:.6rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+            <option value="">— n/a —</option>
+            ${ML_ESTADOS.map(e=>`<option value="${e}" ${estado===e?'selected':''}>${e}</option>`).join('')}
+          </select>
+        </div>
+      </div>
 
       ${isPoint ? `
         <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:8px;font-weight:600">PICTOGRAMA</label>
@@ -12764,6 +12812,8 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
 
     popupEl.querySelector('#popup-salvar').onclick = () => {
       const novoRotulo = popupEl.querySelector('#popup-rotulo').value.trim();
+      const novoTipo = (popupEl.querySelector('#popup-tipo')?.value || '').trim();
+      const novoEstado = popupEl.querySelector('#popup-estado')?.value || '';
       const novaCor = popupEl.querySelector('#popup-cor').value;
       const novaObs = popupEl.querySelector('#popup-obs').value.trim();
       const raioEl = popupEl.querySelector('#popup-raio');
@@ -12775,6 +12825,8 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
       const opDefault = isPolyDefault ? 0.35 : 1;
       mlUpdateFeatureProps(lid, fid, {
         rotulo: novoRotulo || undefined,
+        tipo: novoTipo || undefined,
+        estado: novoEstado || undefined,
         pictograma: picSel || undefined,
         corOverride: (novaCor && novaCor.toLowerCase() !== (layerDef.color || '').toLowerCase()) ? novaCor : undefined,
         obs: novaObs || undefined,
@@ -13782,6 +13834,91 @@ function mlClearCategoria(layerId){
   const entry=_mlImportedLayers.find(l=>l.id===layerId); if(!entry) return;
   delete entry.categoria;
   mlRecolorImported(layerId, entry.color); // volta à cor única (atualiza sidebar/legenda/save)
+}
+
+// ── Categorizar CAMADAS DESENHADAS (ML_LAYERS) por atributo ───────────
+// Mesma ideia do Categorizado, mas para as 20 camadas próprias: colore os
+// pontos/polígonos por valor de tipo/estado/pictograma. Estado em state.ml_cat.
+function mlLayerAttrs(layerId){
+  const ocultar = new Set(['_fid','corOverride','opacity','lineWidth','lineDash','raio','raioOverride','criado_em','origem','achadoVinculado','achadoTexto','distRoute','status','cor','label','catId','subcategoria']);
+  const keys = new Set();
+  (_mlFeatures[layerId]||[]).forEach(f => Object.keys(f.props||{}).forEach(k => { if(!ocultar.has(k)) keys.add(k); }));
+  // prioriza os atributos de classificação
+  const pri = ['tipo','estado','pictograma','rotulo'];
+  return [...keys].sort((a,b)=>{
+    const ia=pri.indexOf(a), ib=pri.indexOf(b);
+    if(ia<0&&ib<0) return a.localeCompare(b);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+}
+
+function _mlLayerCatValores(layerId, campo){
+  const counts=new Map();
+  (_mlFeatures[layerId]||[]).forEach(f=>{
+    const raw=(f.props||{})[campo];
+    const v=String(raw==null?'':raw).trim() || '(vazio)';
+    counts.set(v,(counts.get(v)||0)+1);
+  });
+  return [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,14)
+    .map(([v,n],i)=>({ v, n, cor: ML_CAT_PALETTE[i % ML_CAT_PALETTE.length] }));
+}
+
+function _mlLayerColorExpr(layerId, fallback){
+  const cat = state.ml_cat && state.ml_cat[layerId];
+  if(!cat || !cat.valores || !cat.valores.length)
+    return ['case',['has','corOverride'],['get','corOverride'], fallback];
+  const m=['match',['to-string',['coalesce',['get',cat.campo],'']]];
+  cat.valores.forEach(o=> m.push(o.v==='(vazio)'?'':o.v, o.cor));
+  m.push(fallback);
+  return ['case',['has','corOverride'],['get','corOverride'], m]; // cor manual por feição ainda vence
+}
+
+function _mlApplyLayerCat(layerId){
+  if(!_mlMap) return;
+  const l=ML_LAYERS.find(x=>x.id===layerId); if(!l) return;
+  try{
+    if(_mlMap.getLayer(`circle-${layerId}`)) _mlMap.setPaintProperty(`circle-${layerId}`,'circle-color', _mlLayerColorExpr(layerId, l.id==='equip'?['get','cor']:(l.color||'#888')));
+    if(_mlMap.getLayer(`fill-${layerId}`))   _mlMap.setPaintProperty(`fill-${layerId}`,'fill-color',   _mlLayerColorExpr(layerId, l.id==='uso'?['get','cor']:(l.color||'#888')));
+    if(_mlMap.getLayer(`line-${layerId}`))   _mlMap.setPaintProperty(`line-${layerId}`,'line-color',   _mlLayerColorExpr(layerId, l.id==='uso'?['get','cor']:(l.color||'#888')));
+    if(_mlMap.getLayer(`polyline-${layerId}`)) _mlMap.setPaintProperty(`polyline-${layerId}`,'line-color', _mlLayerColorExpr(layerId, l.color||'#888'));
+  }catch(e){ console.warn('applyLayerCat',layerId,e); }
+}
+
+function mlApplyAllLayerCats(){
+  if(!state.ml_cat) return;
+  Object.keys(state.ml_cat).forEach(id=>_mlApplyLayerCat(id));
+}
+
+function mlCategorizeLayer(layerId, campo){
+  if(!campo){ mlClearLayerCat(layerId); return; }
+  if(!state.ml_cat) state.ml_cat={};
+  state.ml_cat[layerId]={ campo, valores:_mlLayerCatValores(layerId, campo) };
+  _mlApplyLayerCat(layerId);
+  if(typeof mlRenderDrawBar==='function') mlRenderDrawBar();
+  if(typeof mlRefreshLegenda==='function') mlRefreshLegenda();
+  autoSave();
+}
+
+function mlClearLayerCat(layerId){
+  if(state.ml_cat) delete state.ml_cat[layerId];
+  _mlApplyLayerCat(layerId); // sem categoria → volta à cor padrão da camada
+  if(typeof mlRenderDrawBar==='function') mlRenderDrawBar();
+  if(typeof mlRefreshLegenda==='function') mlRefreshLegenda();
+  autoSave();
+}
+
+// Recalcula os valores quando feições mudam, PRESERVANDO as cores já atribuídas
+// (valores novos recebem a próxima cor da paleta; sem reshuffle).
+function mlRecomputeLayerCat(layerId){
+  const cat = state.ml_cat && state.ml_cat[layerId]; if(!cat) return;
+  const prev = new Map((cat.valores||[]).map(o=>[o.v,o.cor]));
+  let next = prev.size;
+  cat.valores = _mlLayerCatValores(layerId, cat.campo).map(o=>{
+    if(prev.has(o.v)) o.cor = prev.get(o.v);
+    else o.cor = ML_CAT_PALETTE[next++ % ML_CAT_PALETTE.length];
+    return o;
+  });
+  _mlApplyLayerCat(layerId);
 }
 
 function mlSetImportOpacity(layerId, op) {
