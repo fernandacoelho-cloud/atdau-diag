@@ -13903,7 +13903,7 @@ function mlSetBasemapOnMap(map, key) {
 }
 
 // ── Helper: adicionar sources/layers de dados em qualquer instância ────
-function mlAddSourcesOnMap(map, _retry) {
+function mlAddSourcesOnMap(map, _retry, onReady) {
   if (!map) return;
   if (!map.isStyleLoaded()) {
     // Retry quando o style estiver pronto (até 30 tentativas, 150ms cada = 4,5s)
@@ -13911,7 +13911,9 @@ function mlAddSourcesOnMap(map, _retry) {
       try { if(typeof diag==='function') diag('mlAddSourcesOnMap: desistiu após 30 retries (style não carrega)', 'ERRO'); } catch(e){}
       return;
     }
-    setTimeout(() => mlAddSourcesOnMap(map, (_retry||0) + 1), 150);
+    // o style fica "mutando" após mlSetBasemapOnMap; só adicionamos quando pronto,
+    // e o onReady garante que o whitelist do tema só rode com as camadas já criadas
+    setTimeout(() => mlAddSourcesOnMap(map, (_retry||0) + 1, onReady), 150);
     return;
   }
   ML_LAYERS.forEach(l => {
@@ -14011,6 +14013,7 @@ function mlAddSourcesOnMap(map, _retry) {
       }
     });
   }
+  if(typeof onReady === 'function') onReady(map); // camadas garantidamente criadas
 }
 
 // ── Buffers de raio de influência para pontos ──
@@ -14707,12 +14710,11 @@ function initBlockMap(wrap) {
 
   map.on('load', ()=>{
     mlSetBasemapOnMap(map, prefAtual);
-    mlAddSourcesOnMap(map);
-    // Ocultar camadas que não pertencem ao tema
-    (theme.hide||[]).forEach(l => {
-      ['fill-'+l,'line-'+l,'polyline-'+l,'circle-'+l].forEach(lyrId => {
-        try { if (map.getLayer(lyrId)) map.setLayoutProperty(lyrId,'visibility','none'); } catch(e){}
-      });
+    // onReady só dispara quando as camadas existem de fato (mlAddSourcesOnMap
+    // adia enquanto o style está mutando) — aí aplicamos o whitelist do tema.
+    mlAddSourcesOnMap(map, 0, ()=>{
+      _blockMapApplyTheme(map, themeId);
+      _injectBlockMapLayerToggle(wrap, map, themeId);
     });
     if (_mlLotCoord) map.setCenter(_mlLotCoord);
     // Controles auxiliares
@@ -14730,6 +14732,62 @@ function initBlockMap(wrap) {
   map.on('contextmenu', e => { e.preventDefault(); _blockMapCancelDraw(wrap, map); });
 
   _blockMaps[wrap.id || ('bm_'+themeId+'_'+Date.now())] = map;
+}
+
+// Mostra/oculta TODAS as sub-camadas (geometrias) de uma camada num block-map
+function _blockMapSetLayerVis(map, layerId, on){
+  const vis = on ? 'visible' : 'none';
+  ['fill-','line-','polyline-','dash-','circle-','label-'].forEach(p=>{
+    const id = p + layerId;
+    try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); } catch(e){}
+  });
+}
+
+// Whitelist do tema: por padrão mostra SÓ as camadas do tema; o resto começa
+// oculto (o usuário liga pelo controle de camadas). Corrige o vazamento em que
+// patrimônio/uso/viário etc. apareciam em mapas de outros temas.
+function _blockMapApplyTheme(map, themeId){
+  const theme = ML_THEMES[themeId]; if(!theme) return;
+  const mostrar = new Set(theme.layers || []);
+  ML_LAYERS.forEach(l => _blockMapSetLayerVis(map, l.id, mostrar.has(l.id)));
+  // estado inicial de visibilidade por wrap (para o controle de camadas refletir)
+  return mostrar;
+}
+
+// Controle "Camadas": liga/desliga qualquer camada neste block-map
+function _injectBlockMapLayerToggle(wrap, map, themeId){
+  const theme = ML_THEMES[themeId]; if(!theme) return;
+  const mapEl = wrap.querySelector('.block-map'); if(!mapEl) return;
+  if(mapEl.querySelector('.bm-layers-ctrl')) return;
+  const doTema = new Set(theme.layers || []);
+
+  const ctrl = document.createElement('div');
+  ctrl.className = 'bm-layers-ctrl';
+  ctrl.style.cssText = 'position:absolute;bottom:8px;left:8px;z-index:5;font-size:.62rem;display:flex;flex-direction:column-reverse;align-items:flex-start';
+  const itens = ML_LAYERS.map(l => {
+    const on = doTema.has(l.id);
+    const sw = l.color ? `background:${l.color}` : 'background:linear-gradient(135deg,#f9d26b,#e0506a,#22c474)';
+    return `<label style="display:flex;align-items:center;gap:6px;padding:3px 4px;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" ${on?'checked':''} data-layer="${l.id}">
+      <span style="width:10px;height:10px;border-radius:${l.geom[0]==='point'?'50%':'2px'};${sw};flex:none"></span>
+      <span>${l.icon||''} ${l.name}</span></label>`;
+  }).join('');
+  ctrl.innerHTML = `
+    <button class="bm-layers-btn" style="padding:5px 10px;border:1px solid var(--line2);background:rgba(255,255,255,.95);border-radius:5px;cursor:pointer;font-size:.62rem;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.18)">▦ Camadas</button>
+    <div class="bm-layers-panel" style="display:none;margin-bottom:4px;background:rgba(255,255,255,.97);border:1px solid var(--line2);border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.2);padding:6px;max-height:180px;overflow:auto;min-width:170px">
+      <div style="font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);padding:2px 4px 5px">Camadas neste mapa</div>
+      ${itens}
+    </div>`;
+  mapEl.appendChild(ctrl);
+
+  const panel = ctrl.querySelector('.bm-layers-panel');
+  ctrl.querySelector('.bm-layers-btn').onclick = (e)=>{
+    e.stopPropagation();
+    panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+  };
+  panel.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.onchange = ()=> _blockMapSetLayerVis(map, cb.dataset.layer, cb.checked);
+  });
 }
 
 // ── Barra de ferramentas de desenho + upload em cada bloco temático ──
