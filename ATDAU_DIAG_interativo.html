@@ -14650,6 +14650,12 @@ function swotInitMap() {
       filter:['==','$type','Point'],
       paint:{'circle-color':'#1ecfa4','circle-radius':4,'circle-stroke-color':'#fff','circle-stroke-width':1}});
 
+    // cursor de mão sobre feições (sinaliza que dá para clicar/editar)
+    ['P','F','O','A'].forEach(c=>['swot-fill-'+c,'swot-stroke-'+c,'swot-pt-'+c].forEach(id=>{
+      _swotMap.on('mouseenter', id, ()=>{ if(!_swotDraw.mode) _swotMap.getCanvas().style.cursor='pointer'; });
+      _swotMap.on('mouseleave', id, ()=>{ if(!_swotDraw.mode) _swotMap.getCanvas().style.cursor=''; });
+    }));
+
     swotLoadState();
     if (_mlLotCoord) _swotMap.setCenter(_mlLotCoord);
   });
@@ -14686,7 +14692,7 @@ function swotCancel() {
 }
 
 function swotOnClick(e) {
-  if (!_swotDraw.mode) return;
+  if (!_swotDraw.mode) { swotHandleFeatureClick(e); return; } // fora do desenho: editar/excluir
   if (_swotDraw.geomType==='point') {
     swotAddFeature(_swotDraw.cat, {type:'Point',coordinates:[e.lngLat.lng,e.lngLat.lat]});
     swotCancel();
@@ -14745,6 +14751,78 @@ function swotClearCat(cat) {
   _swotFeatures[cat]=[];
   const src=_swotMap?.getSource(`swot-${cat}`);
   if (src) src.setData({type:'FeatureCollection',features:[]});
+  swotSave();
+}
+
+// ── Editar/excluir feição individual do SWOT (clique fora do modo desenho) ──
+function swotHandleFeatureClick(e){
+  if(!_swotMap) return;
+  const layers=[];
+  ['P','F','O','A'].forEach(c=>['swot-fill-'+c,'swot-stroke-'+c,'swot-pt-'+c].forEach(id=>{
+    try{ if(_swotMap.getLayer(id)) layers.push(id); }catch(_){}
+  }));
+  if(!layers.length) return;
+  const feats=_swotMap.queryRenderedFeatures(e.point,{layers});
+  if(!feats.length) return;
+  const f=feats[0];
+  const cat=f.layer.id.replace(/^swot-(fill|stroke|pt)-/,'');
+  swotOpenFeaturePopup(cat, f.id, f.properties||{}, e.lngLat);
+}
+
+function _swotFindIdx(cat, fid){ return (_swotFeatures[cat]||[]).findIndex(f=>String(f.id)===String(fid)); }
+
+function swotOpenFeaturePopup(cat, fid, props, lngLat){
+  const label = props.label || SWOT_LABELS[cat] || '';
+  const content = `
+    <div style="min-width:210px">
+      <div style="font-size:.72rem;font-weight:700;color:${SWOT_COLORS[cat]};border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:7px">${SWOT_LABELS[cat]}</div>
+      <label style="display:block;font-size:.6rem;color:var(--t3);font-weight:600">RÓTULO</label>
+      <input id="swot-pop-label" type="text" value="${escHtml(label)}" placeholder="Ex.: encosta instável" style="width:100%;padding:5px 7px;font-size:.62rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+      <label style="display:block;font-size:.6rem;color:var(--t3);font-weight:600;margin-top:7px">CATEGORIA</label>
+      <select id="swot-pop-cat" style="width:100%;padding:4px 5px;font-size:.62rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+        ${['P','F','O','A'].map(c=>`<option value="${c}" ${c===cat?'selected':''}>${SWOT_LABELS[c]}</option>`).join('')}
+      </select>
+      <div style="display:flex;gap:5px;margin-top:9px">
+        <button id="swot-pop-save" style="flex:1;padding:5px 9px;background:var(--teal);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:.6rem;font-weight:600">✓ Salvar</button>
+        <button id="swot-pop-del" style="padding:5px 9px;background:rgba(224,80,106,.1);border:1px solid #e0506a;color:#e0506a;border-radius:3px;cursor:pointer;font-size:.6rem">🗑</button>
+      </div>
+    </div>`;
+  const popup = new maplibregl.Popup({ className:'ml-popup', maxWidth:'260px' })
+    .setLngLat(lngLat).setHTML(content).addTo(_swotMap);
+  setTimeout(()=>{
+    const el = popup.getElement(); if(!el) return;
+    el.querySelector('#swot-pop-save').onclick = ()=>{
+      swotUpdateFeature(cat, fid, el.querySelector('#swot-pop-label').value.trim(), el.querySelector('#swot-pop-cat').value);
+      popup.remove();
+    };
+    el.querySelector('#swot-pop-del').onclick = ()=>{
+      swotDeleteFeature(cat, fid);
+      popup.remove();
+    };
+  }, 50);
+}
+
+function swotDeleteFeature(cat, fid){
+  const i=_swotFindIdx(cat, fid); if(i<0) return;
+  _swotFeatures[cat].splice(i,1);
+  const src=_swotMap?.getSource(`swot-${cat}`);
+  if(src) src.setData(swotFC(cat));
+  swotSave();
+}
+
+function swotUpdateFeature(cat, fid, label, novaCat){
+  const i=_swotFindIdx(cat, fid); if(i<0) return;
+  const f=_swotFeatures[cat][i];
+  f.props = Object.assign({}, f.props, { label: label || SWOT_LABELS[novaCat||cat] });
+  if(novaCat && novaCat!==cat){
+    f.props.cat = novaCat;
+    _swotFeatures[cat].splice(i,1);
+    _swotFeatures[novaCat].push(f);
+    const s1=_swotMap?.getSource(`swot-${cat}`);     if(s1) s1.setData(swotFC(cat));
+    const s2=_swotMap?.getSource(`swot-${novaCat}`); if(s2) s2.setData(swotFC(novaCat));
+  } else {
+    const s=_swotMap?.getSource(`swot-${cat}`); if(s) s.setData(swotFC(cat));
+  }
   swotSave();
 }
 
