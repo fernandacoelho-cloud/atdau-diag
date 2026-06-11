@@ -9341,15 +9341,19 @@ function addAnaloga() {
   const nome = get('an-nome');
   if (!nome) { alert('Informe ao menos o nome da obra.'); return; }
   if (!Array.isArray(state.analogas)) state.analogas = [];
+  const novoId = Date.now();
   state.analogas.push({
-    id: Date.now(), nome, autor:get('an-autor'), local:get('an-local'), fonte:get('an-fonte'),
+    id: novoId, nome, autor:get('an-autor'), local:get('an-local'), fonte:get('an-fonte'),
     area:get('an-area'), terreno:get('an-terreno'), pav:get('an-pav'),
     programa:get('an-programa'), partido:get('an-partido'), licao:get('an-licao')
   });
   ['an-nome','an-autor','an-local','an-fonte','an-area','an-terreno','an-pav','an-programa','an-partido','an-licao'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
   renderAnalogas();
+  // auto-selecionar a obra recém-criada na Análise gráfica (descoberta do editor)
+  const selA = document.getElementById('an-analise-sel');
+  if(selA){ selA.value = String(novoId); renderAnaliseAnaloga(); }
   autoSave();
-  mostrarStatus('Obra análoga adicionada ✓');
+  mostrarStatus('Obra adicionada ✓ — role até "Análise gráfica" para desenhar sobre uma imagem');
 }
 function delAnaloga(id) {
   if (!Array.isArray(state.analogas)) return;
@@ -9487,6 +9491,16 @@ function toggleAnaliseSub(obraId, catId, subId){
   renderAnaliseAnaloga();
   autoSave();
 }
+// Atalho de 1 clique: ativa o sub-tema (se preciso) e abre o editor gráfico
+function iniciarAnaliseGrafica(obraId, catId, subId){
+  const obra = _getObra(obraId); if(!obra) return;
+  const an = _ensureAnalise(obra);
+  const k = catId+'/'+subId;
+  if(!an[k]) an[k] = { desc:'', esboco:'' };
+  else an[k]._oculto = false;
+  renderAnaliseAnaloga();
+  abrirEditorGrafico(obraId, catId, subId);
+}
 function setAnaliseField(obraId, catId, subId, campo, val){
   const obra = _getObra(obraId); if(!obra) return;
   const an = _ensureAnalise(obra);
@@ -9517,7 +9531,8 @@ function renderAnaliseAnaloga(){
   if(!obra){ panel.innerHTML=''; return; }
   const an = _ensureAnalise(obra);
 
-  let html = `<div style="font-size:.62rem;color:var(--t2);margin-bottom:10px;padding:8px 10px;background:var(--bg2);border-radius:6px"><strong>Obra em análise:</strong> ${escHtml(obra.nome)}${obra.autor?' · '+escHtml(obra.autor):''}${obra.local?' · '+escHtml(obra.local):''}</div>`;
+  let html = `<div style="font-size:.62rem;color:var(--t2);margin-bottom:8px;padding:8px 10px;background:var(--bg2);border-radius:6px"><strong>Obra em análise:</strong> ${escHtml(obra.nome)}${obra.autor?' · '+escHtml(obra.autor):''}${obra.local?' · '+escHtml(obra.local):''}</div>`;
+  html += `<div style="font-size:.6rem;color:var(--teal);margin-bottom:10px;padding:7px 10px;background:rgba(30,207,164,.08);border:1px solid rgba(30,207,164,.3);border-radius:6px;line-height:1.5">✏️ <strong>Para desenhar sobre uma imagem</strong> (foto, planta ou corte): clique no <strong>✏️</strong> de qualquer tema abaixo — abre direto o editor com upload de imagem e ferramentas de desenho.</div>`;
 
   ANALISE_CATEGORIAS.forEach(cat=>{
     const ativos = cat.subs.filter(s => an[cat.id+'/'+s.id] && !an[cat.id+'/'+s.id]._oculto);
@@ -9556,7 +9571,10 @@ function renderAnaliseAnaloga(){
     if(inativos.length){
       html += `<div style="display:flex;flex-wrap:wrap;gap:5px;padding-top:${ativos.length?'8px':'0'};${ativos.length?'border-top:1px dashed var(--line2)':''}">`;
       inativos.forEach(s=>{
-        html += `<button onclick="toggleAnaliseSub('${obraId}','${cat.id}','${s.id}')" style="font-size:.56rem;padding:3px 9px;border-radius:11px;border:1px dashed ${cat.cor};background:transparent;color:${cat.cor};cursor:pointer" title="${escHtml(s.prompt)}">+ ${escHtml(s.label)}</button>`;
+        html += `<span style="display:inline-flex;align-items:stretch;border-radius:11px;overflow:hidden;border:1px dashed ${cat.cor}">
+          <button onclick="toggleAnaliseSub('${obraId}','${cat.id}','${s.id}')" style="font-size:.56rem;padding:3px 8px;border:none;background:transparent;color:${cat.cor};cursor:pointer" title="${escHtml(s.prompt)}">+ ${escHtml(s.label)}</button>
+          <button onclick="iniciarAnaliseGrafica('${obraId}','${cat.id}','${s.id}')" style="font-size:.6rem;padding:3px 7px;border:none;border-left:1px dashed ${cat.cor};background:${cat.cor}1a;color:${cat.cor};cursor:pointer" title="Desenhar sobre imagem neste tema (abre o editor)">✏️</button>
+        </span>`;
       });
       html += '</div>';
     }
