@@ -5521,6 +5521,10 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           </div>
         </div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <button onclick="swotUndo()" class="ml-draw-btn" title="Remover a última feição desenhada">↶ Desfazer última</button>
+        <span style="font-size:.58rem;color:var(--t3)">💡 Clique numa feição no mapa para <strong>editar o rótulo, mudar de categoria ou excluí-la</strong> individualmente.</span>
+      </div>
       <div id="swot-map-hint" style="display:none;background:rgba(30,207,164,.1);border:1px solid rgba(30,207,164,.3);border-radius:6px;padding:6px 12px;font-size:.67rem;color:var(--teal);margin-bottom:6px"></div>
       <div id="swot-map-el" style="height:420px;border-radius:8px;overflow:hidden;border:1px solid var(--line2);background:var(--bg4)"></div>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -7741,6 +7745,7 @@ let state = {
   dir_cats:{},
   programa:[],
   viab_criterios:[],
+  viab_pesos:{},
   viab_terrenos:[],
   analogas:[],
   prog_matriz:{},
@@ -9158,11 +9163,15 @@ function renderCriteriosTerreno() {
   if (!el) return;
   const list = state.viab_criterios || [];
   if (!list.length) { el.innerHTML = '<div style="font-size:.6rem;color:var(--t3);font-style:italic;padding:4px 0">Defina critérios a partir da proposta inicial.</div>'; return; }
-  el.innerHTML = list.map((c,i)=>
-    `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;margin-bottom:5px">
+  const pesoLbl = {1:'normal', 2:'importante', 3:'decisivo'};
+  el.innerHTML = list.map((c,i)=>{
+    const p = _viabPeso(c);
+    const pesoBtns = [1,2,3].map(v=>{const on=p===v;return `<button onclick="setCriterioPeso(${JSON.stringify(c).replace(/"/g,'&quot;')},${v})" title="peso ${pesoLbl[v]}" style="width:22px;height:18px;font-size:.55rem;border:1px solid ${on?'var(--teal)':'var(--line2)'};background:${on?'var(--teal)':'white'};color:${on?'#fff':'var(--t3)'};border-radius:3px;cursor:pointer">×${v}</button>`;}).join('');
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;margin-bottom:5px">
       <span style="flex:1;font-size:.65rem;color:var(--t1)">✓ ${escHtml(c)}</span>
+      <span style="display:inline-flex;gap:2px" title="Peso do critério no escore">${pesoBtns}</span>
       <button onclick="delCriterioTerreno(${i})" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:.75rem">✕</button>
-    </div>`).join('');
+    </div>`;}).join('');
 }
 
 function usarAreaPrograma() {
@@ -9236,13 +9245,22 @@ function _viabGateCA(t){
   return { status:'cabe', html:`<span style="color:var(--grn);font-weight:600">🟢 cabe, bom aproveitamento (${Math.round(aprov*100)}%)</span>` };
 }
 
-// Média dos critérios pontuados (1–5); não pontuado = excluído da média
+function _viabPeso(c){ const p = state.viab_pesos && state.viab_pesos[c]; return (p>=1 && p<=3) ? p : 1; }
+function setCriterioPeso(criterio, peso){
+  if(!state.viab_pesos) state.viab_pesos = {};
+  state.viab_pesos[criterio] = peso;
+  renderCriteriosTerreno();
+  renderTerrenosCandidatos();
+  autoSave();
+}
+
+// Média PONDERADA dos critérios pontuados (1–5 × peso); não pontuado = excluído
 function _viabScore(t){
   const crits = state.viab_criterios || [];
   const sc = t.scores || {};
-  let soma=0, n=0;
-  crits.forEach(c=>{ const v=sc[c]; if(v>=1 && v<=5){ soma+=v; n++; } });
-  return { media: n? soma/n : 0, n, total: crits.length };
+  let soma=0, pesoTot=0, n=0;
+  crits.forEach(c=>{ const v=sc[c]; if(v>=1 && v<=5){ const p=_viabPeso(c); soma+=v*p; pesoTot+=p; n++; } });
+  return { media: pesoTot? soma/pesoTot : 0, n, total: crits.length };
 }
 
 function setTerrenoScore(terrenoId, criterio, valor){
@@ -9351,7 +9369,8 @@ function _viabRadarSVG(terrenos, crits){
     // rótulo do critério (curto)
     const [lx,ly]=ptAt(i,1.16);
     const anchor = Math.abs(lx-cx)<10 ? 'middle' : (lx>cx?'start':'end');
-    const txt = c.length>16 ? c.slice(0,15)+'…' : c;
+    const pw = _viabPeso(c);
+    const txt = (c.length>15 ? c.slice(0,14)+'…' : c) + (pw>1?` ×${pw}`:'');
     svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-size="8.5" fill="#555" font-family="sans-serif">${escHtml(txt)}</text>`;
   });
   // polígono por terreno
@@ -9815,8 +9834,8 @@ function _injetarEditorGrafico(){
         </div>
         <!-- centro: canvas SVG + dock da legenda -->
         <div style="flex:1;display:flex;flex-direction:column;background:#F5F4F0;min-width:0;position:relative">
-          <div id="ag-canvas-wrap" style="flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:14px;min-height:0;position:relative">
-            <div id="ag-canvas-host"></div>
+          <div id="ag-canvas-wrap" style="flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:14px;min-height:0;position:relative">
+            <div id="ag-canvas-host" style="width:100%;max-width:980px"></div>
           </div>
           <div style="border-top:1px solid var(--line);padding:7px 14px;font-size:.56rem;color:var(--t3);background:white" id="ag-status">Sem imagem. Carregue uma à esquerda para começar.</div>
         </div>
@@ -10077,7 +10096,9 @@ function _renderCanvas(){
   const host = document.getElementById('ag-canvas-host');
   if(!host) return;
   const img = AG_STATE.diagrama.imagem;
-  let svg = `<svg id="ag-svg" viewBox="0 0 ${AG_W} ${AG_H}" xmlns="http://www.w3.org/2000/svg" style="display:block;max-width:100%;max-height:75vh;border:1px solid var(--line2);background:white;cursor:crosshair" onclick="agClickCanvas(event)" ondblclick="agDblClickCanvas(event)">`;
+  // width/height explícitos + width:100% no estilo: sem isso o SVG (só com
+  // viewBox) colapsava a ~2px dentro do flex-item, e a imagem/desenho não apareciam
+  let svg = `<svg id="ag-svg" viewBox="0 0 ${AG_W} ${AG_H}" width="${AG_W}" height="${AG_H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto;max-height:74vh;border:1px solid var(--line2);background:white;cursor:crosshair" onclick="agClickCanvas(event)" ondblclick="agDblClickCanvas(event)">`;
   svg += `<defs>
     <marker id="ag-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker>
   </defs>`;
@@ -14955,6 +14976,24 @@ function swotDeleteFeature(cat, fid){
   swotSave();
 }
 
+// Desfazer: remove a feição mais recente (maior id) entre todas as categorias
+function swotUndo(){
+  let alvoCat=null, alvoIdx=-1, maxId=-Infinity;
+  ['P','F','O','A'].forEach(c=>{
+    (_swotFeatures[c]||[]).forEach((f,i)=>{
+      const id=Number(f.id)||0;
+      if(id>maxId){ maxId=id; alvoCat=c; alvoIdx=i; }
+    });
+  });
+  if(!alvoCat){ if(typeof mostrarStatus==='function') mostrarStatus('Nada para desfazer no SWOT'); return; }
+  const f=_swotFeatures[alvoCat][alvoIdx];
+  _swotFeatures[alvoCat].splice(alvoIdx,1);
+  const src=_swotMap?.getSource(`swot-${alvoCat}`);
+  if(src) src.setData(swotFC(alvoCat));
+  swotSave();
+  if(typeof mostrarStatus==='function') mostrarStatus(`Desfeito: ${SWOT_LABELS[alvoCat]} ${f.props&&f.props.label?'· '+f.props.label:''} ↶`);
+}
+
 function swotUpdateFeature(cat, fid, label, novaCat){
   const i=_swotFindIdx(cat, fid); if(i<0) return;
   const f=_swotFeatures[cat][i];
@@ -18605,7 +18644,7 @@ function maSetMode(mode) {
   if (info) {
     if (mode === 'view') info.textContent = 'Clique em uma anotação no mapa ou na lista para ver detalhes.';
     else if (mode === 'add') {
-      if (!_maAddCategory) info.innerHTML = '<strong style="color:#f0bf3a">⚠️ Escolha uma categoria abaixo</strong> para começar a adicionar.';
+      if (!_maAddCategory) info.innerHTML = '<strong style="color:#f0bf3a">⚠️ Escolha uma categoria acima</strong> e clique no mapa para adicionar.';
       else {
         const cat = MA_CATEGORIES.find(c => c.id === _maAddCategory);
         info.innerHTML = `Modo ADICIONAR — clique no mapa para registrar uma anotação de <strong style="color:${cat.color}">${cat.icon} ${cat.label}</strong>.`;
