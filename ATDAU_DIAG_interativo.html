@@ -1783,6 +1783,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div style="flex:1"><input type="number" id="v-terr-area" placeholder="área (m²)" style="width:100%;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.66rem;box-sizing:border-box"></div>
         <button class="instr-btn instr-btn-primary" onclick="addTerrenoCandidato()" style="font-size:.64rem;padding:7px 12px">+ Avaliar</button>
       </div>
+
+      <!-- Comparação multicritério (escore + radar) dos terrenos candidatos -->
+      <div id="v-terr-compara"></div>
     </div>
   </div>
 
@@ -9140,12 +9143,14 @@ function addCriterioTerreno() {
   state.viab_criterios.push(txt);
   inp.value = '';
   renderCriteriosTerreno();
+  renderTerrenosCandidatos(); // novo critério entra na pontuação dos candidatos
   autoSave();
 }
 function delCriterioTerreno(i) {
   if (!Array.isArray(state.viab_criterios)) return;
   state.viab_criterios.splice(i,1);
   renderCriteriosTerreno();
+  renderTerrenosCandidatos();
   autoSave();
 }
 function renderCriteriosTerreno() {
@@ -9194,6 +9199,7 @@ function calcularDimensionamento() {
   linhas.push(`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line)"><strong style="color:var(--teal)">Área de terreno sugerida: ${fmtArea(terrNec)} a ${fmtArea(terrConf)}</strong> <span style="color:var(--t3)">(faixa de bom aproveitamento do potencial construtivo)</span></div>`);
   linhas.push(`<div style="font-size:.58rem;color:var(--t3);margin-top:4px">Acima dessa faixa, o terreno tende a ficar subaproveitado em relação ao que a legislação permite; abaixo, pode não comportar o programa. Interprete conforme o contexto.</div>`);
   out.innerHTML = linhas.join('');
+  if (typeof renderTerrenosCandidatos==='function') renderTerrenosCandidatos(); // atualiza a porta de CA dos candidatos
 }
 
 function fmtArea(v){ return (Math.round(v*10)/10).toLocaleString('pt-BR') + ' m²'; }
@@ -9215,32 +9221,149 @@ function delTerrenoCandidato(id) {
   renderTerrenosCandidatos();
   autoSave();
 }
+// ── Escala 1–5 dos critérios (consistente com os ratings da ferramenta) ──
+const VIAB_ESCALA = ['', 'Ruim', 'Fraco', 'Regular', 'Bom', 'Ótimo'];
+const VIAB_CORES = ['#4f9bf8','#f58b40','#1ecfa4','#e0506a','#a07cf0','#f0bf3a','#3f7d8c','#b5462e'];
+
+// Porta de viabilidade pelo CA: o terreno comporta o programa?
+function _viabGateCA(t){
+  const ac = parseFloat(document.getElementById('v-dim-ac')?.value) || 0;
+  const ca = parseFloat(document.getElementById('v-dim-ca')?.value) || 0;
+  if (ac <= 0 || ca <= 0) return { status:'sem-dados', html:'<span style="color:var(--t3)">informe Ac e CA para a porta de viabilidade</span>' };
+  const acMax = ca * t.area, aprov = ac / acMax;
+  if (ac > acMax) return { status:'nao-cabe', html:`<span style="color:var(--red);font-weight:600">🔴 não comporta o programa</span> <span style="color:var(--t3)">· potencial ${fmtArea(acMax)}</span>` };
+  if (aprov < 0.6) return { status:'cabe', html:`<span style="color:#b8860b;font-weight:600">🟡 cabe, subaproveitado (${Math.round(aprov*100)}% do potencial)</span>` };
+  return { status:'cabe', html:`<span style="color:var(--grn);font-weight:600">🟢 cabe, bom aproveitamento (${Math.round(aprov*100)}%)</span>` };
+}
+
+// Média dos critérios pontuados (1–5); não pontuado = excluído da média
+function _viabScore(t){
+  const crits = state.viab_criterios || [];
+  const sc = t.scores || {};
+  let soma=0, n=0;
+  crits.forEach(c=>{ const v=sc[c]; if(v>=1 && v<=5){ soma+=v; n++; } });
+  return { media: n? soma/n : 0, n, total: crits.length };
+}
+
+function setTerrenoScore(terrenoId, criterio, valor){
+  const t = (state.viab_terrenos||[]).find(x=>String(x.id)===String(terrenoId)); if(!t) return;
+  if(!t.scores) t.scores = {};
+  if(t.scores[criterio]===valor) delete t.scores[criterio]; // toggle: clicar de novo desmarca
+  else t.scores[criterio] = valor;
+  renderTerrenosCandidatos();
+  autoSave();
+}
+
 function renderTerrenosCandidatos() {
   const el = document.getElementById('v-terrenos-lista');
   if (!el) return;
   const list = state.viab_terrenos || [];
-  if (!list.length) { el.innerHTML = '<div style="font-size:.6rem;color:var(--t3);font-style:italic;padding:4px 0">Adicione terrenos candidatos para comparar o aproveitamento.</div>'; return; }
-  const ac = parseFloat(document.getElementById('v-dim-ac')?.value) || 0;
-  const ca = parseFloat(document.getElementById('v-dim-ca')?.value) || 0;
+  if (!list.length) { el.innerHTML = '<div style="font-size:.6rem;color:var(--t3);font-style:italic;padding:4px 0">Adicione terrenos candidatos para avaliá-los pela porta de viabilidade (CA) e pelos seus critérios.</div>'; renderViabCompara(); return; }
+  const crits = state.viab_criterios || [];
   el.innerHTML = list.map(t=>{
-    let diag = '<span style="color:var(--t3)">informe Ac e CA para avaliar</span>';
-    if (ac > 0 && ca > 0) {
-      const acMax = ca * t.area;        // potencial construtivo do terreno
-      const aprov = ac / acMax;          // quanto do potencial o programa usa
-      let cor, label;
-      if (ac > acMax) { cor='var(--red)'; label='🔴 pequeno demais — não comporta o programa'; }
-      else if (aprov < 0.6) { cor='#b8860b'; label='🟡 subaproveitado — grande demais ('+Math.round(aprov*100)+'% do potencial)'; }
-      else { cor='var(--grn)'; label='🟢 bom aproveitamento ('+Math.round(aprov*100)+'% do potencial)'; }
-      diag = `<span style="color:${cor};font-weight:600">${label}</span> <span style="color:var(--t3)">· potencial ${fmtArea(acMax)}</span>`;
-    }
-    return `<div style="padding:8px 11px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;margin-bottom:5px">
+    const gate = _viabGateCA(t);
+    const score = _viabScore(t);
+    const sc = t.scores || {};
+    // grade de pontuação por critério (só se houver critérios definidos)
+    const grade = crits.length ? `
+      <div style="margin-top:7px;padding-top:7px;border-top:1px dashed var(--line2)">
+        <div style="font-size:.56rem;color:var(--t3);font-weight:600;margin-bottom:4px">PONTUAÇÃO POR CRITÉRIO ${score.n?`· média ${score.media.toFixed(1)}/5 (${score.n}/${score.total})`:'· avalie cada critério'}</div>
+        ${crits.map(c=>`
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="flex:1;font-size:.6rem;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(c)}">${escHtml(c)}</span>
+            <span style="display:inline-flex;gap:2px">
+              ${[1,2,3,4,5].map(v=>{const on=sc[c]===v;return `<button onclick="setTerrenoScore('${t.id}',${JSON.stringify(c).replace(/"/g,'&quot;')},${v})" title="${VIAB_ESCALA[v]}" style="width:20px;height:20px;font-size:.58rem;border:1px solid ${on?'var(--teal)':'var(--line2)'};background:${on?'var(--teal)':'white'};color:${on?'#fff':'var(--t3)'};border-radius:4px;cursor:pointer">${v}</button>`;}).join('')}
+            </span>
+          </div>`).join('')}
+      </div>` : '<div style="font-size:.56rem;color:var(--t3);font-style:italic;margin-top:5px">Defina critérios acima para pontuar este terreno além do CA.</div>';
+    return `<div style="padding:9px 11px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;margin-bottom:6px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="flex:1;font-size:.66rem;color:var(--t1);font-weight:600">${escHtml(t.nome)} · ${fmtArea(t.area)}</span>
-        <button onclick="delTerrenoCandidato('${t.id}')" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:.75rem">✕</button>
+        <button onclick="delTerrenoCandidato('${t.id}')" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:.75rem" title="remover">✕</button>
       </div>
-      <div style="font-size:.6rem;margin-top:3px">${diag}</div>
+      <div style="font-size:.6rem;margin-top:3px">${gate.html}</div>
+      ${grade}
     </div>`;
   }).join('');
+  renderViabCompara();
+}
+
+// Ranking + radar comparativo dos candidatos pelos critérios
+function renderViabCompara(){
+  const host = document.getElementById('v-terr-compara');
+  if(!host) return;
+  const list = state.viab_terrenos || [];
+  const crits = state.viab_criterios || [];
+  const comScore = list.filter(t=>_viabScore(t).n>0);
+  if(crits.length===0 || comScore.length===0){ host.innerHTML=''; return; }
+
+  // ranking: terrenos que NÃO cabem (CA) vão para o fim, marcados
+  const rank = list.map(t=>({ t, s:_viabScore(t), gate:_viabGateCA(t) }))
+    .sort((a,b)=>{
+      const af=a.gate.status==='nao-cabe'?1:0, bf=b.gate.status==='nao-cabe'?1:0;
+      if(af!==bf) return af-bf;
+      return b.s.media - a.s.media;
+    });
+  const medalhas=['🥇','🥈','🥉'];
+  let rankHtml = `<div style="margin-top:12px"><div style="font-size:.6rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Ranking dos candidatos</div>`;
+  rank.forEach((r,i)=>{
+    const cor = VIAB_CORES[list.indexOf(r.t) % VIAB_CORES.length];
+    const naoCabe = r.gate.status==='nao-cabe';
+    rankHtml += `<div style="display:flex;align-items:center;gap:8px;padding:5px 9px;background:var(--bg1);border:1px solid var(--line);border-left:4px solid ${cor};border-radius:6px;margin-bottom:4px;${naoCabe?'opacity:.6':''}">
+      <span style="font-size:.7rem">${naoCabe?'⛔':(medalhas[i]||'')}</span>
+      <span style="flex:1;font-size:.64rem;color:var(--t1);font-weight:600">${escHtml(r.t.nome)}</span>
+      <span style="font-size:.62rem;color:var(--teal);font-weight:700">${r.s.n?r.s.media.toFixed(1)+'/5':'—'}</span>
+      <span style="font-size:.54rem;color:var(--t3)">${naoCabe?'não comporta (CA)':`${r.s.n}/${r.s.total} crit.`}</span>
+    </div>`;
+  });
+  rankHtml += '</div>';
+
+  // radar (≥3 critérios) ou barras (1–2)
+  let vizHtml = '';
+  if(crits.length>=3){
+    vizHtml = _viabRadarSVG(comScore, crits);
+  } else {
+    vizHtml = `<div style="margin-top:10px;font-size:.58rem;color:var(--t3)">Defina 3 ou mais critérios para ver o radar comparativo.</div>`;
+  }
+  // legenda de cores
+  const leg = comScore.map(t=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:.58rem;color:var(--t2);margin-right:10px"><span style="width:10px;height:10px;border-radius:2px;background:${VIAB_CORES[list.indexOf(t)%VIAB_CORES.length]}"></span>${escHtml(t.nome)}</span>`).join('');
+
+  // ponte para o T01 (passo downstream, depois de escolher)
+  const ponte = `<div style="margin-top:12px;font-size:.58rem;color:var(--t3);background:rgba(201,95,63,.06);border:1px solid rgba(201,95,63,.2);border-radius:6px;padding:7px 10px;line-height:1.5">🔗 <strong>Escolhido o terreno</strong>, o passo seguinte é o estudo de <strong>implantação</strong> (como assentar o edifício no lote): as condicionantes que você levantar nas abas 01–08 podem ir para o <strong>ATDAU T01 — Implantação</strong> via JSON (aba 03 · Condicionantes). Aqui é a <em>escolha</em>; lá é o <em>como implantar</em>.</div>`;
+
+  host.innerHTML = rankHtml + (vizHtml? `<div style="margin-top:12px"><div style="font-size:.6rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Radar comparativo</div><div style="margin-bottom:6px">${leg}</div>${vizHtml}</div>`:'') + ponte;
+}
+
+// Radar SVG: eixos = critérios, um polígono por terreno (score 1–5 do centro à borda)
+function _viabRadarSVG(terrenos, crits){
+  const N = crits.length, S = 340, cx = S/2, cy = S/2, R = S*0.32;
+  const ang = i => -Math.PI/2 + i*2*Math.PI/N;
+  const ptAt = (i, frac) => [cx + Math.cos(ang(i))*R*frac, cy + Math.sin(ang(i))*R*frac];
+  let svg = `<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:380px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">`;
+  // anéis de grade (1..5) + eixos
+  for(let g=1; g<=5; g++){
+    const pts = crits.map((_,i)=>ptAt(i, g/5).map(n=>n.toFixed(1)).join(',')).join(' ');
+    svg += `<polygon points="${pts}" fill="none" stroke="#ddd" stroke-width="0.7"/>`;
+  }
+  crits.forEach((c,i)=>{
+    const [x,y]=ptAt(i,1);
+    svg += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#ddd" stroke-width="0.7"/>`;
+    // rótulo do critério (curto)
+    const [lx,ly]=ptAt(i,1.16);
+    const anchor = Math.abs(lx-cx)<10 ? 'middle' : (lx>cx?'start':'end');
+    const txt = c.length>16 ? c.slice(0,15)+'…' : c;
+    svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-size="8.5" fill="#555" font-family="sans-serif">${escHtml(txt)}</text>`;
+  });
+  // polígono por terreno
+  const listAll = state.viab_terrenos || [];
+  terrenos.forEach(t=>{
+    const cor = VIAB_CORES[listAll.indexOf(t) % VIAB_CORES.length];
+    const sc = t.scores || {};
+    const pts = crits.map((c,i)=>{ const v=sc[c]>=1?sc[c]:0; return ptAt(i, v/5).map(n=>n.toFixed(1)).join(','); }).join(' ');
+    svg += `<polygon points="${pts}" fill="${cor}" fill-opacity="0.12" stroke="${cor}" stroke-width="1.6"/>`;
+  });
+  svg += `</svg>`;
+  return svg;
 }
 
 function renderViabilidade() {
