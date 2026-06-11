@@ -104,4 +104,48 @@ test.describe('P1 — navegação agrupada e completude', () => {
     });
     expect(escopo.comMod).toBeGreaterThan(escopo.semMod);
   });
+
+  test('Completude pondera por tipo: observações/notas ficam fora do denominador', async ({ page }) => {
+    await abrir(page);
+    // bloco-sonda em memória: 2 estruturados + 1 textarea + 1 input "obs"
+    const r = await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.className = 'block';
+      div.innerHTML = `
+        <input id="probe-a" type="text">
+        <select id="probe-b"><option value="">x</option><option value="y">y</option></select>
+        <textarea id="probe-notas"></textarea>
+        <input id="probe-obs" type="text">`;
+      document.body.appendChild(div);
+      const antes = _contarPreenchimento(div); // só os 2 estruturados contam
+      div.querySelector('#probe-a').value = 'preenchido';
+      const aposEstruturado = _contarPreenchimento(div);
+      div.querySelector('#probe-notas').value = 'uma nota longa';
+      div.querySelector('#probe-obs').value = 'observação';
+      const aposNotas = _contarPreenchimento(div);
+      div.remove();
+      return { antes, aposEstruturado, aposNotas };
+    });
+    expect(r.antes.total).toBe(2);            // textarea + input "obs" fora do denominador
+    expect(r.antes.ok).toBe(0);
+    expect(r.aposEstruturado.ok).toBe(1);     // preencher estruturado sobe ok
+    expect(r.aposNotas).toEqual(r.aposEstruturado); // preencher notas NÃO muda a contagem
+  });
+
+  test('Bloco só de notas: fallback conta as notas (não fica sem progresso)', async ({ page }) => {
+    await abrir(page);
+    const r = await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.className = 'block';
+      div.innerHTML = `<textarea id="probe-only-1"></textarea><textarea id="probe-only-2"></textarea>`;
+      document.body.appendChild(div);
+      const antes = _contarPreenchimento(div);
+      div.querySelector('#probe-only-1').value = 'algo';
+      const depois = _contarPreenchimento(div);
+      div.remove();
+      return { antes, depois };
+    });
+    expect(r.antes.total).toBe(2);  // fallback: as 2 notas contam
+    expect(r.depois.ok).toBe(1);
+  });
 });

@@ -10720,7 +10720,10 @@ function marcarNavComDados(){
 // (heurística: campos de texto/seleção + ratings que existem vs. preenchidos)
 // ══════════════════════════════════════════════════
 function _contarPreenchimento(scope){
-  let total=0, ok=0;
+  // Núcleo do diagnóstico = campos estruturados (ratings, selects, inputs, números).
+  // Observações/notas (textareas e ids obs/nota/coment) são opcionais: ficam fora
+  // do denominador — exceto quando o bloco só tem notas (aí contam, p/ não zerar).
+  let total=0, ok=0, txtTotal=0, txtOk=0;
   const ehCampo = el => {
     if(!el.id && !el.name) return false;
     if(['file','hidden','button','submit','reset','color','range','checkbox','radio'].includes(el.type)) return false;
@@ -10732,14 +10735,17 @@ function _contarPreenchimento(scope){
   };
   scope.querySelectorAll('input, select, textarea').forEach(el=>{
     if(!ehCampo(el)) return;
-    total++;
-    if(String(el.value||'').trim()!=='') ok++;
+    const preenchido = String(el.value||'').trim()!=='';
+    const ehNota = el.tagName==='TEXTAREA' || /obs|nota|coment/i.test(el.id||'');
+    if(ehNota){ txtTotal++; if(preenchido) txtOk++; }
+    else { total++; if(preenchido) ok++; }
   });
   scope.querySelectorAll('.rating-group').forEach(g=>{
     if(g.closest('.module-block:not(.mod-active)')) return;
     total++;
     if(g.querySelector('.r-btn.active')) ok++;
   });
+  if(total===0){ total=txtTotal; ok=txtOk; } // bloco só de notas: conta as notas
   return {total, ok};
 }
 
