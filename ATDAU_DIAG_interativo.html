@@ -11177,13 +11177,19 @@ function salvarProjeto(){
     try{ const v = localStorage.getItem(k); if(v!=null) stores[k]=v; }catch(e){}
   });
 
+  // geometrias das camadas importadas (vivem no IndexedDB, fora do localStorage)
+  // — coletadas da memória para o arquivo continuar self-contained e portável
+  const imports_fc = {};
+  if (typeof _mlImportedLayers !== 'undefined') _mlImportedLayers.forEach(l => { if (l.fc) imports_fc[l.id] = l.fc; });
+
   const projeto = {
     formato: 'atdau-projeto',
     versao: 1,
     ferramenta: '01-01-DIAG',
     salvo_em: new Date().toISOString(),
     nome_projeto: state['proj-nome'] || 'Projeto sem nome',
-    stores: stores
+    stores: stores,
+    imports_fc: imports_fc
   };
 
   const nomeArq = (state['proj-nome'] || 'projeto')
@@ -11239,8 +11245,10 @@ function abrirProjeto(input){
 
     mostrarStatus('Projeto carregado — recarregando…');
     input.value='';
-    // recarregar a página para reinicializar todos os módulos (mapa, sidra, fotos) de forma limpa
-    setTimeout(()=>location.reload(), 400);
+    // geometrias importadas → IndexedDB antes do reload (mlRestoreImports lê de lá)
+    const fcs = (dados && dados.imports_fc) ? dados.imports_fc : {};
+    const writes = Object.entries(fcs).map(([id,fc]) => IDB.set('imp-fc-'+id, fc));
+    Promise.allSettled(writes).then(()=> setTimeout(()=>location.reload(), 400));
   };
   reader.readAsText(file);
 }
@@ -13757,6 +13765,28 @@ function _mlAllMaps() {
 
 const _mlImportLayerIds = (id) => [`fill-imp-${id}`,`line-imp-${id}`,`pline-imp-${id}`,`circ-imp-${id}`];
 
+// ── IndexedDB (cota grande) para a GEOMETRIA das camadas importadas ──
+// localStorage (~5MB) não comporta shapefiles grandes; antes a camada sumia
+// no reload. Agora a geometria vai para o IndexedDB; o state guarda só os
+// metadados. Degradação graciosa: sem IndexedDB, cai no localStorage com cap.
+const IDB = {
+  ok: (typeof indexedDB !== 'undefined'),
+  _p: null,
+  _open(){
+    if(this._p) return this._p;
+    this._p = new Promise((res,rej)=>{
+      let r; try{ r = indexedDB.open('atdau-diag', 1); }catch(e){ this.ok=false; return rej(e); }
+      r.onupgradeneeded = e => { try{ if(!e.target.result.objectStoreNames.contains('kv')) e.target.result.createObjectStore('kv'); }catch(_){} };
+      r.onsuccess = e => res(e.target.result);
+      r.onerror = e => { this.ok=false; rej(e.target.error); };
+    });
+    return this._p;
+  },
+  async set(k,v){ if(!this.ok) return; try{ const db=await this._open(); return await new Promise((res,rej)=>{ const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=()=>res(); tx.onerror=e=>rej(e.target.error); }); }catch(e){ this.ok=false; } },
+  async get(k){ if(!this.ok) return undefined; try{ const db=await this._open(); return await new Promise((res)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>res(undefined); }); }catch(e){ return undefined; } },
+  async del(k){ if(!this.ok) return; try{ const db=await this._open(); return await new Promise((res)=>{ const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }); }catch(e){} },
+};
+
 function mlAddImportedLayer(fc, name, extraMap) {
   const entry = {
     id: `import-${Date.now()}-${_mlImportedLayers.length}`,
@@ -13816,44 +13846,57 @@ function _mlAddImportLayersToMap(map, entry) {
   } catch(e) { console.warn('import layers:', e.message); }
 }
 
-// Persistência: guarda as camadas no state (vai junto no autosave e no Export JSON).
-// Guarda de tamanho: localStorage tem ~5MB; acima de ~3MB de GeoJSON a camada
-// continua na sessão mas não é gravada (aviso ao usuário).
+// Persistência: metadados no state (autosave/localStorage); GEOMETRIA no
+// IndexedDB (cota grande, sobrevive ao reload). O arquivo de projeto continua
+// portável porque "Salvar projeto" coleta a geometria em memória.
 function mlSaveImports() {
   try {
-    let total = 0, omitidas = 0;
-    state['ml-imports'] = _mlImportedLayers.map(l => {
-      const tam = l.fc ? JSON.stringify(l.fc).length : 0;
-      total += tam;
-      const cabe = l.fc && total <= 3000000;
-      if (l.fc && !cabe) omitidas++;
-      return { id:l.id, name:l.name, color:l.color, fillOpacity:l.fillOpacity,
-               visible:l.visible !== false, featureCount:l.featureCount,
-               geomTypes:l.geomTypes, categoria:l.categoria||null, fc: cabe ? l.fc : null };
-    });
-    if (omitidas && typeof mostrarStatus === 'function')
-      mostrarStatus(`⚠ ${omitidas} camada(s) importada(s) muito grande(s) para salvar no navegador — use o Export JSON para guardá-las`);
+    state['ml-imports'] = _mlImportedLayers.map(l => ({
+      id:l.id, name:l.name, color:l.color, fillOpacity:l.fillOpacity,
+      visible:l.visible !== false, featureCount:l.featureCount,
+      geomTypes:l.geomTypes, categoria:l.categoria||null
+    }));
+    if (IDB.ok) {
+      // geometria → IndexedDB (uma vez por camada; recolor/rename não reescrevem)
+      _mlImportedLayers.forEach(l => {
+        if (l.fc && !l._persisted) { l._persisted = true; IDB.set('imp-fc-'+l.id, l.fc).catch(()=>{ l._persisted = false; }); }
+      });
+    } else {
+      // sem IndexedDB: fallback p/ localStorage com cap de ~3MB (comportamento antigo)
+      let total = 0, omitidas = 0;
+      state['ml-imports'].forEach((meta,i) => {
+        const l = _mlImportedLayers[i]; const tam = l.fc ? JSON.stringify(l.fc).length : 0; total += tam;
+        if (l.fc && total <= 3000000) meta.fc = l.fc; else if (l.fc) omitidas++;
+      });
+      if (omitidas && typeof mostrarStatus === 'function')
+        mostrarStatus(`⚠ ${omitidas} camada(s) grande(s) sem IndexedDB — use o Export JSON para guardá-las`);
+    }
     autoSave();
   } catch(e) { console.warn('mlSaveImports:', e); }
 }
 
-function mlRestoreImports() {
+async function mlRestoreImports() {
   const saved = state['ml-imports'];
   if (Array.isArray(saved)) {
-    saved.forEach(s => {
-      if (!s || !s.fc) return;
-      if (_mlImportedLayers.some(l => l.id === s.id)) return;
+    for (const s of saved) {
+      if (!s || _mlImportedLayers.some(l => l.id === s.id)) continue;
+      let fc = s.fc || null;                 // compat: projetos antigos tinham fc inline
+      if (!fc) fc = await IDB.get('imp-fc-'+s.id); // geometria no IndexedDB
+      if (!fc || !fc.features) continue;     // geometria indisponível → pula
       _mlImportedLayers.push({
         id:s.id, name:s.name, color:s.color,
         fillOpacity:s.fillOpacity != null ? s.fillOpacity : 0.3,
         visible:s.visible !== false,
-        featureCount:s.featureCount || (s.fc.features || []).length,
-        geomTypes:s.geomTypes || [...new Set((s.fc.features || []).map(f => f.geometry?.type).filter(Boolean))],
+        featureCount:s.featureCount || fc.features.length,
+        geomTypes:s.geomTypes || [...new Set(fc.features.map(f => f.geometry?.type).filter(Boolean))],
         categoria:s.categoria || undefined,
-        fc:s.fc
+        fc, _persisted:true
       });
-    });
+      if (s.fc) IDB.set('imp-fc-'+s.id, fc).catch(()=>{}); // migra inline (projeto antigo) → IndexedDB
+    }
   }
+  // garante que TODAS as camadas em memória entrem no _mlMap (idempotente) —
+  // inclui as importadas via block-map antes de o Mapa de Análise existir
   _mlImportedLayers.forEach(e => _mlAddImportLayersToMap(_mlMap, e));
   mlUpdateImportedSidebar();
 }
@@ -14116,6 +14159,7 @@ function mlRemoveImported(layerId) {
     try { if (map.getSource(`src-${layerId}`)) map.removeSource(`src-${layerId}`); } catch(e){}
   });
   _mlImportedLayers = _mlImportedLayers.filter(l=>l.id!==layerId);
+  IDB.del('imp-fc-'+layerId); // remove a geometria do IndexedDB
   mlUpdateImportedSidebar();
   if (typeof mlRefreshLegenda==='function') mlRefreshLegenda();
   mlSaveImports();
