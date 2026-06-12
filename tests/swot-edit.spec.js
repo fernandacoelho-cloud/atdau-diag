@@ -87,4 +87,34 @@ test.describe('SWOT consolidado como camada do Mapa de Análise', () => {
     expect(ok.p6).toBe(true);
     expect(ok.ativa).toBe('swot');
   });
+
+  test('Reclassificar uma feição SWOT pelo popup muda classe/cor sem virar cinza', async ({ page }) => {
+    await abrirMapa(page);
+    await page.evaluate(() => {
+      const c = _mlMap.getCenter();
+      _mlFeatures.swot = [{ id: 7000, geom: { type: 'Point', coordinates: [c.lng, c.lat] }, props: { layer: 'swot', swot: 'O', label: 'Oportunidade', cor: '#4f9bf8' } }];
+      mlRefreshSource('swot');
+      const ld = ML_LAYERS.find(l => l.id === 'swot');
+      mlOpenFeaturePopup('swot', 7000, _mlFeatures.swot[0].props, c, ld, _mlMap);
+    });
+    await page.waitForTimeout(300);
+    const popup = await page.evaluate(() => {
+      const p = document.querySelector('.maplibregl-popup.ml-popup');
+      return { btns: [...p.querySelectorAll('.popup-swot-btn')].map(b => b.dataset.swot), semCorGenerica: !p.querySelector('#popup-cor') };
+    });
+    expect(popup.btns).toEqual(['P', 'F', 'O', 'A']);
+    expect(popup.semCorGenerica).toBe(true); // a classe define a cor; sem corOverride genérico
+
+    const after = await page.evaluate(() => {
+      const p = document.querySelector('.maplibregl-popup.ml-popup');
+      p.querySelector('.popup-swot-btn[data-swot="F"]').click();
+      p.querySelector('#popup-salvar').click();
+      const f = _mlFeatures.swot.find(x => x.id === 7000);
+      return { swot: f.props.swot, cor: f.props.cor, label: f.props.label, corOverride: f.props.corOverride || null };
+    });
+    expect(after.swot).toBe('F');
+    expect(after.cor).toBe('#e0506a');     // F = vermelho (não cinza)
+    expect(after.label).toBe('Fragilidade');
+    expect(after.corOverride).toBe(null);  // não grava corOverride que apagaria a cor da classe
+  });
 });

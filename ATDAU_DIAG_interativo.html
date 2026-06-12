@@ -1202,6 +1202,11 @@ select option{background:var(--bg3)}
 }
 .block-progress.full{color:var(--grn);border-color:var(--grn);background:rgba(60,160,90,.08)}
 .block-progress.empty{opacity:.55}
+/* bloco com campo essencial ainda vazio: alerta âmbar (vence o .full/.empty acima) */
+.block-progress.ess-pend{color:#9a6b1e;border-color:var(--gold);background:rgba(201,146,59,.12)}
+.block-progress.ess-pend::before{content:'◆ ';color:var(--gold)}
+/* campo essencial: losango âmbar no rótulo, sinaliza que define o projeto */
+.form-field.is-essencial > label::after{content:' ◆';color:var(--gold);font-size:.82em}
 
 /* ═══ P1.7 · Barra de desenho contextual + lista de camadas enxuta ═══ */
 .ml-drawbar{position:sticky;top:0;z-index:3;background:var(--bg4);border-bottom:1px solid var(--line);padding:8px}
@@ -10890,11 +10895,30 @@ function marcarNavComDados(){
 // COMPLETUDE — quanto de cada bloco/aba está preenchido
 // (heurística: campos de texto/seleção + ratings que existem vs. preenchidos)
 // ══════════════════════════════════════════════════
+// Campos ESSENCIAIS — os que definem o projeto. Pesam mais na completude e, se
+// vazios, marcam o bloco como "essencial pendente" (◆ âmbar). Conjunto-semente
+// fundacional (Identificação); para marcar mais campos, basta acrescentar o id
+// do campo aqui — nada mais precisa mudar.
+const CAMPOS_ESSENCIAIS = new Set([
+  'proj-nome','proj-tipo','proj-escopo','proj-end','proj-area','proj-ac','proj-usuario'
+]);
+const PESO_ESSENCIAL = 2;
+const _ehEssencial = el => !!(el && el.id && CAMPOS_ESSENCIAIS.has(el.id));
+let _essMarcado = false;
+function _marcarCamposEssenciais(){
+  // marca o .form-field do campo essencial (CSS põe um ◆ no rótulo) — só uma vez
+  CAMPOS_ESSENCIAIS.forEach(id=>{
+    const ff = document.getElementById(id)?.closest('.form-field');
+    if(ff) ff.classList.add('is-essencial');
+  });
+}
+
 function _contarPreenchimento(scope){
   // Núcleo do diagnóstico = campos estruturados (ratings, selects, inputs, números).
   // Observações/notas (textareas e ids obs/nota/coment) são opcionais: ficam fora
   // do denominador — exceto quando o bloco só tem notas (aí contam, p/ não zerar).
-  let total=0, ok=0, txtTotal=0, txtOk=0;
+  // Campos essenciais pesam PESO_ESSENCIAL e são contados à parte (essTotal/essOk).
+  let total=0, ok=0, txtTotal=0, txtOk=0, essTotal=0, essOk=0;
   const ehCampo = el => {
     if(!el.id && !el.name) return false;
     if(['file','hidden','button','submit','reset','color','range','checkbox','radio'].includes(el.type)) return false;
@@ -10909,7 +10933,11 @@ function _contarPreenchimento(scope){
     const preenchido = String(el.value||'').trim()!=='';
     const ehNota = el.tagName==='TEXTAREA' || /obs|nota|coment/i.test(el.id||'');
     if(ehNota){ txtTotal++; if(preenchido) txtOk++; }
-    else { total++; if(preenchido) ok++; }
+    else {
+      const w = _ehEssencial(el) ? PESO_ESSENCIAL : 1;
+      total+=w; if(preenchido) ok+=w;
+      if(_ehEssencial(el)){ essTotal++; if(preenchido) essOk++; }
+    }
   });
   scope.querySelectorAll('.rating-group').forEach(g=>{
     if(g.closest('.module-block:not(.mod-active)')) return;
@@ -10917,10 +10945,11 @@ function _contarPreenchimento(scope){
     if(g.querySelector('.r-btn.active')) ok++;
   });
   if(total===0){ total=txtTotal; ok=txtOk; } // bloco só de notas: conta as notas
-  return {total, ok};
+  return {total, ok, essTotal, essOk};
 }
 
 function atualizarCompletude(){
+  if(!_essMarcado){ _marcarCamposEssenciais(); _essMarcado=true; }
   // por bloco (badge no cabeçalho)
   document.querySelectorAll('.block').forEach(block=>{
     if(block.classList.contains('module-block') && !block.classList.contains('mod-active')) {
@@ -10930,7 +10959,7 @@ function atualizarCompletude(){
     const header=block.querySelector(':scope > .block-header');
     if(!header) return;
     let badge=header.querySelector(':scope > .block-progress');
-    const {total,ok}=_contarPreenchimento(block);
+    const {total,ok,essTotal,essOk}=_contarPreenchimento(block);
     if(total===0){ if(badge) badge.remove(); return; }
     if(!badge){
       badge=document.createElement('span');
@@ -10938,10 +10967,13 @@ function atualizarCompletude(){
       const chev=header.querySelector('.block-chevron');
       if(chev) header.insertBefore(badge, chev); else header.appendChild(badge);
     }
-    badge.textContent=`${ok}/${total}`;
+    const essPend = essTotal>0 && essOk<essTotal;
+    badge.textContent = `${ok}/${total}`; // o ◆ entra via CSS (::before) p/ não poluir o texto
     badge.classList.toggle('full', ok>=total);
     badge.classList.toggle('empty', ok===0);
-    badge.title=`${ok} de ${total} campos preenchidos neste bloco`;
+    badge.classList.toggle('ess-pend', essPend);
+    badge.title = `${ok} de ${total} campos preenchidos neste bloco`
+      + (essPend ? ` · ${essTotal-essOk} campo(s) essencial(is) ainda vazio(s)` : '');
   });
   // por aba (barra + % na nav)
   document.querySelectorAll('.panel').forEach(panel=>{
@@ -12852,6 +12884,15 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
   const distExtra = props.distRoute != null ? `<small style="color:var(--t3)">🚶 ${props.distRoute}m caminhada</small><br>` : '';
   const raioExtra = props.raio ? `<small style="color:var(--t3)">Raio ref: ${props.raio}m</small><br>` : '';
 
+  // SWOT: seletor de classe P/F/O/A (define cor e rótulo-classe da feição).
+  const swotPicker = (lid === 'swot') ? `
+      <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:8px;font-weight:600">CLASSE SWOT</label>
+      <div style="display:flex;gap:4px;margin-top:3px">
+        ${['P','F','O','A'].map(k=>{const on=(props.swot||'P')===k;return `<button class="popup-swot-btn" data-swot="${k}" title="${SWOT_LABELS[k]}" style="flex:1;padding:5px 2px;border:1px solid ${on?SWOT_COLORS[k]:'var(--line2)'};background:${on?SWOT_COLORS[k]:'white'};color:${on?'white':'var(--t2)'};border-radius:3px;cursor:pointer;font-size:.64rem;font-weight:700">${k}</button>`;}).join('')}
+      </div>
+      <div style="font-size:.5rem;color:var(--t3);margin-top:3px">P potencialidade · F fragilidade · O oportunidade · A ameaça</div>
+  ` : '';
+
   const content = `
     <div style="min-width:260px;max-width:300px">
       <div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px">
@@ -12865,6 +12906,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
 
       <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:6px;font-weight:600">RÓTULO</label>
       <input type="text" id="popup-rotulo" value="${(rotulo||'').replace(/"/g,'&quot;')}" placeholder="Ex.: UBS Centro" style="width:100%;padding:5px 7px;font-size:.62rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+      ${swotPicker}
 
       <div style="display:flex;gap:6px;margin-top:8px">
         <div style="flex:1;min-width:0">
@@ -12894,11 +12936,12 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
         </div>
       ` : ''}
 
+      ${lid==='swot' ? '' : `
       <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:8px;font-weight:600">COR (sobrescreve a cor da camada)</label>
       <div style="display:flex;gap:4px;align-items:center;margin-top:3px">
         <input type="color" id="popup-cor" value="${corOverride || layerDef.color || '#888888'}" style="width:34px;height:24px;border:1px solid var(--line2);border-radius:3px;cursor:pointer;padding:0">
         <button id="popup-cor-clear" style="font-size:.55rem;padding:3px 8px;border:1px solid var(--line2);background:white;border-radius:3px;cursor:pointer">usar cor da camada</button>
-      </div>
+      </div>`}
 
       <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:8px;font-weight:600">OPACIDADE / TRANSPARÊNCIA</label>
       <div style="display:flex;gap:6px;align-items:center;margin-top:3px">
@@ -12952,9 +12995,24 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
       };
     });
 
-    popupEl.querySelector('#popup-cor-clear').onclick = () => {
+    const corClearBtn = popupEl.querySelector('#popup-cor-clear');
+    if (corClearBtn) corClearBtn.onclick = () => {
       popupEl.querySelector('#popup-cor').value = layerDef.color || '#888888';
     };
+
+    // SWOT: botões de classe P/F/O/A (atualizam visual; aplicados no Salvar)
+    let swotSel = props.swot || 'P';
+    popupEl.querySelectorAll('.popup-swot-btn').forEach(b => {
+      b.onclick = () => {
+        swotSel = b.dataset.swot;
+        popupEl.querySelectorAll('.popup-swot-btn').forEach(bb => {
+          const on = bb.dataset.swot === swotSel;
+          bb.style.background = on ? SWOT_COLORS[bb.dataset.swot] : 'white';
+          bb.style.borderColor = on ? SWOT_COLORS[bb.dataset.swot] : 'var(--line2)';
+          bb.style.color = on ? 'white' : 'var(--t2)';
+        });
+      };
+    });
 
     // Sliders de opacidade e espessura — feedback visual em tempo real
     const opSl = popupEl.querySelector('#popup-opacity');
@@ -12989,7 +13047,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
       const novoRotulo = popupEl.querySelector('#popup-rotulo').value.trim();
       const novoTipo = (popupEl.querySelector('#popup-tipo')?.value || '').trim();
       const novoEstado = popupEl.querySelector('#popup-estado')?.value || '';
-      const novaCor = popupEl.querySelector('#popup-cor').value;
+      const novaCor = popupEl.querySelector('#popup-cor')?.value || '';
       const novaObs = popupEl.querySelector('#popup-obs').value.trim();
       const raioEl = popupEl.querySelector('#popup-raio');
       const novoRaio = raioEl ? parseFloat(raioEl.value) : null;
@@ -12998,7 +13056,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
       // Defaults pra comparar e descartar valores iguais ao padrão
       const isPolyDefault = layerDef.geom.includes('polygon') && !isPoint;
       const opDefault = isPolyDefault ? 0.35 : 1;
-      mlUpdateFeatureProps(lid, fid, {
+      const patch = {
         rotulo: novoRotulo || undefined,
         tipo: novoTipo || undefined,
         estado: novoEstado || undefined,
@@ -13009,7 +13067,16 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
         opacity: (novaOpacity != null && Math.abs(novaOpacity - opDefault) > 0.01) ? novaOpacity : undefined,
         lineWidth: (novaEspessura != null && Math.abs(novaEspessura - 2) > 0.01) ? novaEspessura : undefined,
         lineDash: (dashSel && dashSel !== 'solid') ? dashSel : undefined
-      });
+      };
+      // SWOT: a classe escolhida governa cor e rótulo-classe; sem corOverride
+      // (que, em camada de cor null, gravaria cinza e apagaria a cor da classe).
+      if (lid === 'swot') {
+        patch.swot = swotSel;
+        patch.label = SWOT_LABELS[swotSel];
+        patch.cor = SWOT_COLORS[swotSel];
+        patch.corOverride = undefined;
+      }
+      mlUpdateFeatureProps(lid, fid, patch);
       // Renderizar buffers atualizados (só com o Mapa de Análise montado)
       if(typeof mlRefreshBuffers === 'function' && _mlMap) mlRefreshBuffers();
       refreshOwner();
@@ -14371,7 +14438,11 @@ function mlSetBasemapOnMap(map, key) {
       type:'raster', tiles:bm.tiles, tileSize:256,
       attribution:bm.attribution||'', maxzoom:bm.maxzoom||19
     });
-    const first = map.getStyle().layers.find(l=>l.id!=='background');
+    // Inserir o basemap logo ACIMA da camada de fundo e abaixo das camadas de
+    // dados. Filtrar por TIPO background (não pelo id 'background'): o Mapa
+    // Anotado usa id 'bg', e procurar por id deixava o basemap sob o fundo
+    // opaco (mapa "vazio").
+    const first = map.getStyle().layers.find(l=>l.type!=='background' && l.id!=='basemap-layer');
     map.addLayer({id:'basemap-layer',type:'raster',source:'basemap-src'}, first?.id);
   } catch(e) { console.warn('basemap error:', e.message); }
 }
