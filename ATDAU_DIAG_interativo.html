@@ -11523,6 +11523,7 @@ const ML_LAYERS = [
   { id:'livres',    name:'Áreas Livres / Praças', color:'#22c474', geom:['polygon','polyline','point'],  icon:'🌳', desc:'Praças, parques, áreas verdes públicas, espaços de permanência' },
   { id:'app',       name:'APP / Vegetação',       color:'#1ecfa4', geom:['polygon','polyline','point'], icon:'🌿', desc:'Faixas de APP, massas vegetadas, arborização viária' },
   { id:'uso',       name:'Usos do Solo',          color:null,      geom:['polygon','polyline','point'],           icon:'🗺️', desc:'Manche os usos do entorno por categoria' },
+  { id:'cobertura', name:'Cobertura do Solo',     color:null,      geom:['polygon','polyline','point'],           icon:'🛰️', desc:'Cobertura física do solo (padrão MapBiomas): floresta, campo, agropecuária, água, urbano, solo exposto — diferente de USO (função)' },
   { id:'zona',      name:'Zoneamento',            color:'#4f9bf8', geom:['polygon','polyline','point'],           icon:'📐', desc:'Zonas do plano diretor (ZR, ZM, ZC...)' },
   { id:'morfo',     name:'Morfologia urbana',    color:'#7E5A9B', geom:['polygon','polyline','point'], icon:'🏛️', desc:'Tipologias, regiões morfológicas, marcos visuais, fachadas' },
   { id:'equip',     name:'Equipamentos',          color:'#f0bf3a', geom:['polygon','polyline','point'],             icon:'📍', desc:'UBS, escola, CRAS, ponto de ônibus, delegacia...' },
@@ -11546,6 +11547,22 @@ const ML_USO_CATS = [
   { id:'vazio',      label:'Vazio urbano',       color:'#e0506a' },
   { id:'verde',      label:'Verde / APP',        color:'#22c474' },
   { id:'lazer',      label:'Lazer / Esporte',    color:'#4f9bf8' },
+];
+
+// Cobertura do solo — paleta alinhada à legenda MapBiomas (nível 1/2). COBERTURA
+// = superfície física, diferente de USO (função). Usada na camada 'cobertura' e
+// no módulo de Dinâmica Territorial (leitura de mudança ao longo do tempo).
+const ML_COBERTURA_CATS = [
+  { id:'floresta',     label:'Floresta / veget. arbórea',  color:'#1f8d49' },
+  { id:'campo',        label:'Formação campestre/rasteira', color:'#d6bc74' },
+  { id:'umida',        label:'Área úmida / campo alagado',  color:'#519799' },
+  { id:'pastagem',     label:'Pastagem',                    color:'#edde8e' },
+  { id:'agricultura',  label:'Agricultura',                 color:'#C27BA0' },
+  { id:'silvicultura', label:'Silvicultura',                color:'#7a5900' },
+  { id:'mineracao',    label:'Mineração',                   color:'#9c0027' },
+  { id:'urbano',       label:'Área urbanizada',             color:'#d4271e' },
+  { id:'solo',         label:'Solo exposto / não vegetado', color:'#ffaa5f' },
+  { id:'agua',         label:"Corpo d'água",                color:'#2532e4' },
 ];
 
 const ML_EQUIP_CATS = [
@@ -11572,6 +11589,7 @@ ML_LAYERS.forEach(l => { _mlFeatures[l.id] = []; });
 let _mlSelLayer = 'terreno';
 let _mlSelGeom  = 'polygon';
 let _mlSelUso   = 'res_uni';
+let _mlSelCob   = 'floresta'; // categoria de cobertura ativa ao desenhar na camada 'cobertura'
 let _mlSelSwot  = 'P'; // categoria SWOT ativa ao desenhar na camada 'swot'
 let _mlSelEquipCat = 'ubs';
 let _mlEquipPins = []; // {id, catId, nome, lat, lng, distRoute, status}
@@ -12253,7 +12271,7 @@ function mlAplicarEstilo(layerId, st) {
   if (!_mlMap) return;
   // camadas com cor por feição (uso/equip/swot): preserva ['get','cor'] em vez
   // de pintar tudo com a cor única do estilo (senão swot/uso ficariam cinza)
-  const corPorFeicao = ['uso','equip','swot'].includes(layerId);
+  const corPorFeicao = ['uso','equip','swot','cobertura'].includes(layerId);
   const fillC = corPorFeicao ? ['case',['has','cor'],['get','cor'], st.fillColor] : st.fillColor;
   const lineC = corPorFeicao ? ['case',['has','cor'],['get','cor'], st.lineColor] : st.lineColor;
   const dash = (MAP_LINE_DASHES[st.lineStyle]||MAP_LINE_DASHES.solid).arr;
@@ -12302,6 +12320,14 @@ function mlLegendItems() {
           if(!n) return;
           itens.push({ id:'swot-'+k, label:'🎯 '+SWOT_LABELS[k], geom:geomPrincipal, count:n,
             style:{ fillColor:SWOT_COLORS[k], lineColor:SWOT_COLORS[k], fillOpacity:(geomPrincipal==='point'?1:0.35), lineWidth:1.6, lineStyle:'solid' } });
+        });
+      } else if (l.id==='cobertura' && !(cat && cat.valores && cat.valores.length)) {
+        // Cobertura do solo: uma entrada por classe presente, com a cor MapBiomas
+        ML_COBERTURA_CATS.forEach(c=>{
+          const n = todas.filter(f => (f.props && f.props.subcategoria)===c.id).length;
+          if(!n) return;
+          itens.push({ id:'cob-'+c.id, label:'🛰️ '+c.label, geom:geomPrincipal, count:n,
+            style:{ fillColor:c.color, lineColor:c.color, fillOpacity:(geomPrincipal==='point'?1:0.4), lineWidth:1.4, lineStyle:'solid' } });
         });
       } else if (cat && cat.valores && cat.valores.length) {
         // camada desenhada categorizada por atributo: uma entrada por valor
@@ -12353,7 +12379,7 @@ function mlSetupLegenda() {
       return mlGetEstilo(id);
     },
     onStyleChange:(id,novo)=>{
-      if (String(id).startsWith('esf-') || String(id).startsWith('imp-') || String(id).startsWith('cat-') || String(id).startsWith('swot-')) return; // esferas/categorias/SWOT: cor fixa
+      if (String(id).startsWith('esf-') || String(id).startsWith('imp-') || String(id).startsWith('cat-') || String(id).startsWith('swot-') || String(id).startsWith('cob-')) return; // esferas/categorias/SWOT/cobertura: cor fixa
       // camadas importadas: estilo é da camada inteira (cor/opacidade)
       const imp = (typeof _mlImportedLayers !== 'undefined') && _mlImportedLayers.find(l=>l.id===id);
       if (imp) {
@@ -12443,7 +12469,7 @@ function mlRefreshSource(layerId) {
 const ML_LAYER_GROUPS = [
   { id:'g-base',    label:'🏗️ Base',                  layers:['terreno'] },
   { id:'g-infra',   label:'🛣️ Mobilidade e Infra',    layers:['viario','infra','eixos'] },
-  { id:'g-fisico',  label:'🌿 Meio físico',           layers:['agua','topo','risco','app'] },
+  { id:'g-fisico',  label:'🌿 Meio físico',           layers:['agua','topo','risco','app','cobertura'] },
   { id:'g-publico', label:'♿ Espaço público',         layers:['acess','mobil','livres','segur'] },
   { id:'g-uso',     label:'🗺️ Uso e morfologia',      layers:['uso','zona','morfo','equip','impacto'] },
   { id:'g-hist',    label:'📜 História/Patrimônio',   layers:['patrim'] },
@@ -12510,6 +12536,7 @@ function mlRenderDrawBar() {
   const swatch = l.color ? `background:${l.color}` : 'background:linear-gradient(135deg,#f9d26b,#e0506a,#22c474)';
   const extra =
     l.id==='uso' ? `<div class="ml-drawbar-extra"><select id="uso-cat-sel" onchange="_mlSelUso=this.value" style="width:100%;font-size:.7rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:3px 5px">${ML_USO_CATS.map(u=>`<option value="${u.id}"${_mlSelUso===u.id?' selected':''}>${u.label}</option>`).join('')}</select></div>` :
+    l.id==='cobertura' ? `<div class="ml-drawbar-extra"><div style="font-size:.62rem;color:var(--t3);margin-bottom:3px">Classe de cobertura:</div><select id="cob-cat-sel" onchange="_mlSelCob=this.value" style="width:100%;font-size:.7rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:3px 5px">${ML_COBERTURA_CATS.map(u=>`<option value="${u.id}"${_mlSelCob===u.id?' selected':''}>${u.label}</option>`).join('')}</select></div>` :
     l.id==='equip' ? `<div class="ml-drawbar-extra"><button class="ml-draw-btn" onclick="mlShowEquipForm()" style="color:var(--yel);border-color:rgba(240,191,58,.3)">⚙ Configurar equipamento</button></div>` :
     l.id==='swot' ? `<div class="ml-drawbar-extra"><div style="font-size:.62rem;color:var(--t3);margin-bottom:3px">Classificar como:</div><div style="display:flex;gap:3px;flex-wrap:wrap">${['P','F','O','A'].map(k=>`<button onclick="_mlSelSwot='${k}';mlRenderDrawBar()" title="${SWOT_LABELS[k]}" style="flex:1;min-width:42px;font-size:.62rem;padding:4px 3px;border:1px solid ${_mlSelSwot===k?SWOT_COLORS[k]:'var(--line2)'};background:${_mlSelSwot===k?SWOT_COLORS[k]:'white'};color:${_mlSelSwot===k?'#fff':'var(--t2)'};border-radius:4px;cursor:pointer;font-weight:${_mlSelSwot===k?'700':'400'}">${k}</button>`).join('')}</div><div style="font-size:.56rem;color:var(--t3);margin-top:3px">${SWOT_LABELS[_mlSelSwot]}</div></div>` : '';
   // Colorir por atributo (tipo/estado/pictograma) — só se houver feições com atributos
@@ -12676,6 +12703,10 @@ function mlFinishFeature(pts) {
     const u = ML_USO_CATS.find(x=>x.id===_mlSelUso)||ML_USO_CATS[0];
     props = { layer:'uso', subcategoria: u.id, label: u.label, cor: u.color };
   }
+  if (layerId === 'cobertura') {
+    const c = ML_COBERTURA_CATS.find(x=>x.id===_mlSelCob)||ML_COBERTURA_CATS[0];
+    props = { layer:'cobertura', subcategoria: c.id, label: c.label, cor: c.color };
+  }
   if (layerId === 'swot') {
     const k = SWOT_COLORS[_mlSelSwot] ? _mlSelSwot : 'P';
     props = { layer:'swot', swot:k, label: SWOT_LABELS[k], cor: SWOT_COLORS[k] };
@@ -12705,9 +12736,9 @@ function mlFinishFeature(pts) {
   }
   mlCancelDraw();
 
-  // Vincular a um achado (exceto terreno = referência geográfica, e swot =
-  // síntese própria, não um achado a vincular)
-  if (layerId !== 'terreno' && layerId !== 'swot') {
+  // Vincular a um achado (exceto terreno = referência geográfica; swot e
+  // cobertura = pintura temática própria, não um achado discreto a vincular)
+  if (layerId !== 'terreno' && layerId !== 'swot' && layerId !== 'cobertura') {
     mlVincularAchado(f, layerId);
   }
 }
@@ -14157,8 +14188,8 @@ function _mlApplyLayerCat(layerId){
   const l=ML_LAYERS.find(x=>x.id===layerId); if(!l) return;
   try{
     if(_mlMap.getLayer(`circle-${layerId}`)) _mlMap.setPaintProperty(`circle-${layerId}`,'circle-color', _mlLayerColorExpr(layerId, l.id==='equip'?['get','cor']:(l.color||'#888')));
-    if(_mlMap.getLayer(`fill-${layerId}`))   _mlMap.setPaintProperty(`fill-${layerId}`,'fill-color',   _mlLayerColorExpr(layerId, l.id==='uso'?['get','cor']:(l.color||'#888')));
-    if(_mlMap.getLayer(`line-${layerId}`))   _mlMap.setPaintProperty(`line-${layerId}`,'line-color',   _mlLayerColorExpr(layerId, l.id==='uso'?['get','cor']:(l.color||'#888')));
+    if(_mlMap.getLayer(`fill-${layerId}`))   _mlMap.setPaintProperty(`fill-${layerId}`,'fill-color',   _mlLayerColorExpr(layerId, (l.id==='uso'||l.id==='cobertura')?['get','cor']:(l.color||'#888')));
+    if(_mlMap.getLayer(`line-${layerId}`))   _mlMap.setPaintProperty(`line-${layerId}`,'line-color',   _mlLayerColorExpr(layerId, (l.id==='uso'||l.id==='cobertura')?['get','cor']:(l.color||'#888')));
     if(_mlMap.getLayer(`polyline-${layerId}`)) _mlMap.setPaintProperty(`polyline-${layerId}`,'line-color', _mlLayerColorExpr(layerId, l.color||'#888'));
   }catch(e){ console.warn('applyLayerCat',layerId,e); }
 }
@@ -14469,7 +14500,7 @@ function mlAddSourcesOnMap(map, _retry, onReady) {
         filter:['==','$type','Polygon'],
         paint:{
           'fill-color': ['case', ['has','corOverride'], ['get','corOverride'],
-                         l.id==='uso'?['get','cor']:(l.color||'#888')],
+                         (l.id==='uso'||l.id==='cobertura')?['get','cor']:(l.color||'#888')],
           'fill-opacity': ['case', ['has','opacity'], ['get','opacity'], 0.35]
         }
       });
@@ -14477,7 +14508,7 @@ function mlAddSourcesOnMap(map, _retry, onReady) {
         filter:['==','$type','Polygon'],
         paint:{
           'line-color': ['case', ['has','corOverride'], ['get','corOverride'],
-                         l.id==='uso'?['get','cor']:(l.color||'#888')],
+                         (l.id==='uso'||l.id==='cobertura')?['get','cor']:(l.color||'#888')],
           'line-width': ['case', ['has','lineWidth'], ['get','lineWidth'], 2],
           'line-opacity': ['case', ['has','opacity'],
                             ['min', 1, ['*', ['get','opacity'], 2]], 1]
