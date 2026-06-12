@@ -1,0 +1,122 @@
+// tests/blockmap-edit.spec.js
+// 2026-06-11: editar feições desenhadas DENTRO dos block-maps do Diagnóstico
+// (clicar → cor/excluir) e o painel "🎨 Estilo" não ser cortado pela borda do
+// mapa (mora no wrap, com altura limitada ao viewport).
+import { test, expect } from '@playwright/test';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DIAG_URL = 'file://' + path.resolve(__dirname, '..', 'ATDAU_DIAG_interativo.html').replace(/\\/g, '/');
+
+const clickFb = async (loc) => { try { await loc.click({ timeout: 4000 }); } catch { await loc.evaluate(el => el.click()); } };
+
+// Abre o primeiro block-map de um panel simples (sem módulos/subabas) e devolve
+// o índice do wrap + a camada destino.
+async function abrirPrimeiroBlockMap(page) {
+  const t = (await page.evaluate(() =>
+    [...document.querySelectorAll('.block-map-toggle')].map((b, i) => {
+      const block = b.closest('.block');
+      const wraps = [...block.querySelectorAll('.block-map-wrap')];
+      return {
+        i, panel: (b.closest('.panel') || {}).id || null,
+        primeiroWrapIdx: [...document.querySelectorAll('.block-map-wrap')].indexOf(wraps[0]),
+        modules: (b.closest('.module-block') || { dataset: {} }).dataset.modules || null,
+        subId: (b.closest('.subpanel') || {}).id || null,
+      };
+    }).filter(t => !t.modules && !t.subId && /^panel-(\d+)$/.test(t.panel || ''))
+  ))[0];
+  const n = /^panel-(\d+)$/.exec(t.panel)[1];
+  await page.evaluate(nn => document.querySelector('#nav-' + nn)?.click(), n);
+  await page.waitForTimeout(800);
+  const btn = page.locator('.block-map-toggle').nth(t.i);
+  try { await btn.scrollIntoViewIfNeeded({ timeout: 4000 }); } catch { await btn.evaluate(el => el.scrollIntoView({ block: 'center' })); }
+  const aberto = await page.evaluate(wi => document.querySelectorAll('.block-map-wrap')[wi].classList.contains('open'), t.primeiroWrapIdx);
+  if (!aberto) await clickFb(btn);
+  await page.waitForFunction(wi => {
+    const wr = document.querySelectorAll('.block-map-wrap')[wi];
+    return wr && wr.querySelector('.block-map-draw-ctrl .bm-draw-btn');
+  }, t.primeiroWrapIdx, { timeout: 25000 });
+  await page.waitForTimeout(700);
+  const lid = await page.evaluate(wi => document.querySelectorAll('.block-map-wrap')[wi].querySelector('.bm-layer-select').value, t.primeiroWrapIdx);
+  return { wrapIdx: t.primeiroWrapIdx, lid };
+}
+
+test('Block-map: clicar numa feição desenhada abre o editor (cor + excluir) e salva', async ({ page }) => {
+  page.on('dialog', d => d.accept().catch(() => {}));
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1800);
+  const { wrapIdx, lid } = await abrirPrimeiroBlockMap(page);
+  const wrapLoc = page.locator('.block-map-wrap').nth(wrapIdx);
+
+  // desenhar um ponto
+  await clickFb(wrapLoc.locator('.bm-draw-btn[data-geom="point"]'));
+  const canvas = wrapLoc.locator('.block-map canvas').first();
+  await canvas.evaluate(el => el.scrollIntoView({ block: 'center' }));
+  await page.waitForTimeout(400);
+  const box = await canvas.boundingBox();
+  const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+  const antes = await page.evaluate(l => (_mlFeatures[l] || []).length, lid);
+  await page.mouse.click(cx, cy);
+  await page.waitForFunction(({ l, a }) => (_mlFeatures[l] || []).length > a, { l: lid, a: antes }, { timeout: 8000 });
+  const fid = await page.evaluate(l => _mlFeatures[l][_mlFeatures[l].length - 1].id, lid);
+
+  // clicar no ponto → editor abre com cor + excluir
+  await page.waitForTimeout(400);
+  await page.mouse.click(cx, cy);
+  await page.waitForTimeout(500);
+  const editor = await page.evaluate(() => {
+    const p = document.querySelector('.maplibregl-popup.ml-popup');
+    return { abriu: !!p, temCor: !!p?.querySelector('#popup-cor'), temDeletar: !!p?.querySelector('#popup-deletar') };
+  });
+  expect(editor.abriu).toBe(true);
+  expect(editor.temCor).toBe(true);
+  expect(editor.temDeletar).toBe(true);
+
+  // mudar cor + salvar → corOverride persiste
+  const cor = await page.evaluate(({ l, f }) => {
+    const p = document.querySelector('.maplibregl-popup.ml-popup');
+    const inp = p.querySelector('#popup-cor');
+    inp.value = '#ff0000'; inp.dispatchEvent(new Event('input', { bubbles: true }));
+    p.querySelector('#popup-salvar').click();
+    return _mlFeatures[l].find(x => String(x.id) === String(f))?.props?.corOverride || null;
+  }, { l: lid, f: fid });
+  expect(cor).toBe('#ff0000');
+
+  // reabrir e excluir
+  await page.waitForTimeout(400);
+  await page.mouse.click(cx, cy);
+  await page.waitForTimeout(500);
+  const before = await page.evaluate(l => _mlFeatures[l].length, lid);
+  await page.evaluate(() => document.querySelector('.maplibregl-popup.ml-popup #popup-deletar').click());
+  await page.waitForTimeout(500);
+  const after = await page.evaluate(l => _mlFeatures[l].length, lid);
+  expect(after).toBeLessThan(before);
+});
+
+test('Block-map: painel de estilo cabe na tela (não cortado pela borda do mapa)', async ({ page }) => {
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1800);
+  const { wrapIdx } = await abrirPrimeiroBlockMap(page);
+  const wrapLoc = page.locator('.block-map-wrap').nth(wrapIdx);
+
+  await clickFb(wrapLoc.locator('.bm-style-btn'));
+  await page.waitForTimeout(350);
+  const r = await page.evaluate(wi => {
+    const wr = document.querySelectorAll('.block-map-wrap')[wi];
+    const panel = wr.querySelector('.block-map-style-panel');
+    const p = panel.getBoundingClientRect();
+    return {
+      visivel: panel.style.display === 'block',
+      paiEhWrap: panel.parentElement === wr,          // fora do .block-map (overflow:hidden)
+      dentroViewport: p.top >= 0 && p.bottom <= window.innerHeight + 1,
+      altura: Math.round(p.height),
+    };
+  }, wrapIdx);
+  expect(r.visivel).toBe(true);
+  expect(r.paiEhWrap).toBe(true);          // não está mais dentro do mapa que recorta
+  expect(r.dentroViewport).toBe(true);     // visível por inteiro
+  expect(r.altura).toBeGreaterThan(120);
+});

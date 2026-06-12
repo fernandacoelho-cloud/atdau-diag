@@ -12392,13 +12392,17 @@ function maLegendItems() {
 function maRefreshLegenda(){ if(typeof MapLegend!=='undefined') MapLegend.refresh('anotado'); }
 
 function mlRefreshSource(layerId) {
-  const src = _mlMap.getSource(`src-${layerId}`);
-  if (src) src.setData(mlGetFC(layerId));
-  if (layerId==='patrim') mlRefreshPatrimCluster(); // mantém os clusters em sincronia
-  if (state.ml_cat && state.ml_cat[layerId]) mlRecomputeLayerCat(layerId); // novos valores entram na categorização
-  if (layerId===_mlSelLayer && typeof mlRenderDrawBar==='function') mlRenderDrawBar(); // "Colorir por" reflete novos atributos
-  mlUpdateAreaInfo();
-  mlUpdateEquipPanel();
+  // _mlMap pode não existir se o usuário edita uma feição num block-map do
+  // Diagnóstico sem nunca ter aberto o Mapa de Análise — guardar evita throw.
+  if (_mlMap) {
+    const src = _mlMap.getSource(`src-${layerId}`);
+    if (src) src.setData(mlGetFC(layerId));
+    if (layerId==='patrim') mlRefreshPatrimCluster(); // mantém os clusters em sincronia
+    if (state.ml_cat && state.ml_cat[layerId]) mlRecomputeLayerCat(layerId); // novos valores entram na categorização
+    if (layerId===_mlSelLayer && typeof mlRenderDrawBar==='function') mlRenderDrawBar(); // "Colorir por" reflete novos atributos
+    mlUpdateAreaInfo();
+    mlUpdateEquipPanel();
+  }
   mlSaveState();
 }
 
@@ -12804,7 +12808,10 @@ function mlHandleFeatureClick(e) {
   mlOpenFeaturePopup(lid, fid, props, e.lngLat, layerDef);
 }
 
-function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
+function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
+  // map: o mapa onde abrir o popup. Default = Mapa de Análise; nos block-maps
+  // do Diagnóstico recebe o mapa do bloco para editar a feição ali mesmo.
+  map = map || _mlMap;
   // Hook para popup customizado de bens tombados (CSV de patrimônio)
   if(typeof window._patrimPopupBuilder === 'function'){
     const customHtml = window._patrimPopupBuilder(lid, fid, props, lngLat, layerDef);
@@ -12812,7 +12819,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
       new maplibregl.Popup({ className:'ml-popup', maxWidth:'360px' })
         .setLngLat(lngLat)
         .setHTML(customHtml)
-        .addTo(_mlMap);
+        .addTo(map);
       return;
     }
   }
@@ -12926,7 +12933,9 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
   const popup = new maplibregl.Popup({ className:'ml-popup', maxWidth:'320px' })
     .setLngLat(lngLat)
     .setHTML(content)
-    .addTo(_mlMap);
+    .addTo(map);
+  // quando o popup é de um block-map, refrescar também a fonte daquele mapa
+  const refreshOwner = () => { if (map && map !== _mlMap && typeof _blockMapRefreshSource === 'function') _blockMapRefreshSource(map, lid); };
 
   // Wire-up dos controles após popup montado
   setTimeout(() => {
@@ -13001,14 +13010,16 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef) {
         lineWidth: (novaEspessura != null && Math.abs(novaEspessura - 2) > 0.01) ? novaEspessura : undefined,
         lineDash: (dashSel && dashSel !== 'solid') ? dashSel : undefined
       });
-      // Renderizar buffers atualizados
-      if(typeof mlRefreshBuffers === 'function') mlRefreshBuffers();
+      // Renderizar buffers atualizados (só com o Mapa de Análise montado)
+      if(typeof mlRefreshBuffers === 'function' && _mlMap) mlRefreshBuffers();
+      refreshOwner();
       popup.remove();
     };
 
     popupEl.querySelector('#popup-deletar').onclick = () => {
       if(confirm('Remover esta feição?')) {
         mlDeleteFeature(lid, fid);
+        refreshOwner();
         popup.remove();
       }
     };
@@ -15414,7 +15425,7 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
   // === Painel de estilo (popover) ===
   const stylePanel = document.createElement('div');
   stylePanel.className = 'block-map-style-panel';
-  stylePanel.style.cssText = 'position:absolute;top:50px;left:8px;z-index:6;background:white;border:1px solid var(--line2);border-radius:6px;padding:11px 13px;box-shadow:0 4px 12px rgba(0,0,0,.18);font-size:.6rem;display:none;width:240px';
+  stylePanel.style.cssText = 'position:absolute;top:50px;left:8px;z-index:8;background:white;border:1px solid var(--line2);border-radius:6px;padding:11px 13px;box-shadow:0 4px 12px rgba(0,0,0,.18);font-size:.6rem;display:none;width:240px;max-height:calc(100vh - 140px);overflow-y:auto';
   stylePanel.innerHTML = `
     <div style="font-weight:700;color:var(--t1);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
       <span>🎨 Estilo do próximo desenho</span>
@@ -15453,7 +15464,10 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
   mapContainer.appendChild(ctrl);
   mapContainer.appendChild(hint);
   mapContainer.appendChild(active);
-  mapContainer.appendChild(stylePanel);
+  // O painel de estilo vai no WRAP (não no .block-map, que tem overflow:hidden),
+  // senão é cortado pela borda inferior do mapa quando passa de 240px de altura.
+  wrap.style.position = 'relative';
+  wrap.appendChild(stylePanel);
 
   setTimeout(() => { if(hint) hint.style.opacity = '0.5'; }, 6000);
 
@@ -15501,6 +15515,17 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
       const layer = ML_LAYERS.find(l => l.id === ws.layerId);
       const corInput = stylePanel.querySelector('.bm-st-cor');
       corInput.value = ws.estilo.cor || layer?.color || '#888888';
+      // Limitar a altura ao espaço visível: o painel já escapa do recorte do
+      // mapa (mora no wrap), mas se o mapa estiver baixo na página parte dele
+      // cairia abaixo da dobra — então rola internamente só quando preciso.
+      requestAnimationFrame(() => {
+        const top = stylePanel.getBoundingClientRect().top;
+        stylePanel.style.maxHeight = Math.max(170, window.innerHeight - top - 16) + 'px';
+        // se ainda assim ficar abaixo da dobra (mapa no rodapé da tela), rolar
+        // o painel para dentro do viewport — só rola se precisar.
+        if (stylePanel.getBoundingClientRect().bottom > window.innerHeight)
+          stylePanel.scrollIntoView({ block: 'nearest' });
+      });
     }
   };
   stylePanel.querySelector('.bm-style-close').onclick = (e) => {
@@ -15691,9 +15716,11 @@ function _blockMapOnClick(wrap, map, themeId, e) {
     // Não está desenhando: verificar se clicou em uma feature de tombamento
     const theme = ML_THEMES[themeId];
     if(!theme) return;
+    // Considerar polígono, linha E ponto — antes só 'circle-' (ponto), então
+    // não dava para clicar/editar polígonos e linhas desenhados no block-map.
     const layerIds = [];
     (theme.layers || []).forEach(lid => {
-      ['circle-'+lid].forEach(id => {
+      ['fill-'+lid, 'polyline-'+lid, 'circle-'+lid].forEach(id => {
         if(map.getLayer(id)) layerIds.push(id);
       });
     });
@@ -15701,7 +15728,7 @@ function _blockMapOnClick(wrap, map, themeId, e) {
     const feats = map.queryRenderedFeatures(e.point, { layers: layerIds });
     if(!feats.length) return;
     const f = feats[0];
-    const lid = f.layer.id.replace(/^circle-/, '');
+    const lid = f.layer.id.replace(/^(fill|polyline|circle)-/, '');
     const layerDef = ML_LAYERS.find(l => l.id === lid);
     if(!layerDef) return;
     const props = f.properties;
@@ -15712,7 +15739,12 @@ function _blockMapOnClick(wrap, map, themeId, e) {
         new maplibregl.Popup({ className:'ml-popup', maxWidth:'360px' })
           .setLngLat(e.lngLat).setHTML(html).addTo(map);
       }
+      return;
     }
+    // Feição desenhada → abrir o editor (rótulo/cor/opacidade/excluir) neste mapa.
+    // f.id vem undefined quando o id original é string ('bm-…'): usar props._fid.
+    const fid = (props._fid !== undefined) ? props._fid : f.id;
+    mlOpenFeaturePopup(lid, fid, props, e.lngLat, layerDef, map);
     return;
   }
   const coord = [e.lngLat.lng, e.lngLat.lat];
