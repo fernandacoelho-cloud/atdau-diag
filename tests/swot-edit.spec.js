@@ -1,8 +1,7 @@
 // tests/swot-edit.spec.js
-// Edicao/exclusao de feicao individual no mapa SWOT (2026-06-11): antes so
-// dava para "limpar categoria" inteira. Agora clicar numa feicao (fora do
-// modo desenho) abre popup para editar rotulo, mover entre categorias P/F/O/A
-// e excluir.
+// Consolidação do SWOT (2026-06-11): o mapa SWOT separado virou uma CAMADA do
+// Mapa de Análise (🎯 Síntese SWOT). Desenha-se classificando como P/F/O/A; a
+// cor é por classe; a legenda agrupa por classe; o painel SWOT só tem um atalho.
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,81 +9,82 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIAG_URL = 'file://' + path.resolve(__dirname, '..', 'ATDAU_DIAG_interativo.html').replace(/\\/g, '/');
 
-async function abrirSwotComFeicao(page) {
+async function abrirMapa(page) {
   await page.goto(DIAG_URL);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(1500);
-  await page.locator('#nav-7').click();
-  await page.waitForFunction(() => typeof _swotMap !== 'undefined' && _swotMap && _swotMap.isStyleLoaded && _swotMap.isStyleLoaded(), null, { timeout: 20000 });
+  await page.locator('#nav-6').click();
+  await page.waitForFunction(() => typeof _mlMap !== 'undefined' && _mlMap && _mlMap.isStyleLoaded(), null, { timeout: 20000 });
   await page.waitForTimeout(800);
-  await page.evaluate(() => {
-    const c = _swotMap.getCenter();
-    _swotFeatures.P = [{ id: 111, geom: { type: 'Point', coordinates: [c.lng, c.lat] }, props: { cat: 'P', label: 'Vista privilegiada' } }];
-    _swotFeatures.F = []; _swotFeatures.O = []; _swotFeatures.A = [];
-    _swotMap.getSource('swot-P').setData(swotFC('P'));
-  });
-  await page.waitForTimeout(500);
 }
 
-async function clicarNaFeicao(page) {
-  // esperar a feição renderizar (setData é assíncrono) antes de clicar
-  await page.waitForFunction(() => {
-    const c = _swotMap.project(_swotMap.getCenter());
-    return _swotMap.queryRenderedFeatures(c, { layers: ['swot-pt-P', 'swot-pt-F', 'swot-pt-O', 'swot-pt-A'].filter(id => _swotMap.getLayer(id)) }).length > 0;
-  }, null, { timeout: 8000 }).catch(() => {});
-  // trazer o mapa para a viewport (no viewport 1280x720 ele fica abaixo da dobra)
-  await page.locator('#swot-map-el').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(150);
-  const box = await page.locator('#swot-map-el').boundingBox();
-  const pt = await page.evaluate(() => { const p = _swotMap.project(_swotMap.getCenter()); return { x: p.x, y: p.y }; });
-  await page.mouse.click(box.x + pt.x, box.y + pt.y);
-  await page.waitForTimeout(400);
-}
+test.describe('SWOT consolidado como camada do Mapa de Análise', () => {
 
-test.describe('SWOT — editar/excluir feição individual', () => {
-
-  test('Clicar abre popup com rótulo, categoria e excluir', async ({ page }) => {
-    await abrirSwotComFeicao(page);
-    await clicarNaFeicao(page);
-    const popup = await page.evaluate(() => {
-      const p = document.querySelector('.maplibregl-popup.ml-popup');
-      return p ? { label: p.querySelector('#swot-pop-label')?.value, cat: !!p.querySelector('#swot-pop-cat'), del: !!p.querySelector('#swot-pop-del') } : null;
+  test('swot está em ML_LAYERS e migra o SWOT antigo', async ({ page }) => {
+    await abrirMapa(page);
+    const r = await page.evaluate(() => {
+      const inLayers = ML_LAYERS.some(l => l.id === 'swot');
+      const c = _mlMap.getCenter();
+      state['swot-map'] = {
+        P: [{ id: 1, geom: { type: 'Point', coordinates: [c.lng, c.lat] }, props: { cat: 'P', label: 'Vista' } }],
+        F: [{ id: 2, geom: { type: 'Point', coordinates: [c.lng + 0.001, c.lat] }, props: { cat: 'F' } }],
+        O: [], A: []
+      };
+      state.swot_migrado = false; _mlFeatures.swot = [];
+      mlMigrateSwot();
+      return { inLayers, n: _mlFeatures.swot.length, p0: _mlFeatures.swot[0]?.props, corF: _mlFeatures.swot[1]?.props.cor, migrado: state.swot_migrado };
     });
-    expect(popup).not.toBeNull();
-    expect(popup.label).toBe('Vista privilegiada');
-    expect(popup.cat).toBe(true);
-    expect(popup.del).toBe(true);
+    expect(r.inLayers).toBe(true);
+    expect(r.n).toBe(2);
+    expect(r.p0).toMatchObject({ layer: 'swot', swot: 'P', cor: '#22c474' });
+    expect(r.corF).toBe('#e0506a'); // F = vermelho
+    expect(r.migrado).toBe(true);
   });
 
-  test('Editar rótulo e mover de categoria (P→F)', async ({ page }) => {
-    await abrirSwotComFeicao(page);
-    await clicarNaFeicao(page);
-    await page.evaluate(() => {
-      const p = document.querySelector('.maplibregl-popup.ml-popup');
-      p.querySelector('#swot-pop-label').value = 'Encosta instável';
-      p.querySelector('#swot-pop-cat').value = 'F';
-      p.querySelector('#swot-pop-save').click();
+  test('Barra de desenho mostra P/F/O/A; desenhar cria feição classificada e colorida', async ({ page }) => {
+    await abrirMapa(page);
+    await page.evaluate(() => { _mlFeatures.swot = []; mlSetActiveLayer('swot'); });
+    await page.waitForTimeout(200);
+    const bar = await page.evaluate(() => {
+      const botoes = [...document.querySelectorAll('#ml-drawbar button')].map(b => b.textContent.trim());
+      return { pfoa: ['P', 'F', 'O', 'A'].every(k => botoes.includes(k)), head: document.querySelector('.ml-drawbar-head')?.textContent };
     });
-    await page.waitForTimeout(400);
-    const r = await page.evaluate(() => ({
-      P: _swotFeatures.P.length, F: _swotFeatures.F.length,
-      label: _swotFeatures.F[0]?.props.label, cat: _swotFeatures.F[0]?.props.cat,
-      persistidoF: (state['swot-map']?.F || []).length,
+    expect(bar.pfoa).toBe(true);
+    expect(bar.head).toContain('Síntese SWOT');
+
+    const draw = await page.evaluate(() => {
+      _mlSelSwot = 'O'; mlSelectDraw('swot', 'point');
+      const c = _mlMap.getCenter();
+      _mlMap.fire('click', { lngLat: { lng: c.lng + 0.002, lat: c.lat + 0.002 }, point: _mlMap.project([c.lng + 0.002, c.lat + 0.002]) });
+      const f = _mlFeatures.swot[_mlFeatures.swot.length - 1];
+      return { n: _mlFeatures.swot.length, swot: f.props.swot, cor: f.props.cor, semVinculoModal: !document.getElementById('ml-vinculo-modal') };
+    });
+    expect(draw.n).toBe(1);
+    expect(draw.swot).toBe('O');
+    expect(draw.cor).toBe('#4f9bf8'); // O = azul
+    expect(draw.semVinculoModal).toBe(true); // swot não abre o modal de vínculo
+
+    const leg = await page.evaluate(() => mlLegendItems().filter(i => String(i.id).startsWith('swot-')).map(i => i.id));
+    expect(leg).toContain('swot-O');
+  });
+
+  test('Painel SWOT não cria mapa próprio e o atalho ativa a camada', async ({ page }) => {
+    await abrirMapa(page);
+    await page.locator('#nav-7').click();
+    await page.waitForTimeout(800);
+    const p7 = await page.evaluate(() => ({
+      semMapEl: !document.getElementById('swot-map-el'),
+      semSwotMap: typeof _swotMap === 'undefined' || !_swotMap,
+      atalho: !![...document.querySelectorAll('#panel-7 button')].find(b => /Espacializar SWOT/.test(b.textContent)),
     }));
-    expect(r.P).toBe(0);
-    expect(r.F).toBe(1);
-    expect(r.label).toBe('Encosta instável');
-    expect(r.cat).toBe('F');
-    expect(r.persistidoF).toBe(1);
-  });
+    expect(p7.semMapEl).toBe(true);
+    expect(p7.semSwotMap).toBe(true);
+    expect(p7.atalho).toBe(true);
 
-  test('Excluir feição individual', async ({ page }) => {
-    await abrirSwotComFeicao(page);
-    await clicarNaFeicao(page);
-    await page.evaluate(() => document.querySelector('.maplibregl-popup.ml-popup #swot-pop-del').click());
-    await page.waitForTimeout(400);
-    const r = await page.evaluate(() => ({ P: _swotFeatures.P.length, persistido: (state['swot-map']?.P || []).length }));
-    expect(r.P).toBe(0);
-    expect(r.persistido).toBe(0);
+    await page.evaluate(() => irParaSwotMapa());
+    await page.waitForFunction(() => document.getElementById('panel-6').classList.contains('active') && _mlSelLayer === 'swot', null, { timeout: 8000 });
+    const ok = await page.evaluate(() => ({ p6: document.getElementById('panel-6').classList.contains('active'), ativa: _mlSelLayer }));
+    expect(ok.p6).toBe(true);
+    expect(ok.ativa).toBe('swot');
   });
 });

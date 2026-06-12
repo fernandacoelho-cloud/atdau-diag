@@ -5478,58 +5478,13 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="swot-grid" id="swot-panels"></div>
 
   <div class="block" style="margin-bottom:14px">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Mapa síntese — Espacialização das fragilidades e potencialidades</span></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Espacialização SWOT — no Mapa de Análise</span></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
-        Espacialize as categorias SWOT diretamente na base cartográfica. Selecione a categoria, o tipo de geometria e clique no mapa. <strong>Duplo-clique</strong> fecha polígonos e linhas.
+        A espacialização das categorias SWOT agora é uma <strong>camada do Mapa de Análise</strong> (🎯 Síntese SWOT) — desenhada sobre a mesma base e camadas das outras análises, com edição por feição, legenda por classe (P/F/O/A) e exportação (GeoJSON/PNG) <strong>unificadas</strong>. Selecione a classe e desenhe ponto/linha/mancha.
       </div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px">
-        <div style="background:rgba(34,196,116,.07);border:1px solid rgba(34,196,116,.2);border-radius:7px;padding:9px">
-          <div style="font-size:.63rem;font-weight:700;color:#22c474;margin-bottom:6px">✅ P — Potencialidades</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button id="swot-btn-P-polygon"  class="ml-draw-btn" onclick="swotDraw('P','polygon')">▦ Mancha</button>
-            <button id="swot-btn-P-polyline" class="ml-draw-btn" onclick="swotDraw('P','polyline')">╱ Linha</button>
-            <button id="swot-btn-P-point"    class="ml-draw-btn" onclick="swotDraw('P','point')">● Ponto</button>
-            <button onclick="swotClearCat('P')" style="font-size:.58rem;color:var(--t3);background:none;border:none;cursor:pointer">✕ Limpar</button>
-          </div>
-        </div>
-        <div style="background:rgba(224,80,106,.07);border:1px solid rgba(224,80,106,.2);border-radius:7px;padding:9px">
-          <div style="font-size:.63rem;font-weight:700;color:#e0506a;margin-bottom:6px">⚠️ F — Fragilidades</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button id="swot-btn-F-polygon"  class="ml-draw-btn" onclick="swotDraw('F','polygon')">▦ Mancha</button>
-            <button id="swot-btn-F-polyline" class="ml-draw-btn" onclick="swotDraw('F','polyline')">╱ Linha</button>
-            <button id="swot-btn-F-point"    class="ml-draw-btn" onclick="swotDraw('F','point')">● Ponto</button>
-            <button onclick="swotClearCat('F')" style="font-size:.58rem;color:var(--t3);background:none;border:none;cursor:pointer">✕ Limpar</button>
-          </div>
-        </div>
-        <div style="background:rgba(79,155,248,.07);border:1px solid rgba(79,155,248,.2);border-radius:7px;padding:9px">
-          <div style="font-size:.63rem;font-weight:700;color:#4f9bf8;margin-bottom:6px">💡 O — Oportunidades</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button id="swot-btn-O-polygon"  class="ml-draw-btn" onclick="swotDraw('O','polygon')">▦ Mancha</button>
-            <button id="swot-btn-O-polyline" class="ml-draw-btn" onclick="swotDraw('O','polyline')">╱ Linha</button>
-            <button id="swot-btn-O-point"    class="ml-draw-btn" onclick="swotDraw('O','point')">● Ponto</button>
-            <button onclick="swotClearCat('O')" style="font-size:.58rem;color:var(--t3);background:none;border:none;cursor:pointer">✕ Limpar</button>
-          </div>
-        </div>
-        <div style="background:rgba(240,191,58,.07);border:1px solid rgba(240,191,58,.2);border-radius:7px;padding:9px">
-          <div style="font-size:.63rem;font-weight:700;color:#f0bf3a;margin-bottom:6px">⚡ A — Ameaças</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button id="swot-btn-A-polygon"  class="ml-draw-btn" onclick="swotDraw('A','polygon')">▦ Mancha</button>
-            <button id="swot-btn-A-polyline" class="ml-draw-btn" onclick="swotDraw('A','polyline')">╱ Linha</button>
-            <button id="swot-btn-A-point"    class="ml-draw-btn" onclick="swotDraw('A','point')">● Ponto</button>
-            <button onclick="swotClearCat('A')" style="font-size:.58rem;color:var(--t3);background:none;border:none;cursor:pointer">✕ Limpar</button>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-        <button onclick="swotUndo()" class="ml-draw-btn" title="Remover a última feição desenhada">↶ Desfazer última</button>
-        <span style="font-size:.58rem;color:var(--t3)">💡 Clique numa feição no mapa para <strong>editar o rótulo, mudar de categoria ou excluí-la</strong> individualmente.</span>
-      </div>
-      <div id="swot-map-hint" style="display:none;background:rgba(30,207,164,.1);border:1px solid rgba(30,207,164,.3);border-radius:6px;padding:6px 12px;font-size:.67rem;color:var(--teal);margin-bottom:6px"></div>
-      <div id="swot-map-el" style="height:420px;border-radius:8px;overflow:hidden;border:1px solid var(--line2);background:var(--bg4)"></div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="swotExport()" class="add-btn" style="color:var(--teal);border-color:rgba(30,207,164,.3)">⬇ GeoJSON síntese SWOT</button>
-      </div>
+      <button onclick="irParaSwotMapa()" class="instr-btn instr-btn-primary" style="font-size:.72rem;padding:9px 18px">🎯 Espacializar SWOT no Mapa de Análise →</button>
+      <div style="font-size:.58rem;color:var(--t3);margin-top:7px;line-height:1.5">No Mapa de Análise: a barra de desenho mostra os botões <strong>P / F / O / A</strong> quando a camada Síntese SWOT está ativa. Para editar/excluir uma feição, clique nela. A exportação do Mapa de Análise já inclui esta camada.</div>
     </div>
   </div>
 
@@ -11545,6 +11500,7 @@ const ML_LAYERS = [
   { id:'lynch',     name:'Imageabilidade',color:'#a07cf0', geom:['polygon','polyline','point'],  icon:'👁️', desc:'Marcos, nós, caminhos, bordas, bairros (Kevin Lynch)' },
   { id:'eixos',     name:'Eixos / Ventos / Solar',color:'#5cc8f0', geom:['polygon','polyline','point'],          icon:'➡️', desc:'Eixos visuais, direção dos ventos, incidência solar' },
   { id:'notas',     name:'Notas / Outros',        color:'#f58b40', geom:['polygon','polyline','point'], icon:'✏️', desc:'Qualquer elemento de análise livre' },
+  { id:'swot',      name:'Síntese SWOT',          color:null,      geom:['polygon','polyline','point'], icon:'🎯', desc:'Potencialidade / Fragilidade / Oportunidade / Ameaça desenhadas sobre o território' },
 ];
 
 const ML_USO_CATS = [
@@ -11584,6 +11540,7 @@ ML_LAYERS.forEach(l => { _mlFeatures[l.id] = []; });
 let _mlSelLayer = 'terreno';
 let _mlSelGeom  = 'polygon';
 let _mlSelUso   = 'res_uni';
+let _mlSelSwot  = 'P'; // categoria SWOT ativa ao desenhar na camada 'swot'
 let _mlSelEquipCat = 'ubs';
 let _mlEquipPins = []; // {id, catId, nome, lat, lng, distRoute, status}
 let _mlLotCoord  = null;
@@ -12030,6 +11987,7 @@ function mlInit() {
     mlSetupPatrimCluster(); // pontos de tombamento clusterizados (após sources, antes do estado)
     mlBuildSidebar();
     mlLoadState();
+    mlMigrateSwot(); // SWOT antigo (mapa próprio) → camada 'swot' do Mapa de Análise
     mlRestoreImports(); // camadas importadas persistidas + importadas via block-map antes do init
     mlRenderUseLegend();
     addNorthArrow(_mlMap, 'ml-map');
@@ -12056,7 +12014,8 @@ function mlAddSources() {
         paint: {
           'fill-color': ['case',
             ['has','corOverride'], ['get','corOverride'],
-            l.id==='uso' ? ['get','cor'] : (l.color||'#888')
+            ['has','cor'], ['get','cor'],
+            (l.color||'#888')
           ],
           'fill-opacity': 0.35
         }
@@ -12066,7 +12025,8 @@ function mlAddSources() {
         paint: {
           'line-color': ['case',
             ['has','corOverride'], ['get','corOverride'],
-            l.id==='uso' ? ['get','cor'] : (l.color||'#888')
+            ['has','cor'], ['get','cor'],
+            (l.color||'#888')
           ],
           'line-width':2
         }
@@ -12078,7 +12038,8 @@ function mlAddSources() {
         paint: {
           'line-color': ['case',
             ['has','corOverride'], ['get','corOverride'],
-            l.color||'#888'
+            ['has','cor'], ['get','cor'],
+            (l.color||'#888')
           ],
           'line-width':2.5, 'line-dasharray': l.id==='eixos' ? [4,2] : [1]
         }
@@ -12096,7 +12057,8 @@ function mlAddSources() {
         paint: {
           'circle-color': ['case',
             ['has','corOverride'], ['get','corOverride'],
-            l.id==='equip' ? ['get','cor'] : (l.color||'#888')
+            ['has','cor'], ['get','cor'],
+            (l.color||'#888')
           ],
           'circle-radius': 7, 'circle-stroke-width':2, 'circle-stroke-color':'#fff'
         }
@@ -12257,26 +12219,29 @@ function mlGetEstilo(layerId) {
 
 function mlAplicarEstilo(layerId, st) {
   if (!_mlMap) return;
-  const usoGet = layerId==='uso' ? ['get','cor'] : null;
-  const equipGet = layerId==='equip' ? ['get','cor'] : null;
+  // camadas com cor por feição (uso/equip/swot): preserva ['get','cor'] em vez
+  // de pintar tudo com a cor única do estilo (senão swot/uso ficariam cinza)
+  const corPorFeicao = ['uso','equip','swot'].includes(layerId);
+  const fillC = corPorFeicao ? ['case',['has','cor'],['get','cor'], st.fillColor] : st.fillColor;
+  const lineC = corPorFeicao ? ['case',['has','cor'],['get','cor'], st.lineColor] : st.lineColor;
   const dash = (MAP_LINE_DASHES[st.lineStyle]||MAP_LINE_DASHES.solid).arr;
   try {
     if (_mlMap.getLayer(`fill-${layerId}`)) {
-      _mlMap.setPaintProperty(`fill-${layerId}`,'fill-color', usoGet || st.fillColor);
+      _mlMap.setPaintProperty(`fill-${layerId}`,'fill-color', fillC);
       _mlMap.setPaintProperty(`fill-${layerId}`,'fill-opacity', st.fillOpacity);
     }
     if (_mlMap.getLayer(`line-${layerId}`)) {
-      _mlMap.setPaintProperty(`line-${layerId}`,'line-color', usoGet || st.lineColor);
+      _mlMap.setPaintProperty(`line-${layerId}`,'line-color', lineC);
       _mlMap.setPaintProperty(`line-${layerId}`,'line-width', st.lineWidth);
       _mlMap.setPaintProperty(`line-${layerId}`,'line-dasharray', dash);
     }
     if (_mlMap.getLayer(`polyline-${layerId}`)) {
-      _mlMap.setPaintProperty(`polyline-${layerId}`,'line-color', st.lineColor);
+      _mlMap.setPaintProperty(`polyline-${layerId}`,'line-color', lineC);
       _mlMap.setPaintProperty(`polyline-${layerId}`,'line-width', st.lineWidth);
       _mlMap.setPaintProperty(`polyline-${layerId}`,'line-dasharray', dash);
     }
     if (_mlMap.getLayer(`circle-${layerId}`)) {
-      _mlMap.setPaintProperty(`circle-${layerId}`,'circle-color', equipGet || st.lineColor);
+      _mlMap.setPaintProperty(`circle-${layerId}`,'circle-color', lineC);
       _mlMap.setPaintProperty(`circle-${layerId}`,'circle-radius', st.pointRadius);
     }
   } catch(e){ console.warn('mlAplicarEstilo',layerId,e); }
@@ -12298,7 +12263,15 @@ function mlLegendItems() {
     if (naoTomb>0) {
       const geomPrincipal = l.geom.includes('polygon') ? 'polygon' : (l.geom.includes('polyline') ? 'polyline' : 'point');
       const cat = state.ml_cat && state.ml_cat[l.id];
-      if (cat && cat.valores && cat.valores.length) {
+      if (l.id==='swot') {
+        // SWOT: uma entrada por classe presente (P/F/O/A), com cor fixa
+        ['P','F','O','A'].forEach(k=>{
+          const n = todas.filter(f => (f.props && f.props.swot)===k).length;
+          if(!n) return;
+          itens.push({ id:'swot-'+k, label:'🎯 '+SWOT_LABELS[k], geom:geomPrincipal, count:n,
+            style:{ fillColor:SWOT_COLORS[k], lineColor:SWOT_COLORS[k], fillOpacity:(geomPrincipal==='point'?1:0.35), lineWidth:1.6, lineStyle:'solid' } });
+        });
+      } else if (cat && cat.valores && cat.valores.length) {
         // camada desenhada categorizada por atributo: uma entrada por valor
         itens.push({ id:'cat-'+l.id+'-hdr', label:(l.icon?l.icon+' ':'')+l.name+' · por '+cat.campo, geom:geomPrincipal, count:null, muted:true,
           style:{ fillColor:l.color||'#888', lineColor:l.color||'#888', fillOpacity:.15, lineWidth:1, lineStyle:'solid' } });
@@ -12348,7 +12321,7 @@ function mlSetupLegenda() {
       return mlGetEstilo(id);
     },
     onStyleChange:(id,novo)=>{
-      if (String(id).startsWith('esf-') || String(id).startsWith('imp-') || String(id).startsWith('cat-')) return; // esferas/categorias: cor fixa
+      if (String(id).startsWith('esf-') || String(id).startsWith('imp-') || String(id).startsWith('cat-') || String(id).startsWith('swot-')) return; // esferas/categorias/SWOT: cor fixa
       // camadas importadas: estilo é da camada inteira (cor/opacidade)
       const imp = (typeof _mlImportedLayers !== 'undefined') && _mlImportedLayers.find(l=>l.id===id);
       if (imp) {
@@ -12438,7 +12411,7 @@ const ML_LAYER_GROUPS = [
   { id:'g-publico', label:'♿ Espaço público',         layers:['acess','mobil','livres','segur'] },
   { id:'g-uso',     label:'🗺️ Uso e morfologia',      layers:['uso','zona','morfo','equip','impacto'] },
   { id:'g-hist',    label:'📜 História/Patrimônio',   layers:['patrim'] },
-  { id:'g-analise', label:'👁️ Análise / Outros',     layers:['lynch','notas'] },
+  { id:'g-analise', label:'👁️ Análise / Outros',     layers:['lynch','notas','swot'] },
 ];
 
 function mlBuildSidebar() {
@@ -12501,7 +12474,8 @@ function mlRenderDrawBar() {
   const swatch = l.color ? `background:${l.color}` : 'background:linear-gradient(135deg,#f9d26b,#e0506a,#22c474)';
   const extra =
     l.id==='uso' ? `<div class="ml-drawbar-extra"><select id="uso-cat-sel" onchange="_mlSelUso=this.value" style="width:100%;font-size:.7rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t2);border-radius:4px;padding:3px 5px">${ML_USO_CATS.map(u=>`<option value="${u.id}"${_mlSelUso===u.id?' selected':''}>${u.label}</option>`).join('')}</select></div>` :
-    l.id==='equip' ? `<div class="ml-drawbar-extra"><button class="ml-draw-btn" onclick="mlShowEquipForm()" style="color:var(--yel);border-color:rgba(240,191,58,.3)">⚙ Configurar equipamento</button></div>` : '';
+    l.id==='equip' ? `<div class="ml-drawbar-extra"><button class="ml-draw-btn" onclick="mlShowEquipForm()" style="color:var(--yel);border-color:rgba(240,191,58,.3)">⚙ Configurar equipamento</button></div>` :
+    l.id==='swot' ? `<div class="ml-drawbar-extra"><div style="font-size:.62rem;color:var(--t3);margin-bottom:3px">Classificar como:</div><div style="display:flex;gap:3px;flex-wrap:wrap">${['P','F','O','A'].map(k=>`<button onclick="_mlSelSwot='${k}';mlRenderDrawBar()" title="${SWOT_LABELS[k]}" style="flex:1;min-width:42px;font-size:.62rem;padding:4px 3px;border:1px solid ${_mlSelSwot===k?SWOT_COLORS[k]:'var(--line2)'};background:${_mlSelSwot===k?SWOT_COLORS[k]:'white'};color:${_mlSelSwot===k?'#fff':'var(--t2)'};border-radius:4px;cursor:pointer;font-weight:${_mlSelSwot===k?'700':'400'}">${k}</button>`).join('')}</div><div style="font-size:.56rem;color:var(--t3);margin-top:3px">${SWOT_LABELS[_mlSelSwot]}</div></div>` : '';
   // Colorir por atributo (tipo/estado/pictograma) — só se houver feições com atributos
   const attrs = (typeof mlLayerAttrs==='function') ? mlLayerAttrs(l.id) : [];
   const catAtual = state.ml_cat && state.ml_cat[l.id];
@@ -12518,7 +12492,20 @@ function mlRenderDrawBar() {
     <div class="ml-drawbar-head"><span class="ml-dot" style="${swatch};border-radius:${l.geom[0]==='point'?'50%':'2px'}"></span>Desenhar em: ${l.icon} ${l.name}</div>
     <div class="ml-drawbar-geoms">
       ${l.geom.map(g=>`<button class="ml-draw-btn" id="btn-draw-${l.id}-${g}" onclick="mlSelectDraw('${l.id}','${g}')" title="Desenhar ${g==='polygon'?'polígono':g==='polyline'?'linha':'ponto'}">${geomLabel[g]}</button>`).join('')}
+      <button class="ml-draw-btn" onclick="mlUndoLastDraw()" title="Remover a última feição desenhada nesta camada">↶ Desfazer</button>
     </div>${extra}${catSel}`;
+}
+
+// Desfazer: remove a feição mais recente da camada ativa (maior id)
+function mlUndoLastDraw(){
+  const layerId = _mlSelLayer;
+  const arr = _mlFeatures[layerId] || [];
+  if(!arr.length){ if(typeof mostrarStatus==='function') mostrarStatus('Nada para desfazer nesta camada'); return; }
+  let idx=0, maxId=-Infinity;
+  arr.forEach((f,i)=>{ const id=Number(f.id)||0; if(id>=maxId){ maxId=id; idx=i; } });
+  arr.splice(idx,1);
+  mlRefreshSource(layerId);
+  if(typeof mostrarStatus==='function') mostrarStatus('Última feição removida ↶');
 }
 
 // Seleciona a camada ativa para desenho (sem iniciar o desenho ainda)
@@ -12653,6 +12640,10 @@ function mlFinishFeature(pts) {
     const u = ML_USO_CATS.find(x=>x.id===_mlSelUso)||ML_USO_CATS[0];
     props = { layer:'uso', subcategoria: u.id, label: u.label, cor: u.color };
   }
+  if (layerId === 'swot') {
+    const k = SWOT_COLORS[_mlSelSwot] ? _mlSelSwot : 'P';
+    props = { layer:'swot', swot:k, label: SWOT_LABELS[k], cor: SWOT_COLORS[k] };
+  }
   if (layerId === 'equip') {
     const cat = ML_EQUIP_CATS.find(x=>x.id===_mlSelEquipCat)||ML_EQUIP_CATS[0];
     props = { layer:'equip', catId: cat.id, nome: cat.nome, cor: cat.cor, raio: cat.raio, ref: cat.ref, distRoute: null, status:'calculando' };
@@ -12678,8 +12669,9 @@ function mlFinishFeature(pts) {
   }
   mlCancelDraw();
 
-  // Vincular a um achado (exceto terreno, que é referência geográfica)
-  if (layerId !== 'terreno') {
+  // Vincular a um achado (exceto terreno = referência geográfica, e swot =
+  // síntese própria, não um achado a vincular)
+  if (layerId !== 'terreno' && layerId !== 'swot') {
     mlVincularAchado(f, layerId);
   }
 }
@@ -14282,6 +14274,46 @@ function mlLoadState() {
   mlUpdateEquipPanel();
 }
 
+// Migra o antigo mapa SWOT (state['swot-map'] = {P,F,O,A}) para a camada 'swot'
+// do Mapa de Análise — uma vez. Cada feição vira ponto/linha/polígono com
+// props.swot (P/F/O/A) e a cor da classe.
+function mlMigrateSwot() {
+  if (state.swot_migrado) return;
+  const old = state['swot-map'];
+  let migrou = 0;
+  if (old && typeof old === 'object') {
+    _mlFeatures.swot = _mlFeatures.swot || [];
+    ['P','F','O','A'].forEach(k => {
+      (old[k] || []).forEach(f => {
+        if (!f || !f.geom) return;
+        _mlFeatures.swot.push({
+          id: f.id || (Date.now() + '-' + Math.random().toString(36).slice(2,6)),
+          geom: f.geom,
+          props: { layer:'swot', swot:k, label: SWOT_LABELS[k], cor: SWOT_COLORS[k],
+                   obs: (f.props && f.props.obs) || undefined }
+        });
+        migrou++;
+      });
+    });
+  }
+  state.swot_migrado = true;
+  if (migrou && typeof mlRefreshSource === 'function') mlRefreshSource('swot');
+}
+
+// Atalho do painel SWOT → Mapa de Análise com a camada 'swot' ativa para desenho
+function irParaSwotMapa() {
+  irPara(6, document.getElementById('nav-6'));
+  const tentar = (n) => {
+    if (typeof _mlMap !== 'undefined' && _mlMap && typeof mlSetActiveLayer === 'function' && document.getElementById('layer-item-swot')) {
+      const item = document.getElementById('layer-item-swot');
+      const det = item.closest('details'); if (det) det.open = true; // abre o grupo "Análise / Outros"
+      mlSetActiveLayer('swot');
+      item.scrollIntoView({ block:'center', behavior:'smooth' });
+    } else if (n > 0) setTimeout(() => tentar(n - 1), 300);
+  };
+  setTimeout(() => tentar(25), 400);
+}
+
 // ── Utilitários geométricos ───────────────────────────────────────────
 function mlHaversine(lat1,lng1,lat2,lng2){
   const R=6371000,d2r=Math.PI/180;
@@ -14814,7 +14846,8 @@ let _swotFeatures = {P:[], F:[], O:[], A:[]};
 function swotInitMap() {
   if (_swotMap) return;
   const el = document.getElementById('swot-map-el');
-  if (!el || typeof maplibregl === 'undefined') { setTimeout(swotInitMap,500); return; }
+  if (!el) return; // mapa SWOT removido — consolidado na camada 'swot' do Mapa de Análise
+  if (typeof maplibregl === 'undefined') { setTimeout(swotInitMap,500); return; }
 
   _swotMap = new maplibregl.Map({
     container:'swot-map-el',

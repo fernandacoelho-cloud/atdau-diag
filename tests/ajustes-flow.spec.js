@@ -31,24 +31,31 @@ test('Viabilidade: peso do critério muda o escore (média ponderada)', async ({
   expect(r.botoesPeso).toBe(12);         // 4 critérios × 3 botões (×1/×2/×3)
 });
 
-test('SWOT: desfazer remove a última feição desenhada', async ({ page }) => {
+test('Mapa de Análise: desfazer remove a última feição da camada ativa', async ({ page }) => {
   await page.goto(DIAG_URL);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(1500);
-  await page.locator('#nav-7').click();
-  await page.waitForFunction(() => typeof _swotMap !== 'undefined' && _swotMap && _swotMap.isStyleLoaded && _swotMap.isStyleLoaded(), null, { timeout: 20000 });
-  await page.waitForTimeout(500);
+  await page.locator('#nav-6').click();
+  await page.waitForFunction(() => typeof _mlMap !== 'undefined' && _mlMap && _mlMap.isStyleLoaded(), null, { timeout: 20000 });
+  await page.waitForTimeout(600);
   const r = await page.evaluate(() => {
-    const c = _swotMap.getCenter();
-    _swotFeatures = { P: [], F: [], O: [], A: [] };
-    _swotFeatures.P = [{ id: 1000, geom: { type: 'Point', coordinates: [c.lng, c.lat] }, props: { cat: 'P' } }];
-    _swotFeatures.O = [{ id: 3000, geom: { type: 'Point', coordinates: [c.lng, c.lat] }, props: { cat: 'O' } }];
-    ['P', 'F', 'O', 'A'].forEach(k => _swotMap.getSource('swot-' + k).setData(swotFC(k)));
-    swotUndo(); // remove a de maior id (O=3000)
-    return { O: _swotFeatures.O.length, P: _swotFeatures.P.length, botao: !!document.querySelector('button[onclick="swotUndo()"]') };
+    const c = _mlMap.getCenter();
+    _mlFeatures.swot = [
+      { id: 1000, geom: { type: 'Point', coordinates: [c.lng, c.lat] }, props: { layer: 'swot', swot: 'P', cor: '#22c474' } },
+      { id: 3000, geom: { type: 'Point', coordinates: [c.lng, c.lat] }, props: { layer: 'swot', swot: 'O', cor: '#4f9bf8' } },
+    ];
+    mlRefreshSource('swot');
+    mlSetActiveLayer('swot');
+    const antes = _mlFeatures.swot.length;
+    mlUndoLastDraw(); // remove a mais recente (id 3000)
+    return {
+      antes, depois: _mlFeatures.swot.length, restante: _mlFeatures.swot[0]?.id,
+      botao: !!document.querySelector('#ml-drawbar button[onclick="mlUndoLastDraw()"]'),
+    };
   });
-  expect(r.O).toBe(0);  // última removida
-  expect(r.P).toBe(1);  // a anterior permanece
+  expect(r.antes).toBe(2);
+  expect(r.depois).toBe(1);    // última removida
+  expect(r.restante).toBe(1000); // a anterior permanece
   expect(r.botao).toBe(true);
 });
 
