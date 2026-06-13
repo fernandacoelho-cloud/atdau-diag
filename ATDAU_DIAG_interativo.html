@@ -1208,6 +1208,17 @@ select option{background:var(--bg3)}
 /* bloco fora do escopo do usuário */
 .block-progress.escopo-off{color:var(--t3);border-color:var(--line2);background:var(--bg4);font-style:italic}
 .block.fora-escopo > .block-header .block-title{color:var(--t3)}
+/* ESCOPO Fatia 2 — bloco fora do escopo: corpo esmaecido + botão reativar */
+.block.fora-escopo > .block-body{opacity:.55}
+.escopo-incluir{border:1px solid var(--teal);background:rgba(31,111,92,.08);color:var(--teal);border-radius:5px;cursor:pointer;font-size:.6rem;padding:2px 9px;margin-left:6px;font-weight:600;white-space:nowrap}
+.escopo-incluir:hover{background:rgba(31,111,92,.16)}
+/* ajuste fino por campo: campo desligado individualmente */
+.form-field.campo-off > label{opacity:.5}
+.form-field.campo-off input,.form-field.campo-off select,.form-field.campo-off textarea{opacity:.45;pointer-events:none;background:var(--bg4)}
+.campo-toggle{border:none;background:none;cursor:pointer;font-size:.72rem;line-height:1;color:var(--t3);padding:0 3px;margin-left:5px;opacity:0;transition:opacity .12s;vertical-align:baseline}
+.form-field:hover .campo-toggle{opacity:.7}
+.campo-toggle:hover{opacity:1;color:var(--teal)}
+.form-field.campo-off .campo-toggle{opacity:.85;color:var(--t3)}
 /* campo essencial: losango âmbar no rótulo, sinaliza que define o projeto */
 .form-field.is-essencial > label::after{content:' ◆';color:var(--gold);font-size:.82em}
 
@@ -8345,7 +8356,8 @@ function renderTutorial(){
 
   const p = TUT_PERCURSOS[TUT_ATUAL];
   // descrição + fluxo vertical: cada nó é clicável → abre a aba correspondente
-  let html = `<div style="background:${p.cor}12;border-left:3px solid ${p.cor};padding:10px 13px;border-radius:5px;margin-bottom:18px">
+  let html = `<div style="background:rgba(31,111,92,.08);border:1px solid var(--teal);border-radius:6px;padding:9px 12px;margin-bottom:14px;font-size:.62rem;line-height:1.5;color:var(--t1)"><strong>🎯 Comece definindo o Escopo.</strong> No painel de <strong>Identificação</strong>, no bloco <em>Escopo do diagnóstico</em>, marque quais análises você fará (parta de um dos níveis e ajuste — por bloco ou por campo). O progresso passa a ser relativo ao <em>seu</em> escopo; o que ficar de fora não conta e aparece esmaecido nas abas, com um botão para incluir quando quiser.</div>`;
+  html += `<div style="background:${p.cor}12;border-left:3px solid ${p.cor};padding:10px 13px;border-radius:5px;margin-bottom:18px">
     <div style="font-size:.66rem;line-height:1.55;color:var(--t1)">${escHtml(p.desc)}</div>
   </div>`;
   html += '<div style="position:relative;padding-left:24px">';
@@ -11174,6 +11186,42 @@ function escopoAplicarPreset(p){
   ESCOPO_PANEIS.forEach(n=>document.querySelectorAll('#panel-'+n+' .block[data-escopo-id]').forEach(bl=>{ e.blocos[bl.getAttribute('data-escopo-id')]=inc.includes(n); }));
   if(typeof autoSave==='function')autoSave(); renderEscopo(); if(typeof atualizarCompletude==='function')atualizarCompletude();
 }
+// ── ajuste fino por campo (Fatia 2): bloco = controle grosso; campo sobrescreve ──
+function escopoToggleCampo(fieldId, blocoId){
+  const c=_escopo().campos;
+  c[fieldId] = !escopoCampoAtivo(fieldId, blocoId); // inverte o estado efetivo atual
+  if(typeof autoSave==='function')autoSave();
+  if(typeof atualizarCompletude==='function')atualizarCompletude();
+}
+let _escopoCamposMarcados=false;
+function _escopoMarcarCampos(){ // injeta o toggle uma vez em cada campo dos painéis analisáveis
+  if(_escopoCamposMarcados) return; _escopoCamposMarcados=true;
+  _escopoAtribuirIds();
+  ESCOPO_PANEIS.forEach(n=>{
+    document.querySelectorAll('#panel-'+n+' .block[data-escopo-id] .form-field').forEach(ff=>{
+      const inp=ff.querySelector('input,select,textarea'); if(!inp||!inp.id) return;
+      if(['file','hidden','button','submit','reset','color','range','checkbox','radio'].includes(inp.type)) return;
+      const lab=ff.querySelector(':scope > label'); if(!lab || lab.querySelector('.campo-toggle')) return;
+      const bl=ff.closest('.block[data-escopo-id]'); const bid=bl?bl.getAttribute('data-escopo-id'):'';
+      const btn=document.createElement('button');
+      btn.className='campo-toggle'; btn.type='button';
+      btn.title='Incluir/excluir este campo do escopo';
+      btn.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); escopoToggleCampo(inp.id, bid); };
+      lab.appendChild(btn);
+    });
+  });
+}
+function _escopoAplicarCampos(){ // reflete o estado de cada campo (mute + ícone)
+  ESCOPO_PANEIS.forEach(n=>{
+    document.querySelectorAll('#panel-'+n+' .block[data-escopo-id] .form-field').forEach(ff=>{
+      const inp=ff.querySelector('input,select,textarea'); if(!inp||!inp.id) return;
+      const bl=ff.closest('.block[data-escopo-id]'); const bid=bl?bl.getAttribute('data-escopo-id'):'';
+      const on=escopoCampoAtivo(inp.id, bid);
+      ff.classList.toggle('campo-off', !on);
+      const tg=ff.querySelector('.campo-toggle'); if(tg) tg.textContent = on ? '◉' : '○';
+    });
+  });
+}
 
 function _contarPreenchimento(scope){
   // Núcleo do diagnóstico = campos estruturados (ratings, selects, inputs, números).
@@ -11233,9 +11281,17 @@ function atualizarCompletude(){
     if(foraEscopo){
       if(!badge){ badge=document.createElement('span'); badge.className='block-progress'; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(badge,chev); else header.appendChild(badge); }
       badge.textContent='fora do escopo'; badge.classList.remove('full','empty','ess-pend'); badge.classList.add('escopo-off'); badge.title='Esta análise está fora do escopo definido na Identificação';
+      // botão para reativar a análise no próprio bloco (in-place)
+      if(!header.querySelector('.escopo-incluir')){
+        const ib=document.createElement('button'); ib.className='escopo-incluir'; ib.type='button';
+        ib.textContent='➕ incluir esta análise';
+        ib.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); escopoToggleBloco(escId, true); };
+        const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(ib,chev); else header.appendChild(ib);
+      }
       return;
     }
     if(badge) badge.classList.remove('escopo-off');
+    const _ib=header.querySelector('.escopo-incluir'); if(_ib) _ib.remove();
     const {total,ok,essTotal,essOk}=_contarPreenchimento(block);
     if(total===0){ if(badge) badge.remove(); return; }
     if(!badge){
@@ -11268,6 +11324,8 @@ function atualizarCompletude(){
     } else if(pctEl){ pctEl.remove(); }
     nav.title=`${ok} de ${total} campos preenchidos`;
   });
+  // ajuste fino por campo (Fatia 2): injeta os toggles uma vez e reflete o estado
+  if(typeof _escopoMarcarCampos==='function'){ _escopoMarcarCampos(); _escopoAplicarCampos(); }
   if(typeof renderDashboard==='function') renderDashboard();
 }
 let _compTimer=null;
