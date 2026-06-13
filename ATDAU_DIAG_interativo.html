@@ -11645,6 +11645,25 @@ function gerarRelatorioPDF(){
   dumpPainel(3,  'Condicionantes ambientais e climáticas');
   dumpPainel(4,  'Paisagem e morfologia urbana');
   dumpPainel(5,  'Ocupação urbana e usos do solo');
+  dumpPainel(9,  'Instrumentos de coleta — registros de campo');
+  dumpPainel(12, 'Obras análogas — análise');
+
+  // ─── VIABILIDADE — terrenos candidatos + escores ───
+  if(Array.isArray(state.viab_terrenos) && state.viab_terrenos.length){
+    titulo('Viabilidade — terrenos candidatos');
+    state.viab_terrenos.forEach(t=>{ if(!t) return; const nm=(t.nome||'(sem nome)').toString().trim(); const ar=t.area?(' — '+t.area+' m²'):''; let sc=''; if(typeof _viabScore==='function'){ try{ const m=_viabScore(t).media; if(m!=null) sc=' · escore médio '+(+m).toFixed(2); }catch(e){} } item(nm+ar+sc); });
+    espaco(2);
+  }
+
+  // ─── MAPA ANOTADO — anotações de campo (texto) ───
+  if(typeof MapaAnotadoStore!=='undefined' && typeof MapaAnotadoStore.getAll==='function'){
+    const anot=MapaAnotadoStore.getAll()||[];
+    if(anot.length){
+      titulo('Mapa Anotado — anotações de campo');
+      anot.forEach(a=>{ const cat=(typeof MA_CATEGORIES!=='undefined'?((MA_CATEGORIES.find(c=>c.id===a.category)||{}).label):'')||a.category||''; const t=(a.title||'').toString().trim(); const d=(a.description||'').toString().trim(); const nn=(a.notes||'').toString().trim(); item((cat?('['+cat+'] '):'')+(t||'(sem título)')+(d?(' — '+d):'')+(nn?(' · '+nn):'')); });
+      espaco(2);
+    }
+  }
 
   // ─── DINÂMICA TERRITORIAL (números-chave + leitura) ───
   if(state.dinamica && (state.dinamica.numeros || state.dinamica.leitura)){
@@ -11672,10 +11691,11 @@ function gerarRelatorioPDF(){
       const g=PFOA[k];
       if(g.list.length===0) return;
       subt(g.label+' ('+g.list.length+')');
-      g.list.slice(0,8).forEach(t=> item(t, g.cor));
+      g.list.forEach(t=> item(t, g.cor));
       espaco(1);
     });
   }
+  if(state.swot_narrativa){ subt('Leitura interpretativa do diagnóstico'); paragrafo(state.swot_narrativa); espaco(1); }
   espaco(2);
 
   // ─── PROGRAMA DE NECESSIDADES ───
@@ -11702,7 +11722,7 @@ function gerarRelatorioPDF(){
   if(diretrizes.length===0){
     paragrafo('Defina diretrizes no Painel 8 para compor esta seção.');
   } else {
-    diretrizes.slice(0,10).forEach(d=> item(d));
+    diretrizes.forEach(d=> item(d));
   }
   espaco(2);
 
