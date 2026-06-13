@@ -11081,7 +11081,14 @@ function marcarNavComDados(){
 // fundacional (Identificação); para marcar mais campos, basta acrescentar o id
 // do campo aqui — nada mais precisa mudar.
 const CAMPOS_ESSENCIAIS = new Set([
-  'proj-nome','proj-tipo','proj-escopo','proj-end','proj-area','proj-ac','proj-usuario'
+  // Identificação (painel 0) — definem o projeto
+  'proj-nome','proj-tipo','proj-escopo','proj-end','proj-area','proj-ac','proj-usuario',
+  // Contexto Urbano (painel 1) — onde se insere
+  'c-bairro','c-zona',
+  // Legislação (painel 2) — parâmetros urbanísticos que definem o que se pode construir
+  'l-zona','l-ca','l-to',
+  // Condicionantes Ambientais (painel 3) — condicionantes bioclimáticas fundamentais
+  'a-orient','a-zb'
 ]);
 const PESO_ESSENCIAL = 2;
 const _ehEssencial = el => !!(el && el.id && CAMPOS_ESSENCIAIS.has(el.id));
