@@ -5493,7 +5493,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div style="font-size:.6rem;color:var(--t2);margin-bottom:4px"><strong>📍 Abrir os mapas já no seu município:</strong> na plataforma, busque o município, clique <strong>Aplicar</strong> e <strong>copie a URL da barra de endereço</strong> aqui. A URL fica salva no projeto.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <input type="text" id="din-mb-url" oninput="dinSetCampo('mb_url', this.value)" placeholder="cole aqui a URL do MapBiomas já posicionada no município…" style="flex:1;min-width:220px;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.6rem;box-sizing:border-box">
-        <button class="instr-btn" onclick="dinExemploSTL()" style="font-size:.58rem">usar São Tomé das Letras (exemplo)</button>
+        <button class="instr-btn" onclick="document.getElementById('din-mb-url').value='';dinSetCampo('mb_url','')" style="font-size:.58rem" title="Voltar os mapas para o Brasil inteiro">limpar</button>
       </div>
     </div>
   </div>
@@ -8720,8 +8720,6 @@ function getAllFindings(){
 // codifica território t[ids][], ano tl[year] e classes tl[pixelValues][]. Se o
 // usuário colar a URL já posicionada no município, os mapas abrem lá.
 const DIN_MAPA_PADRAO = 'https://plataforma.brasil.mapbiomas.org/cobertura';
-// exemplo confirmado: São Tomé das Letras/MG (t[ids][]=1-95-676)
-const DIN_STL_URL = 'https://plataforma.brasil.mapbiomas.org/coverage/coverage_lclu?t[regionKey]=brazil&t[ids][]=1-95-676&t[divisionCategoryId]=95&tl[id]=1&tl[themeKey]=coverage&tl[subthemeKey]=coverage_lclu&tl[year]=2022';
 const DIN_CLASSE_URBANO = 24; // MapBiomas: Área Urbanizada
 
 function _dinState(){
@@ -8734,11 +8732,6 @@ function _dinState(){
   return state.dinamica;
 }
 function dinSetCampo(campo,val){ _dinState()[campo]=val; if(typeof autoSave==='function') autoSave(); }
-function dinExemploSTL(){
-  _dinState().mb_url = DIN_STL_URL;
-  const el=document.getElementById('din-mb-url'); if(el) el.value=DIN_STL_URL;
-  if(typeof autoSave==='function') autoSave();
-}
 function _dinBaseUrl(){
   const u=(_dinState().mb_url||'').trim();
   return (u && /mapbiomas\.org/.test(u)) ? u : DIN_MAPA_PADRAO;

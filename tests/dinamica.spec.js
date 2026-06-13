@@ -80,8 +80,10 @@ test('Dinâmica Territorial: deep-link de município posiciona os mapas; mancha 
   await page.locator('#nav-14').click();
   await page.waitForTimeout(400);
 
-  const r = await page.evaluate(() => {
-    dinExemploSTL(); // preenche a URL de São Tomé das Letras (t[ids][]=1-95-676)
+  const SAMPLE = 'https://plataforma.brasil.mapbiomas.org/coverage/coverage_lclu?t[regionKey]=brazil&t[ids][]=1-95-676&t[divisionCategoryId]=95&tl[themeKey]=coverage&tl[subthemeKey]=coverage_lclu&tl[pixelValues][]=3&tl[pixelValues][]=15&tl[year]=2022';
+  const r = await page.evaluate((url) => {
+    dinSetCampo('mb_url', url); // URL de um município qualquer colada pelo usuário
+    document.getElementById('din-mb-url').value = url;
     dinCarregarMapa('cob');
     dinCarregarMapa('urb');
     const cob = document.getElementById('din-cob-iframe').getAttribute('src');
@@ -92,7 +94,7 @@ test('Dinâmica Territorial: deep-link de município posiciona os mapas; mancha 
       urbNoMunicipio: /1-95-676/.test(urb),
       urbClasses: (urb.match(/tl\[pixelValues\]\[\]=\d+/g) || []),
     };
-  });
+  }, SAMPLE);
   expect(r.campo).toContain('1-95-676');
   expect(r.cobNoMunicipio).toBe(true);
   expect(r.urbNoMunicipio).toBe(true);
