@@ -5503,7 +5503,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header"><span class="block-icon">🛰️</span><span class="block-title">Cobertura do solo no tempo (MapBiomas)</span></div>
     <div class="block-body">
       <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Mapa oficial classificado, com legenda, seletor de ano e estatísticas por classe. Leia aqui a <strong>composição da cobertura</strong> e como ela mudou — floresta, campo, pastagem, agricultura, água, área urbanizada.</div>
-      <div id="din-cob-mapwrap" style="position:relative;border:1px solid var(--line2);border-radius:8px;overflow:hidden;height:540px;background:var(--bg4)">
+      <div id="din-cob-mapwrap" style="position:relative;border:1px solid var(--line2);border-radius:8px;overflow:hidden;height:clamp(620px,88vh,940px);background:var(--bg4)">
         <div id="din-cob-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px">
           <div style="font-size:1.6rem">🛰️</div>
           <div style="font-size:.7rem;color:var(--t3);max-width:440px;line-height:1.5">O mapa de cobertura do <strong>MapBiomas</strong> (conteúdo externo) carrega aqui. Requer conexão com a internet.</div>
@@ -5519,7 +5519,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header"><span class="block-icon">🏘️</span><span class="block-title">Evolução da mancha urbana (MapBiomas)</span></div>
     <div class="block-body">
       <div class="info-box" style="font-size:.6rem;margin-bottom:10px">No mapa, isole a classe <strong>"Área Urbanizada"</strong> (legenda) e percorra a <strong>linha do tempo</strong> para ver a expansão real ano a ano. Para sobrepor a mancha ao <strong>seu lote</strong>, desenhe/importe os footprints por ano na camada <strong>Cobertura</strong> do <a href="javascript:void(0)" onclick="irPara(6,document.getElementById('nav-6'))" style="color:var(--teal);font-weight:600">Mapa de Análise (08)</a>.</div>
-      <div id="din-urb-mapwrap" style="position:relative;border:1px solid var(--line2);border-radius:8px;overflow:hidden;height:540px;background:var(--bg4)">
+      <div id="din-urb-mapwrap" style="position:relative;border:1px solid var(--line2);border-radius:8px;overflow:hidden;height:clamp(620px,88vh,940px);background:var(--bg4)">
         <div id="din-urb-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px">
           <div style="font-size:1.6rem">🏘️</div>
           <div style="font-size:.7rem;color:var(--t3);max-width:440px;line-height:1.5">O mesmo mapa do <strong>MapBiomas</strong> para ler a <strong>mancha urbana</strong> ao longo do tempo. Requer internet.</div>
