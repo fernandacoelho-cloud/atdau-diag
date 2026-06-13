@@ -23,7 +23,7 @@ test.describe('P1 — navegação agrupada e completude', () => {
 
     // ids preservados (testes e navegação dependem deles) e na ordem do fluxo
     const ids = await page.evaluate(() => [...document.querySelectorAll('.sec-nav-item')].map(n => n.id));
-    expect(ids).toEqual(['nav-0','nav-11','nav-1','nav-2','nav-3','nav-4','nav-5','nav-9','nav-12','nav-6','nav-10','nav-7','nav-13','nav-8']);
+    expect(ids).toEqual(['nav-0','nav-11','nav-1','nav-2','nav-3','nav-4','nav-5','nav-14','nav-9','nav-12','nav-6','nav-10','nav-7','nav-13','nav-8']);
 
     // cada item ainda navega para o painel certo (amostra)
     await page.locator('#nav-1').click();

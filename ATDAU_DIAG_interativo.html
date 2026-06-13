@@ -1301,6 +1301,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="sec-nav-item" onclick="irPara(5,this)" id="nav-5">
     <div class="dot"></div>05 · Ocupação e Usos<div class="nav-prog"><i></i></div>
   </div>
+  <div class="sec-nav-item" onclick="irPara(14,this)" id="nav-14">
+    <div class="dot"></div>🛰️ Dinâmica Territorial<div class="nav-prog"><i></i></div>
+  </div>
 
   <div class="sec-nav-group">Coleta &amp; Referências</div>
   <div class="sec-nav-item" onclick="irPara(9,this)" id="nav-9">
@@ -5470,6 +5473,84 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 </div>
 
+<!-- ════════════════════ PANEL 14: DINÂMICA TERRITORIAL ════════════════════ -->
+<div class="panel" id="panel-14">
+  <div class="sec-title">Dinâmica Territorial — escala ampliada <div class="sec-line"></div>
+    <span class="sec-ref">Leitura da mudança no tempo · cobertura do solo + mancha urbana</span>
+  </div>
+
+  <div class="info-box">
+    <strong>Para que serve:</strong> ler a <em>trajetória</em> do território — como a <strong>cobertura do solo</strong> e a <strong>mancha urbana</strong> mudaram ao longo de décadas — para informar o partido, a postura de sustentabilidade e o programa. Não substitui o Plano Diretor: aqui a leitura da dinâmica <strong>alimenta a Síntese SWOT do projeto</strong>. Lembre: <strong>uso</strong> do solo é a função; <strong>cobertura</strong> é a superfície física.
+  </div>
+
+  <div class="info-box" style="font-size:.62rem;background:rgba(31,111,92,.06)">
+    <strong>De onde vêm os dados:</strong> os mapas abaixo são o <strong>MapBiomas oficial</strong> (1985→atual, 30&nbsp;m), embutidos ao vivo. <strong>Busque o seu município</strong> dentro do mapa (campo de busca da plataforma), use o seletor de ano e a aba de estatísticas. Como o mapa é externo, ele <strong>precisa de internet</strong> e <strong>não entra no PDF/JSON</strong> — por isso registre os números-chave que ler no bloco de leitura, mais abaixo.
+    <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap">
+      <a href="https://plataforma.brasil.mapbiomas.org/cobertura" target="_blank" rel="noopener" class="instr-btn" style="font-size:.62rem">🛰️ Abrir plataforma em nova aba →</a>
+      <a href="https://brasil.mapbiomas.org/estatisticas/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.62rem">📊 Estatísticas por município →</a>
+    </div>
+  </div>
+
+  <!-- Bloco A: cobertura do solo — mapa MapBiomas embutido -->
+  <div class="block block-open">
+    <div class="block-header"><span class="block-icon">🛰️</span><span class="block-title">Cobertura do solo no tempo (MapBiomas)</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Mapa oficial classificado, com legenda, seletor de ano e estatísticas por classe. Leia aqui a <strong>composição da cobertura</strong> e como ela mudou — floresta, campo, pastagem, agricultura, água, área urbanizada.</div>
+      <div id="din-cob-mapwrap" style="position:relative;border:1px solid var(--line2);border-radius:8px;overflow:hidden;height:540px;background:var(--bg4)">
+        <div id="din-cob-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px">
+          <div style="font-size:1.6rem">🛰️</div>
+          <div style="font-size:.7rem;color:var(--t3);max-width:440px;line-height:1.5">O mapa de cobertura do <strong>MapBiomas</strong> (conteúdo externo) carrega aqui. Requer conexão com a internet.</div>
+          <button class="instr-btn instr-btn-primary" onclick="dinCarregarMapa('cob')" style="font-size:.72rem;padding:9px 20px">▶ Carregar mapa de cobertura</button>
+        </div>
+        <iframe id="din-cob-iframe" title="MapBiomas — Cobertura do solo" allow="fullscreen" style="width:100%;height:100%;border:0;display:none"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloco B: mancha urbana — mapa MapBiomas (classe Área Urbanizada) -->
+  <div class="block block-open">
+    <div class="block-header"><span class="block-icon">🏘️</span><span class="block-title">Evolução da mancha urbana (MapBiomas)</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">No mapa, isole a classe <strong>"Área Urbanizada"</strong> (legenda) e percorra a <strong>linha do tempo</strong> para ver a expansão real ano a ano. Para sobrepor a mancha ao <strong>seu lote</strong>, desenhe/importe os footprints por ano na camada <strong>Cobertura</strong> do <a href="javascript:void(0)" onclick="irPara(6,document.getElementById('nav-6'))" style="color:var(--teal);font-weight:600">Mapa de Análise (08)</a>.</div>
+      <div id="din-urb-mapwrap" style="position:relative;border:1px solid var(--line2);border-radius:8px;overflow:hidden;height:540px;background:var(--bg4)">
+        <div id="din-urb-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px">
+          <div style="font-size:1.6rem">🏘️</div>
+          <div style="font-size:.7rem;color:var(--t3);max-width:440px;line-height:1.5">O mesmo mapa do <strong>MapBiomas</strong> para ler a <strong>mancha urbana</strong> ao longo do tempo. Requer internet.</div>
+          <button class="instr-btn instr-btn-primary" onclick="dinCarregarMapa('urb')" style="font-size:.72rem;padding:9px 20px">▶ Carregar mapa da mancha urbana</button>
+        </div>
+        <iframe id="din-urb-iframe" title="MapBiomas — Área Urbanizada" allow="fullscreen" style="width:100%;height:100%;border:0;display:none"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloco C: leitura + registro que vai ao export -->
+  <div class="block block-open">
+    <div class="block-header"><span class="block-icon">💬</span><span class="block-title">Leitura da dinâmica → registro do projeto</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Os mapas acima são externos e <strong>não entram no export</strong>. Registre aqui o que você leu deles — este texto viaja com o projeto e alimenta o SWOT. Cruze com os dados de <strong>01 · Contexto Urbano · IBGE/SIDRA</strong>.</div>
+      <div class="form-field"><label>Números-chave lidos dos mapas (cobertura e mancha)</label>
+        <textarea id="din-numeros" oninput="dinSetCampo('numeros', this.value)" placeholder="Ex.: floresta 55%→38% (1985→2022); área urbanizada ~120→260 ha (+117%); pastagem recuou; agricultura avançou…" style="min-height:54px"></textarea>
+      </div>
+      <div class="form-field"><label>Leitura da dinâmica socioespacial e econômica</label>
+        <textarea id="din-leitura" oninput="dinSetCampo('leitura', this.value)" placeholder="O que a trajetória revela — pressões, vetores de expansão, perda de vegetação, oportunidades — e as implicações para o partido e o programa do projeto." style="min-height:90px"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloco D: achados -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">📌</span><span class="block-title">Achados — Dinâmica Territorial</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Classifique como P/F/O/A — estes achados entram na <strong>Síntese SWOT</strong>.</div>
+      <div class="finding-list" id="findings-14"></div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input type="text" id="inp-f14" placeholder="Ex.: perda de X% de vegetação no entorno em 30 anos (ameaça)…" onkeydown="if(event.key==='Enter')addFinding(14)" style="flex:1;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.66rem;box-sizing:border-box">
+        <button class="add-btn" onclick="addFinding(14)">+ Adicionar achado</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════════ PANEL 6: SWOT ════════════════════ -->
 <div class="panel" id="panel-7">
   <div class="sec-title">Síntese SWOT do Diagnóstico <div class="sec-line"></div></div>
@@ -7699,7 +7780,8 @@ window.MS_B64="PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ+CjxtZXRhI
 // ══════════════════════════════════════════════════
 let state = {
   proj:{}, contexto:{}, leg:{}, amb:{}, paisa:{}, ocu:{},
-  findings: {1:[],2:[],3:[],4:[],5:[]},
+  findings: {1:[],2:[],3:[],4:[],5:[],14:[]},
+  dinamica: null, // Dinâmica Territorial (panel-14) — preenchido sob demanda por _dinState()
   swot_narrativa:'',
   dir_manual:[],
   dir_cats:{},
@@ -8352,6 +8434,7 @@ function irPara(n, el){
   if(n===11) renderViabilidade();
   if(n===12) renderAnalogasPanel();
   if(n===13) renderProgramacao();
+  if(n===14 && typeof renderDinamica==='function') renderDinamica();
   if(n===9 && typeof renderUserProfiles==='function'){ renderUserProfiles('mapa-comportamental'); renderUserProfiles('stationary-mapping'); }
   if(n===0 && typeof renderValores==='function') renderValores();
   if(typeof atualizarCompletude==='function') atualizarCompletude();
@@ -8566,6 +8649,7 @@ function addFinding(sec){
   const text=inp.value.trim();
   if(!text) return;
   const f={id:Date.now(),text,class:''};
+  if(!state.findings[sec]) state.findings[sec]=[];
   state.findings[sec].push(f);
   inp.value='';
   renderFindings(sec);
@@ -8575,6 +8659,8 @@ function addFinding(sec){
 
 function renderFindings(sec){
   const container=document.getElementById(`findings-${sec}`);
+  if(!container) return;
+  if(!state.findings[sec]) state.findings[sec]=[]; // estados salvos antigos não têm a aba 14
   container.innerHTML='';
   state.findings[sec].forEach((f,idx)=>{
     const div=document.createElement('div');
@@ -8590,7 +8676,7 @@ function renderFindings(sec){
 }
 
 function renderAllFindings(){
-  [1,2,3,4,5].forEach(s=>renderFindings(s));
+  [1,2,3,4,5,14].forEach(s=>renderFindings(s));
 }
 
 function setFClass(sec,idx,cls){
@@ -8612,8 +8698,40 @@ function delFinding(sec,idx){
 // ══════════════════════════════════════════════════
 function getAllFindings(){
   const all=[];
-  [1,2,3,4,5].forEach(s=> state.findings[s].forEach(f=>all.push(f)));
+  [1,2,3,4,5,14].forEach(s=> (state.findings[s]||[]).forEach(f=>all.push(f)));
   return all;
+}
+
+// ══════════════════════════════════════════════════
+// DINÂMICA TERRITORIAL (panel-14) — leitura da mudança no tempo
+// Dois mapas oficiais do MapBiomas embutidos (cobertura + mancha urbana),
+// carregados sob clique (conteúdo externo, precisa de internet). A leitura e
+// os números-chave são registrados em texto (vão ao export) e os achados
+// (sec=14) alimentam o SWOT.
+// ══════════════════════════════════════════════════
+const DIN_MAPAS = {
+  cob: 'https://plataforma.brasil.mapbiomas.org/cobertura',
+  urb: 'https://plataforma.brasil.mapbiomas.org/cobertura'
+};
+function _dinState(){
+  if(!state.dinamica || Array.isArray(state.dinamica.cob_anos)) {
+    // (re)inicia no novo formato; descarta o formato antigo de tabelas se houver
+    const prev = state.dinamica || {};
+    state.dinamica = { numeros: prev.numeros||'', leitura: prev.leitura||'' };
+  }
+  return state.dinamica;
+}
+function dinSetCampo(campo,val){ _dinState()[campo]=val; if(typeof autoSave==='function') autoSave(); }
+function dinCarregarMapa(which){
+  const f=document.getElementById('din-'+which+'-iframe'), ph=document.getElementById('din-'+which+'-ph');
+  if(f && !f.getAttribute('src')){ f.setAttribute('src', DIN_MAPAS[which]); f.style.display='block'; }
+  if(ph) ph.style.display='none';
+}
+function renderDinamica(){
+  const d=_dinState();
+  const num=document.getElementById('din-numeros'); if(num && document.activeElement!==num) num.value=d.numeros||'';
+  const lt=document.getElementById('din-leitura'); if(lt && document.activeElement!==lt) lt.value=d.leitura||'';
+  if(typeof renderFindings==='function') renderFindings(14);
 }
 
 function renderSwot(){
@@ -10885,7 +11003,7 @@ function updateMeta(){
 }
 
 function marcarNavComDados(){
-  [1,2,3,4,5].forEach(s=>{
+  [1,2,3,4,5,14].forEach(s=>{
     const nav=document.getElementById(`nav-${s}`);
     if(nav) nav.classList.toggle('has-data', state.findings[s]&&state.findings[s].length>0);
   });
@@ -11001,7 +11119,7 @@ function agendarCompletude(){ clearTimeout(_compTimer); _compTimer=setTimeout(at
 // ══════════════════════════════════════════════════
 const DASH_FASES = [
   { nome:'Preparação',           panels:[0,11] },
-  { nome:'Diagnóstico',          panels:[1,2,3,4,5] },
+  { nome:'Diagnóstico',          panels:[1,2,3,4,5,14] },
   { nome:'Coleta & Referências', panels:[9,12] },
   { nome:'Mapas',                panels:[6,10] },
   { nome:'Síntese & Entrega',    panels:[7,13,8] },
