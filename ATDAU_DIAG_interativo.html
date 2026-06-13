@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATDAU-01-01-DIAG · Diagnóstico Urbano</title>
+<title>ATDAU · Pré-Projeto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1263,7 +1263,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="tb-logo">ATDAU</div>
-  <div class="tb-title">01-01-DIAG · Diagnóstico Urbano</div>
+  <div class="tb-title">Pré-Projeto · ATDAU 01-01</div>
   <div class="tb-meta" id="tb-meta">Projeto não salvo</div>
   <button class="tb-export" onclick="exportJSON()">⬇ Export JSON</button>
   <button class="tb-export" onclick="gerarRelatorioPDF()" title="Gerar relatório-síntese em PDF">📄 Relatório PDF</button>
@@ -2445,7 +2445,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header" style="background:rgba(224,80,106,.06)"><span class="block-icon">⚠️</span><span class="block-title" style="color:var(--red)">Áreas de risco — Inundação e Geológico</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
     <div class="block-body">
       <div class="info-box" style="border-color:rgba(224,80,106,.2);background:rgba(224,80,106,.04)">
-        <strong style="color:var(--red)">Fontes oficiais de dados de risco</strong> — todas com download em shapefile/GeoJSON para abrir no QGIS ou importar na DIAG (botão "⬆ Importar shape" no mapa do bloco):
+        <strong style="color:var(--red)">Fontes oficiais de dados de risco</strong> — todas com download em shapefile/GeoJSON para abrir no QGIS ou importar no Pré-Projeto (botão "⬆ Importar shape" no mapa do bloco):
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:.6rem">
           <div>
             <strong>🇧🇷 Nacional</strong>
@@ -7462,7 +7462,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
         <div style="background:white;border:1px solid var(--line);border-radius:6px;padding:11px 14px">
-          <strong style="font-size:.72rem;color:var(--teal)">📥 Como exportar do QGIS para DIAG</strong>
+          <strong style="font-size:.72rem;color:var(--teal)">📥 Como exportar do QGIS para o Pré-Projeto</strong>
           <ol style="margin:6px 0 0;padding-left:18px;font-size:.62rem;color:var(--t2);line-height:1.55">
             <li>Selecione a camada no painel <em>Camadas</em></li>
             <li>Clique direito → <em>Exportar → Salvar feições como…</em></li>
@@ -7472,18 +7472,18 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           </ol>
         </div>
         <div style="background:white;border:1px solid var(--line);border-radius:6px;padding:11px 14px">
-          <strong style="font-size:.72rem;color:var(--gold)">📤 Como abrir na DIAG</strong>
+          <strong style="font-size:.72rem;color:var(--gold)">📤 Como abrir no Pré-Projeto</strong>
           <ol style="margin:6px 0 0;padding-left:18px;font-size:.62rem;color:var(--t2);line-height:1.55">
             <li>No Mapa de Análise (aba 09), botão <em>"⬆ Importar"</em> aceita .geojson e .zip (shape)</li>
             <li>Em cada bloco temático com "📍 Mostrar mapa", a barra inferior tem <em>"⬆ Importar shape/GeoJSON"</em></li>
-            <li>O arquivo importado vira camada na DIAG e aparece no Mapa-Síntese</li>
+            <li>O arquivo importado vira camada no Pré-Projeto e aparece no Mapa-Síntese</li>
           </ol>
         </div>
       </div>
 
       <div style="background:#fff8e6;border-left:3px solid #d4a544;border-radius:5px;padding:10px 13px;font-size:.62rem;color:var(--t2);line-height:1.5">
-        <strong>O que mantém no QGIS, o que faz na DIAG.</strong>
-        Use o QGIS para: análises espaciais avançadas (buffers, interseções, declividade derivada de DEM, redes de drenagem), cartografia final para impressão, e processamento de dados oficiais (geobr, IBGE). Use a DIAG para: estruturar o método do diagnóstico, organizar achados PFOA, redigir diretrizes projetuais, e cruzar análise gráfica de obras análogas. As duas ferramentas trabalham juntas — não uma <em>contra</em> a outra.
+        <strong>O que mantém no QGIS, o que faz no Pré-Projeto.</strong>
+        Use o QGIS para: análises espaciais avançadas (buffers, interseções, declividade derivada de DEM, redes de drenagem), cartografia final para impressão, e processamento de dados oficiais (geobr, IBGE). Use o Pré-Projeto para: estruturar o método do diagnóstico, organizar achados PFOA, redigir diretrizes projetuais, e cruzar análise gráfica de obras análogas. As duas ferramentas trabalham juntas — não uma <em>contra</em> a outra.
       </div>
     </div>
 
@@ -7503,7 +7503,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <div id="diag-panel" style="position:fixed;bottom:60px;right:14px;width:380px;max-width:calc(100vw - 28px);max-height:60vh;z-index:9997;background:rgba(20,18,28,.96);color:#e8e6e1;border-radius:8px;padding:0;box-shadow:0 4px 16px rgba(0,0,0,.4);font-family:monospace;font-size:.6rem;display:none;flex-direction:column;border:1px solid #7E5A9B">
   <div style="background:#7E5A9B;padding:7px 12px;border-radius:8px 8px 0 0;font-weight:700;display:flex;align-items:center;justify-content:space-between">
-    <span>🔍 Diagnóstico ATDAU DIAG</span>
+    <span>🔍 Diagnóstico ATDAU Pré-Projeto</span>
     <div style="display:flex;gap:6px">
       <button onclick="diagAutoTest()" style="background:#1F6F5C;color:white;border:none;border-radius:3px;padding:3px 8px;cursor:pointer;font-size:.55rem">▶ teste auto</button>
       <button onclick="diagClear()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:3px;padding:3px 8px;cursor:pointer;font-size:.55rem">limpar</button>
@@ -11062,7 +11062,7 @@ function updateMeta(){
   const nome=state['proj-nome']||'Projeto sem nome';
   const data=state['proj-data']||'';
   document.getElementById('tb-meta').textContent=`${nome}${data?' · '+data:''}`;
-  document.title=`ATDAU-DIAG · ${nome}`;
+  document.title=`ATDAU Pré-Projeto · ${nome}`;
 }
 
 function marcarNavComDados(){
@@ -11447,7 +11447,7 @@ function gerarRelatorioPDF(){
   function rodape(){
     const p = doc.internal.getNumberOfPages();
     doc.setFontSize(7.5); doc.setTextColor(...CINZA);
-    doc.text('Suite ATDAU · 01-01-DIAG · Diagnóstico Urbano', M, H-10);
+    doc.text('Suite ATDAU · Pré-Projeto (01-01)', M, H-10);
     doc.text('pág. '+p, W-M, H-10, {align:'right'});
   }
   function titulo(txt){
@@ -11484,9 +11484,9 @@ function gerarRelatorioPDF(){
   doc.setFillColor(...TERRA); doc.rect(0, 0, W, 3, 'F');
   y = M+4;
   doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...ESC);
-  doc.text('Relatório de Diagnóstico Urbano', M, y); y+=8;
+  doc.text('Relatório de Pré-Projeto', M, y); y+=8;
   doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...CINZA);
-  doc.text('Suite ATDAU · ferramenta 01-01-DIAG', M, y); y+=10;
+  doc.text('Suite ATDAU · Pré-Projeto (ferramenta 01-01)', M, y); y+=10;
 
   const nome = state['proj-nome']||'(projeto sem nome)';
   const ender = state['proj-end']||'';
@@ -12126,7 +12126,7 @@ function exportarMapaPNG(map, opts) {
       opts._escalaMetros = metros; opts._escalaPx = metros/mPerPx;
     } catch(e){}
     if (escalaTxt) linhas.push({t:'Escala gráfica · barra = '+escalaTxt, b:false, s:10});
-    linhas.push({t: (opts.credito || 'Suite ATDAU · 01-01-DIAG') + ' · ' + new Date().toLocaleDateString('pt-BR'), b:false, s:9});
+    linhas.push({t: (opts.credito || 'Suite ATDAU · Pré-Projeto') + ' · ' + new Date().toLocaleDateString('pt-BR'), b:false, s:9});
 
     // medir caixa
     let boxH = pad; const lineGap = 4*dpr;
