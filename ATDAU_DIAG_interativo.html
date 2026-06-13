@@ -8050,7 +8050,7 @@ const CENSO22_AGREGADOS = [
 ];
 
 // geobr — mapa de geografias relevantes para o pré-projeto arquitetônico
-// (subset do catálogo geobr; nem todas as ~5000 URLs interessam para TCC)
+// (subset do catálogo geobr; nem todas as ~5000 URLs interessam ao pré-projeto)
 const GEOBR_GEOGRAFIAS = [
   {id:'census_tract', titulo:'Setores censitários', desc:'Geometria oficial dos setores (menor unidade de divulgação do Censo). Cruza com TODOS os agregados acima pelo código de 15 dígitos.', anos:[2000,2010,2022], escala:'UF', recomendado:true},
   {id:'municipality', titulo:'Município (limite)', desc:'Limite municipal (polígono). Útil como recorte/máscara.', anos:[2000,2010,2020,2022,2024], escala:'UF', recomendado:true},
@@ -8212,10 +8212,10 @@ function _copyURL(btn, url){
 // ══════════════════════════════════════════════════
 const TUT_PERCURSOS = {
   novato: {
-    label: 'Novato',
-    sub: 'TCC com tempo curto · caminho mínimo viável',
+    label: 'Essencial',
+    sub: 'Núcleo do diagnóstico · escala do lote e entorno imediato',
     cor: '#3D8B5A',
-    desc: 'Para quem está conhecendo a ferramenta agora ou tem prazo apertado. Cobre só o essencial — você pode aprofundar depois.',
+    desc: 'O conjunto mínimo que orienta qualquer pré-projeto — não é "a versão rápida", é a base sobre a qual as demais trilhas aprofundam. A escolha do percurso reflete o aprofundamento e a escala do seu projeto, não o prazo. Atenção: legislação, condicionantes ambientais e viabilidade podem ser obrigatórias conforme a natureza do projeto — inclua-as quando o caso pedir.',
     nos: [
       {n:0, lbl:'Identificação',   tag:'caracterize o projeto e os usuários'},
       {n:0, lbl:'· Recorte territorial',  tag:'declare a tipologia e a lógica de recorte'},
@@ -8227,10 +8227,10 @@ const TUT_PERCURSOS = {
     ]
   },
   avancado: {
-    label: 'Avançado',
-    sub: 'TCC com aprofundamento · caminho completo',
+    label: 'Aprofundado',
+    sub: 'Diagnóstico completo do contexto · do lote ao bairro',
     cor: '#3B6B8C',
-    desc: 'Para quem tem tempo para um diagnóstico aprofundado. Cobre as 6 etapas do pré-projeto, com viabilidade, legislação e instrumentos de coleta.',
+    desc: 'Para projetos que exigem leitura aprofundada do contexto. Cobre as etapas do pré-projeto com maior detalhe: viabilidade, legislação, condicionantes ambientais, paisagem, ocupação e instrumentos de coleta.',
     nos: [
       {n:0, lbl:'Identificação + Valores',     tag:'todas as áreas HECTTEAS pertinentes'},
       {n:11,lbl:'Viabilidade preliminar',      tag:'natureza pública/privada + enquadramento'},
@@ -8249,10 +8249,10 @@ const TUT_PERCURSOS = {
     ]
   },
   pesquisador: {
-    label: 'Pesquisador / Professor',
-    sub: 'Uso pleno do método · todos os recursos',
+    label: 'Pleno',
+    sub: 'Método completo · maior aprofundamento e escala territorial',
     cor: '#7E5A9B',
-    desc: 'Para quem quer explorar a ferramenta como objeto de pesquisa ou ensiná-la a uma turma. Inclui análise gráfica decomposta de cada obra análoga, todas as 8 áreas HECTTEAS, viabilidade consolidada, e vínculos entre necessidades/ambientes/diretrizes.',
+    desc: 'Uso pleno do método, para o maior nível de aprofundamento e escala. Inclui todas as 8 áreas HECTTEAS, viabilidade consolidada, dados socioeconômicos por setor, dinâmica territorial (MapBiomas), análise gráfica decomposta de cada obra análoga e vínculos entre necessidades, ambientes e diretrizes.',
     nos: [
       {n:0, lbl:'Identificação (8 áreas)',     tag:'HECTTEAS completo, incluindo Temporal/Estética/Segurança'},
       {n:11,lbl:'Viabilidade preliminar + consolidada', tag:'os dois momentos (preliminar e pós-SWOT)'},
@@ -8285,7 +8285,7 @@ function abrirTutorial(){
         <span style="font-size:1.1rem">🎯</span>
         <div style="flex:1">
           <div style="font-size:.82rem;font-weight:700;color:var(--t1)">Como usar a ferramenta</div>
-          <div style="font-size:.6rem;color:var(--t3);font-style:italic">três percursos possíveis · clique em uma etapa para ir até ela</div>
+          <div style="font-size:.6rem;color:var(--t3);font-style:italic">três percursos por nível de aprofundamento e escala · clique em uma etapa para ir até ela</div>
         </div>
         <button onclick="fecharTutorial()" style="font-size:.7rem;padding:6px 14px;background:transparent;border:1px solid var(--line2);border-radius:5px;cursor:pointer">Fechar</button>
       </div>
