@@ -5489,6 +5489,13 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <a href="https://plataforma.brasil.mapbiomas.org/cobertura" target="_blank" rel="noopener" class="instr-btn" style="font-size:.62rem">🛰️ Abrir plataforma em nova aba →</a>
       <a href="https://brasil.mapbiomas.org/estatisticas/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.62rem">📊 Estatísticas por município →</a>
     </div>
+    <div style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line2)">
+      <div style="font-size:.6rem;color:var(--t2);margin-bottom:4px"><strong>📍 Abrir os mapas já no seu município:</strong> na plataforma, busque o município, clique <strong>Aplicar</strong> e <strong>copie a URL da barra de endereço</strong> aqui. A URL fica salva no projeto.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="din-mb-url" oninput="dinSetCampo('mb_url', this.value)" placeholder="cole aqui a URL do MapBiomas já posicionada no município…" style="flex:1;min-width:220px;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.6rem;box-sizing:border-box">
+        <button class="instr-btn" onclick="dinExemploSTL()" style="font-size:.58rem">usar São Tomé das Letras (exemplo)</button>
+      </div>
+    </div>
   </div>
 
   <!-- Bloco A: cobertura do solo — mapa MapBiomas embutido -->
@@ -8709,26 +8716,50 @@ function getAllFindings(){
 // os números-chave são registrados em texto (vão ao export) e os achados
 // (sec=14) alimentam o SWOT.
 // ══════════════════════════════════════════════════
-const DIN_MAPAS = {
-  cob: 'https://plataforma.brasil.mapbiomas.org/cobertura',
-  urb: 'https://plataforma.brasil.mapbiomas.org/cobertura'
-};
+// URL-padrão (Brasil inteiro). A URL do MapBiomas é "fixável" (verificado):
+// codifica território t[ids][], ano tl[year] e classes tl[pixelValues][]. Se o
+// usuário colar a URL já posicionada no município, os mapas abrem lá.
+const DIN_MAPA_PADRAO = 'https://plataforma.brasil.mapbiomas.org/cobertura';
+// exemplo confirmado: São Tomé das Letras/MG (t[ids][]=1-95-676)
+const DIN_STL_URL = 'https://plataforma.brasil.mapbiomas.org/coverage/coverage_lclu?t[regionKey]=brazil&t[ids][]=1-95-676&t[divisionCategoryId]=95&tl[id]=1&tl[themeKey]=coverage&tl[subthemeKey]=coverage_lclu&tl[year]=2022';
+const DIN_CLASSE_URBANO = 24; // MapBiomas: Área Urbanizada
+
 function _dinState(){
   if(!state.dinamica || Array.isArray(state.dinamica.cob_anos)) {
     // (re)inicia no novo formato; descarta o formato antigo de tabelas se houver
     const prev = state.dinamica || {};
-    state.dinamica = { numeros: prev.numeros||'', leitura: prev.leitura||'' };
+    state.dinamica = { numeros: prev.numeros||'', leitura: prev.leitura||'', mb_url: prev.mb_url||'' };
   }
+  if(typeof state.dinamica.mb_url!=='string') state.dinamica.mb_url='';
   return state.dinamica;
 }
 function dinSetCampo(campo,val){ _dinState()[campo]=val; if(typeof autoSave==='function') autoSave(); }
+function dinExemploSTL(){
+  _dinState().mb_url = DIN_STL_URL;
+  const el=document.getElementById('din-mb-url'); if(el) el.value=DIN_STL_URL;
+  if(typeof autoSave==='function') autoSave();
+}
+function _dinBaseUrl(){
+  const u=(_dinState().mb_url||'').trim();
+  return (u && /mapbiomas\.org/.test(u)) ? u : DIN_MAPA_PADRAO;
+}
+// deriva a URL da mancha: isola a classe Área Urbanizada (remove outros filtros
+// de classe e fixa só o código urbano). Mantém os colchetes literais.
+function _dinUrbUrl(base){
+  let s = base.replace(/[?&]tl\[pixelValues\]\[\]=\d+/g, m => m[0]==='?' ? '?' : '');
+  s = s.replace(/\?&/, '?').replace(/&&+/g, '&').replace(/[?&]$/, '');
+  return s + (s.includes('?') ? '&' : '?') + 'tl[pixelValues][]=' + DIN_CLASSE_URBANO;
+}
 function dinCarregarMapa(which){
   const f=document.getElementById('din-'+which+'-iframe'), ph=document.getElementById('din-'+which+'-ph');
-  if(f && !f.getAttribute('src')){ f.setAttribute('src', DIN_MAPAS[which]); f.style.display='block'; }
+  const base=_dinBaseUrl();
+  const url = which==='urb' ? _dinUrbUrl(base) : base;
+  if(f && !f.getAttribute('src')){ f.setAttribute('src', url); f.style.display='block'; }
   if(ph) ph.style.display='none';
 }
 function renderDinamica(){
   const d=_dinState();
+  const mb=document.getElementById('din-mb-url'); if(mb && document.activeElement!==mb) mb.value=d.mb_url||'';
   const num=document.getElementById('din-numeros'); if(num && document.activeElement!==num) num.value=d.numeros||'';
   const lt=document.getElementById('din-leitura'); if(lt && document.activeElement!==lt) lt.value=d.leitura||'';
   if(typeof renderFindings==='function') renderFindings(14);

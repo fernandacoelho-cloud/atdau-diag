@@ -72,3 +72,35 @@ test('Dinâmica Territorial: leitura e números-chave persistem no reload', asyn
   expect(persist.numeros).toBe('floresta 55→38%');
   expect(persist.leitura).toBe('urbanização acelerada a sudeste');
 });
+
+test('Dinâmica Territorial: deep-link de município posiciona os mapas; mancha isola Área Urbanizada', async ({ page }) => {
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1500);
+  await page.locator('#nav-14').click();
+  await page.waitForTimeout(400);
+
+  const r = await page.evaluate(() => {
+    dinExemploSTL(); // preenche a URL de São Tomé das Letras (t[ids][]=1-95-676)
+    dinCarregarMapa('cob');
+    dinCarregarMapa('urb');
+    const cob = document.getElementById('din-cob-iframe').getAttribute('src');
+    const urb = document.getElementById('din-urb-iframe').getAttribute('src');
+    return {
+      campo: document.getElementById('din-mb-url').value,
+      cobNoMunicipio: /1-95-676/.test(cob),
+      urbNoMunicipio: /1-95-676/.test(urb),
+      urbClasses: (urb.match(/tl\[pixelValues\]\[\]=\d+/g) || []),
+    };
+  });
+  expect(r.campo).toContain('1-95-676');
+  expect(r.cobNoMunicipio).toBe(true);
+  expect(r.urbNoMunicipio).toBe(true);
+  expect(r.urbClasses).toEqual(['tl[pixelValues][]=24']); // só Área Urbanizada
+
+  // a URL colada persiste no reload
+  await page.waitForTimeout(1400);
+  await page.reload();
+  await page.waitForTimeout(1500);
+  expect(await page.evaluate(() => state.dinamica?.mb_url || '')).toContain('1-95-676');
+});
