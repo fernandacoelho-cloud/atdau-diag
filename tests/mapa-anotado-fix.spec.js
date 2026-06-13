@@ -1,0 +1,70 @@
+// tests/mapa-anotado-fix.spec.js
+// 2026-06-13: dois bugs que travavam o Mapa Anotado (panel-9 urbana), dirigindo
+// a UI como o usuário (cliques reais, não chamadas de função):
+//  (1) no modo "Adicionar", clicar uma categoria não a selecionava — o onclick
+//      só checava shiftKey, nunca o modo. Sem categoria, o clique no mapa não
+//      criava nada.
+//  (2) o modal de edição nunca abria: o #ma-modal tinha display:none INLINE, que
+//      vencia a classe .ma-modal.open{display:flex}.
+import { test, expect } from '@playwright/test';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DIAG_URL = 'file://' + path.resolve(__dirname, '..', 'ATDAU_DIAG_interativo.html').replace(/\\/g, '/');
+
+test('Mapa Anotado: adicionar e editar funcionam pela UI real', async ({ page }) => {
+  page.on('dialog', d => d.accept().catch(() => {}));
+  await page.setViewportSize({ width: 1280, height: 1000 }); // mapa de 480px cabe sem cair fora da dobra
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1600);
+  await page.locator('#nav-9').click();
+  await page.waitForTimeout(900);
+  await page.evaluate(() => document.getElementById('ma-mapa')?.scrollIntoView({ block: 'center' }));
+  await page.waitForFunction(() => typeof _maInst !== 'undefined' && _maInst && _maInst.isStyleLoaded(), null, { timeout: 20000 });
+  await page.waitForTimeout(900);
+
+  // (1) modo Adicionar + clique normal na categoria → categoria selecionada
+  await page.locator('.ma-mode-btn[data-mode="add"]').click();
+  await page.waitForTimeout(200);
+  await page.locator('.ma-cat-chip').first().click(); // clique NORMAL (sem shift)
+  await page.waitForTimeout(200);
+  const addCat = await page.evaluate(() => _maAddCategory);
+  expect(addCat).toBeTruthy(); // antes do fix ficava null
+
+  // clicar no mapa cria a anotação
+  const antes = await page.evaluate(() => MapaAnotadoStore.getAll().length);
+  const box = await page.locator('#ma-mapa canvas').first().boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(700);
+  const depois = await page.evaluate(() => MapaAnotadoStore.getAll().length);
+  expect(depois).toBe(antes + 1);
+
+  // (2) o modal de edição abre (display != none)
+  const modalAberto = await page.evaluate(() => {
+    const m = document.getElementById('ma-modal');
+    return m.classList.contains('open') && getComputedStyle(m).display !== 'none';
+  });
+  expect(modalAberto).toBe(true);
+
+  // editar pela lista também abre o modal
+  await page.evaluate(() => maCloseModal());
+  await page.waitForTimeout(200);
+  const editouLista = await page.evaluate(() => {
+    document.querySelector('.ma-lista-item').click();
+    const m = document.getElementById('ma-modal');
+    return m.classList.contains('open') && getComputedStyle(m).display !== 'none';
+  });
+  expect(editouLista).toBe(true);
+
+  // modo Ver: clique normal ainda alterna a visibilidade da categoria (não regrediu)
+  const toggle = await page.evaluate(() => {
+    maCloseModal(); maSetMode('view');
+    const cat = MA_CATEGORIES[0].id;
+    const a = MapaAnotadoStore.isCategoryActive(cat);
+    document.querySelector('.ma-cat-chip').click();
+    return a !== MapaAnotadoStore.isCategoryActive(cat);
+  });
+  expect(toggle).toBe(true);
+});

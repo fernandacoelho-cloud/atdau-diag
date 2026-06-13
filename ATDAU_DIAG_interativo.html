@@ -5938,7 +5938,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
 
     <!-- Modal de edição do Mapa Anotado (overlay, fica fora do .instr-card propositalmente) -->
-    <div id="ma-modal" class="ma-modal" onclick="if(event.target===this)maCloseModal()" style="display:none">
+    <div id="ma-modal" class="ma-modal" onclick="if(event.target===this)maCloseModal()">
       <div class="ma-modal-content">
         <button class="ma-modal-close" onclick="maCloseModal()" aria-label="Fechar">×</button>
         <div id="ma-modal-title" class="ma-modal-title">Editar anotação</div>
@@ -19096,8 +19096,8 @@ function maRenderCategories() {
     const indicator = adding ? '➕ ' : '';
     return `<div class="ma-cat-chip${active?' active':''}" 
                  style="background:${active?cat.color:bg};border-color:${border};color:${active?'#0a0a0a':'var(--t2)'}"
-                 onclick="event.shiftKey ? maSetAddCategory('${cat.id}') : maToggleCategoryVisibility('${cat.id}')"
-                 title="Clique: mostrar/ocultar · Shift+clique: adicionar nova nesta categoria">
+                 onclick="(_maMode==='add' || event.shiftKey) ? maSetAddCategory('${cat.id}') : maToggleCategoryVisibility('${cat.id}')"
+                 title="Clique: mostrar/ocultar (no modo Adicionar, seleciona a categoria) · Shift+clique: selecionar categoria para adicionar">
               ${indicator}<span class="ma-cat-dot" style="background:${cat.color}"></span>
               ${cat.icon} ${cat.label}
               <span class="ma-cat-count">${count}</span>
