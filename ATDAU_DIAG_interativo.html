@@ -11568,6 +11568,39 @@ function gerarRelatorioPDF(){
     y+=1.2;
   }
   function espaco(n){ y += (n||4); }
+  // rótulo de um campo (label do .form-field, ou label anterior, ou o id)
+  function _labelDe(el){
+    const ff=el.closest('.form-field'); if(ff){ const l=ff.querySelector('label'); if(l) return l.textContent.trim(); }
+    let p=el.previousElementSibling; while(p){ if(p.tagName==='LABEL') return p.textContent.trim(); p=p.previousElementSibling; }
+    return (el.id||'').replace(/[-_]/g,' ');
+  }
+  function _valRating(g){ const a=g.querySelector('.r-btn.active'); return a? (a.dataset.val||a.textContent.trim()) : ''; }
+  // dump genérico de TODOS os campos preenchidos de um painel, bloco a bloco —
+  // garante que o relatório incorpore os dados inseridos na ferramenta.
+  function dumpPainel(n, tit){
+    const panel=document.getElementById('panel-'+n); if(!panel) return false;
+    const secoes=[];
+    panel.querySelectorAll('.block').forEach(bl=>{
+      if(bl.id==='escopo-block') return;
+      if(bl.closest('.module-block:not(.mod-active)')) return;
+      const bt=bl.querySelector(':scope > .block-header .block-title'); if(!bt) return;
+      const linhas=[];
+      bl.querySelectorAll('input, select, textarea').forEach(el=>{
+        if(!el.id) return;
+        if(['file','hidden','button','submit','reset','color','range','checkbox','radio'].includes(el.type)) return;
+        if(el.closest('.block-map-wrap')) return;
+        const v=String(el.value||'').trim(); if(!v) return;
+        linhas.push(_labelDe(el)+': '+v);
+      });
+      bl.querySelectorAll('.rating-group').forEach(g=>{ const v=_valRating(g); if(v) linhas.push(_labelDe(g)+': '+v); });
+      if(linhas.length) secoes.push({t:bt.textContent.trim(), linhas});
+    });
+    if(!secoes.length) return false;
+    titulo(tit);
+    secoes.forEach(s=>{ subt(s.t); s.linhas.forEach(l=>paragrafo(l)); espaco(1); });
+    espaco(2);
+    return true;
+  }
 
   // ─── CAPA / CABEÇALHO ───
   doc.setFillColor(...TERRA); doc.rect(0, 0, W, 3, 'F');
@@ -11586,6 +11619,10 @@ function gerarRelatorioPDF(){
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...ESC);
   if(ender){ paragrafo('Endereço: '+ender); }
   if(escopo){ paragrafo('Escopo: '+escopo); }
+  if(state['proj-tipo']) paragrafo('Tipologia: '+state['proj-tipo']);
+  if(state['proj-area']) paragrafo('Área do terreno: '+state['proj-area']);
+  if(state['proj-ac']) paragrafo('Área construída pretendida: '+state['proj-ac']);
+  if(state['proj-usuario']) paragrafo('Usuários: '+state['proj-usuario']);
   paragrafo('Data do relatório: '+data);
   espaco(4);
 
@@ -11601,17 +11638,23 @@ function gerarRelatorioPDF(){
     espaco(3);
   }
 
-  // ─── 1. SÍNTESE SOCIOECONÔMICA (SIDRA) ───
-  const sidraNotas = state['sidra-notas']||'';
-  const sidraMuni = state['sidra-busca']||state['sidra-codigo']||'';
-  if(sidraMuni || sidraNotas){
-    titulo('1 · Contexto socioeconômico');
-    if(sidraMuni) paragrafo('Município de referência (IBGE/SIDRA): '+sidraMuni);
-    if(sidraNotas) paragrafo(sidraNotas);
-    espaco(3);
+  // ─── DADOS INSERIDOS — dimensões do diagnóstico (dump por bloco) ───
+  dumpPainel(11, 'Estudo de viabilidade');
+  dumpPainel(1,  'Contexto urbano');
+  dumpPainel(2,  'Legislação urbanística');
+  dumpPainel(3,  'Condicionantes ambientais e climáticas');
+  dumpPainel(4,  'Paisagem e morfologia urbana');
+  dumpPainel(5,  'Ocupação urbana e usos do solo');
+
+  // ─── DINÂMICA TERRITORIAL (números-chave + leitura) ───
+  if(state.dinamica && (state.dinamica.numeros || state.dinamica.leitura)){
+    titulo('Dinâmica territorial');
+    if(state.dinamica.numeros){ subt('Números-chave (MapBiomas)'); paragrafo(state.dinamica.numeros); }
+    if(state.dinamica.leitura){ subt('Leitura da dinâmica socioespacial e econômica'); paragrafo(state.dinamica.leitura); }
+    espaco(2);
   }
 
-  // ─── 2. ACHADOS PFOA ───
+  // ─── ACHADOS PFOA ───
   const all = (typeof getAllFindings==='function'?getAllFindings():[]).filter(f=>f.class && f.text);
   const PFOA = {
     P:{label:'Potencialidades', cor:[46,160,90], list:[]},
@@ -11621,7 +11664,7 @@ function gerarRelatorioPDF(){
   };
   all.forEach(f=>{ if(PFOA[f.class]) PFOA[f.class].list.push(f.text.trim()); });
 
-  titulo('2 · Achados do diagnóstico (PFOA)');
+  titulo('Síntese SWOT — achados do diagnóstico (PFOA)');
   if(all.length===0){
     paragrafo('Nenhum achado classificado. Classifique os achados nas seções de diagnóstico para compor esta seção.');
   } else {
@@ -11635,8 +11678,16 @@ function gerarRelatorioPDF(){
   }
   espaco(2);
 
-  // ─── 3. DIRETRIZES PRIORITÁRIAS ───
-  titulo('3 · Diretrizes prioritárias');
+  // ─── PROGRAMA DE NECESSIDADES ───
+  if(Array.isArray(state.programa) && state.programa.length){
+    titulo('Programa de necessidades');
+    state.programa.forEach(p=>{ if(!p) return; const t=(p.item||p.nome||'').toString().trim(); if(!t) return; const a=p.area?(' — '+p.area+' m²'):''; const o=p.obs?(' ('+p.obs+')'):''; item(t+a+o); });
+    const ench=state['prog-enunciado']||''; if(ench){ subt('Enunciado do problema de projeto'); paragrafo(ench); }
+    espaco(2);
+  }
+
+  // ─── DIRETRIZES PRIORITÁRIAS ───
+  titulo('Diretrizes prioritárias');
   // diretrizes manuais marcadas + auto (das fragilidades/oportunidades)
   let diretrizes = [];
   if(state.dir_cats){
@@ -11658,7 +11709,7 @@ function gerarRelatorioPDF(){
   // ─── 4. NOTAS SOBRE AS OPERAÇÕES PROJETUAIS (escritas pelo estudante) ───
   const notasVerbos = state['verbos-notas']||'';
   if(notasVerbos){
-    titulo('4 · Notas sobre as operações projetuais');
+    titulo('Notas sobre as operações projetuais');
     paragrafo(notasVerbos);
     espaco(2);
   }
@@ -11668,7 +11719,7 @@ function gerarRelatorioPDF(){
     .map(id=> (typeof VERBOS_OPERATIVOS!=='undefined') ? (VERBOS_OPERATIVOS.find(v=>v.id===id)||{}).label : id)
     .filter(Boolean);
   if(verbosSel.length){
-    titulo('5 · Operações projetuais (verbos)');
+    titulo('Operações projetuais (verbos)');
     paragrafo(verbosSel.join(' · '));
     espaco(2);
   }
