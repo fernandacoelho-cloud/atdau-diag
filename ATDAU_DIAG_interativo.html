@@ -5568,6 +5568,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <strong>Gerado automaticamente</strong> a partir dos achados classificados nas seções anteriores. Adicione também achados manuais diretamente nos campos abaixo.
   </div>
 
+  <div id="swot-mapstatus" style="margin-bottom:12px"></div>
+
   <div class="swot-grid" id="swot-panels"></div>
 
   <div class="block" style="margin-bottom:14px">
@@ -8807,6 +8809,24 @@ function renderSwot(){
     c.innerHTML=`<div class="sum-num" style="color:${v.col}">${v.c}</div><div class="sum-lbl">${v.l}</div>`;
     counters.appendChild(c);
   });
+
+  // Vínculo matriz↔mapa: quantos achados classificados estão espacializados
+  const ms=document.getElementById('swot-mapstatus');
+  if(ms){
+    const classificados=all.filter(f=>f.class);
+    const espac=classificados.filter(f=>f.mapeado).length;
+    const swotFeats=(typeof _mlFeatures!=='undefined' && _mlFeatures.swot)?_mlFeatures.swot.length:0;
+    if(classificados.length===0 && swotFeats===0){
+      ms.innerHTML='';
+    } else {
+      const todos=classificados.length>0 && espac===classificados.length;
+      ms.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:${todos?'rgba(60,160,90,.08)':'var(--bg4)'};border:1px solid ${todos?'var(--grn)':'var(--line2)'};border-radius:8px;padding:9px 12px;font-size:.66rem">
+        <span style="font-weight:700;color:${todos?'var(--grn)':'var(--teal)'}">📍 ${espac}/${classificados.length} achados espacializados</span>
+        <span style="color:var(--t3)">no Mapa de Análise${swotFeats?` · ${swotFeats} feição(ões) na camada Síntese SWOT`:''}</span>
+        <button onclick="irParaSwotMapa()" class="instr-btn" style="font-size:.6rem;margin-left:auto">🎯 ${todos?'ver no mapa':'espacializar no mapa'} →</button>
+      </div>`;
+    }
+  }
 
   const nar=document.getElementById('swot-narrativa');
   if(nar && !nar.dataset.bound){
