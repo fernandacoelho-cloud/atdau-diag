@@ -1205,6 +1205,9 @@ select option{background:var(--bg3)}
 /* bloco com campo essencial ainda vazio: alerta âmbar (vence o .full/.empty acima) */
 .block-progress.ess-pend{color:#9a6b1e;border-color:var(--gold);background:rgba(201,146,59,.12)}
 .block-progress.ess-pend::before{content:'◆ ';color:var(--gold)}
+/* bloco fora do escopo do usuário */
+.block-progress.escopo-off{color:var(--t3);border-color:var(--line2);background:var(--bg4);font-style:italic}
+.block.fora-escopo > .block-header .block-title{color:var(--t3)}
 /* campo essencial: losango âmbar no rótulo, sinaliza que define o projeto */
 .form-field.is-essencial > label::after{content:' ◆';color:var(--gold);font-size:.82em}
 
@@ -1346,7 +1349,22 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <strong>As etapas que antecedem o projeto.</strong> A ABNT NBR 13532:1995 (e a NBR 13531:1995) fixam a sequência das etapas do projeto de arquitetura: <em>levantamento de dados → programa de necessidades → estudo de viabilidade → estudo preliminar → anteprojeto → projeto legal → projeto básico → projeto para execução</em>. Esta ferramenta cobre as etapas <strong>anteriores ao projeto</strong>: levantamento e diagnóstico, viabilidade, estudo de referências projetuais e programação. Na prática, porém, o processo não é estritamente linear: o programa de necessidades <strong>retroalimenta-se com o diagnóstico</strong> e com as diretrizes — amadurecem juntos ao longo do percurso (KOWALTOWSKI et al., 2011). A ordem das abas é uma referência, não uma camisa de força.
   </div>
 
-  <div class="block">
+  <div class="block block-open" id="escopo-block">
+    <div class="block-header"><span class="block-icon">🎯</span><span class="block-title">Escopo do diagnóstico</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.62rem;margin-bottom:10px">Marque <strong>quais análises você fará</strong>. Assim o percentual de preenchimento fica <strong>relativo ao seu escopo</strong>, não à ferramenta inteira. Parta de um nível e ajuste à vontade — pode mudar a qualquer momento. As análises não marcadas saem da contagem e aparecem como <em>"fora do escopo"</em>.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <span style="font-size:.6rem;color:var(--t3)">Partir de um nível:</span>
+        <button class="instr-btn" onclick="escopoAplicarPreset('essencial')" style="font-size:.62rem">Essencial</button>
+        <button class="instr-btn" onclick="escopoAplicarPreset('aprofundado')" style="font-size:.62rem">Aprofundado</button>
+        <button class="instr-btn" onclick="escopoAplicarPreset('pleno')" style="font-size:.62rem">Pleno</button>
+        <span id="escopo-contador" style="font-size:.6rem;color:var(--teal);font-weight:600;margin-left:auto"></span>
+      </div>
+      <div id="escopo-container"></div>
+    </div>
+  </div>
+
+  <div class="block block-open">
     <div class="block-header">
       <span class="block-icon">📋</span>
       <span class="block-title">Dados gerais</span>
@@ -7846,6 +7864,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Catálogo IPEA/IBGE — render inicial (com UF=MG default)
   if(typeof renderCatalogoIpea==='function') renderCatalogoIpea();
   aplicarModoCampo(!!state.modo_campo); // restaura preferência salva
+  if(typeof renderEscopo==='function') renderEscopo();
   atualizarCompletude();
   // completude reage a qualquer edição de campo (delegado, fora dos mapas)
   document.querySelector('.main')?.addEventListener('input', e=>{
@@ -11101,6 +11120,61 @@ function _marcarCamposEssenciais(){
   });
 }
 
+// ══════════════════════════════════════════════════
+// ESCOPO — o usuário define quais ANÁLISES (blocos) e campos fará. A completude
+// passa a ser relativa ao escopo escolhido, não à ferramenta inteira. Bloco =
+// controle grosso; campo = ajuste fino que sobrescreve o bloco.
+// ══════════════════════════════════════════════════
+const ESCOPO_PANEIS = [1,2,3,4,5,9,11,12,14]; // painéis "analisáveis" (os demais são núcleo, sempre no escopo)
+const ESCOPO_PRESETS = { essencial:[1], aprofundado:[1,2,3,4,5,9,11,12], pleno:[1,2,3,4,5,9,11,12,14] };
+function _escopo(){ if(!state.escopo||typeof state.escopo!=='object') state.escopo={blocos:{},campos:{}}; state.escopo.blocos=state.escopo.blocos||{}; state.escopo.campos=state.escopo.campos||{}; return state.escopo; }
+function escopoBlocoAtivo(id){ return !id || _escopo().blocos[id]!==false; }      // default: ativo
+function escopoCampoAtivo(fieldId, blocoId){ const c=_escopo().campos; if(fieldId && Object.prototype.hasOwnProperty.call(c,fieldId)) return c[fieldId]!==false; return escopoBlocoAtivo(blocoId); }
+let _escopoIdsFeitos=false;
+function _escopoAtribuirIds(){
+  if(_escopoIdsFeitos) return; _escopoIdsFeitos=true;
+  ESCOPO_PANEIS.forEach(n=>{
+    const panel=document.getElementById('panel-'+n); if(!panel) return;
+    let i=0;
+    panel.querySelectorAll('.block').forEach(bl=>{
+      if(bl.id==='escopo-block') return;
+      const t=bl.querySelector(':scope > .block-header .block-title'); if(!t) return;
+      bl.setAttribute('data-escopo-id','esc-'+n+'-'+(i++));
+      bl.setAttribute('data-escopo-panel',String(n));
+      bl.setAttribute('data-escopo-titulo',t.textContent.trim());
+    });
+  });
+}
+function renderEscopo(){
+  _escopoAtribuirIds();
+  const cont=document.getElementById('escopo-container'); if(!cont) return;
+  let total=0, ativos=0;
+  // grid único e denso: o título da aba ocupa a linha toda (separador) e as
+  // análises fluem em colunas contínuas, aproveitando a largura (paisagem).
+  let html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0 18px;align-items:start">';
+  ESCOPO_PANEIS.forEach(n=>{
+    const blocos=[...document.querySelectorAll('#panel-'+n+' .block[data-escopo-id]')];
+    if(!blocos.length) return;
+    const nome=(typeof _navLabel==='function')?_navLabel(n):('Painel '+n);
+    html+=`<div style="grid-column:1/-1;font-size:.58rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-top:9px;padding-top:5px;border-top:1px solid var(--line2)">${escHtml(nome)}</div>`;
+    blocos.forEach(bl=>{
+      const id=bl.getAttribute('data-escopo-id'); const tit=bl.getAttribute('data-escopo-titulo')||id;
+      const on=escopoBlocoAtivo(id); total++; if(on)ativos++;
+      html+=`<label style="display:flex;align-items:center;gap:7px;padding:2px 4px;border-radius:5px;cursor:pointer;font-size:.63rem;line-height:1.2;${on?'':'opacity:.5'}"><input type="checkbox" ${on?'checked':''} onchange="escopoToggleBloco('${id}',this.checked)" style="width:13px;height:13px;flex:none"><span>${escHtml(tit)}</span></label>`;
+    });
+  });
+  html+='</div>';
+  cont.innerHTML = total ? html : '<div style="font-size:.62rem;color:var(--t3)">As análises aparecem aqui depois que as abas de diagnóstico carregam.</div>';
+  const cnt=document.getElementById('escopo-contador'); if(cnt) cnt.textContent=`${ativos} de ${total} análises no escopo`;
+}
+function escopoToggleBloco(id,on){ _escopo().blocos[id]=!!on; if(typeof autoSave==='function')autoSave(); renderEscopo(); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
+function escopoAplicarPreset(p){
+  _escopoAtribuirIds();
+  const inc=ESCOPO_PRESETS[p]||ESCOPO_PANEIS; const e=_escopo(); e.blocos={}; e.campos={};
+  ESCOPO_PANEIS.forEach(n=>document.querySelectorAll('#panel-'+n+' .block[data-escopo-id]').forEach(bl=>{ e.blocos[bl.getAttribute('data-escopo-id')]=inc.includes(n); }));
+  if(typeof autoSave==='function')autoSave(); renderEscopo(); if(typeof atualizarCompletude==='function')atualizarCompletude();
+}
+
 function _contarPreenchimento(scope){
   // Núcleo do diagnóstico = campos estruturados (ratings, selects, inputs, números).
   // Observações/notas (textareas e ids obs/nota/coment) são opcionais: ficam fora
@@ -11114,6 +11188,9 @@ function _contarPreenchimento(scope){
     if(el.closest('.block-map-wrap')) return false;                // controles do mapa não são diagnóstico
     if(el.closest('.subpanel:not(.active)')) return false;         // subaba inativa
     if(el.disabled) return false;
+    // fora do escopo do usuário (bloco desmarcado ou campo desligado): não conta
+    const _bl=el.closest('.block[data-escopo-id]');
+    if(_bl && typeof escopoCampoAtivo==='function' && !escopoCampoAtivo(el.id, _bl.getAttribute('data-escopo-id'))) return false;
     return true;
   };
   scope.querySelectorAll('input, select, textarea').forEach(el=>{
@@ -11129,6 +11206,8 @@ function _contarPreenchimento(scope){
   });
   scope.querySelectorAll('.rating-group').forEach(g=>{
     if(g.closest('.module-block:not(.mod-active)')) return;
+    const _bl=g.closest('.block[data-escopo-id]');
+    if(_bl && typeof escopoCampoAtivo==='function' && !escopoCampoAtivo(g.id, _bl.getAttribute('data-escopo-id'))) return; // fora do escopo
     total++;
     if(g.querySelector('.r-btn.active')) ok++;
   });
@@ -11147,6 +11226,16 @@ function atualizarCompletude(){
     const header=block.querySelector(':scope > .block-header');
     if(!header) return;
     let badge=header.querySelector(':scope > .block-progress');
+    // bloco fora do escopo do usuário: marca e não conta progresso
+    const escId=block.getAttribute('data-escopo-id');
+    const foraEscopo = escId && typeof escopoBlocoAtivo==='function' && !escopoBlocoAtivo(escId);
+    block.classList.toggle('fora-escopo', !!foraEscopo);
+    if(foraEscopo){
+      if(!badge){ badge=document.createElement('span'); badge.className='block-progress'; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(badge,chev); else header.appendChild(badge); }
+      badge.textContent='fora do escopo'; badge.classList.remove('full','empty','ess-pend'); badge.classList.add('escopo-off'); badge.title='Esta análise está fora do escopo definido na Identificação';
+      return;
+    }
+    if(badge) badge.classList.remove('escopo-off');
     const {total,ok,essTotal,essOk}=_contarPreenchimento(block);
     if(total===0){ if(badge) badge.remove(); return; }
     if(!badge){
