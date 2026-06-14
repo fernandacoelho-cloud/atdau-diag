@@ -1225,6 +1225,9 @@ select option{background:var(--bg3)}
 .bloco-resp-chip{display:inline-flex;align-items:center;gap:4px;border-radius:12px;padding:1px 8px;font-size:.56rem;font-weight:600;margin-left:6px;white-space:nowrap}
 .bloco-override{border:1px solid var(--line2);background:var(--bg4);color:var(--t2);border-radius:5px;cursor:pointer;font-size:.58rem;padding:2px 8px;margin-left:6px;white-space:nowrap}
 .bloco-override:hover{border-color:var(--teal);color:var(--teal)}
+.coment-btn{border:none;background:none;cursor:pointer;font-size:.62rem;color:var(--t3);padding:1px 5px;margin-left:4px}
+.coment-btn:hover{color:var(--teal)}
+.coment-panel{border:1px solid var(--line2);border-radius:6px;padding:8px 10px;margin-bottom:10px;background:var(--bg3)}
 /* campo essencial: losango âmbar no rótulo, sinaliza que define o projeto */
 .form-field.is-essencial > label::after{content:' ◆';color:var(--gold);font-size:.82em}
 
@@ -11320,6 +11323,31 @@ function renderEquipe(){
   const sel=document.getElementById('equipe-sou');
   if(sel){ sel.innerHTML='<option value="">— ninguém (edito tudo) —</option>'+e.colaboradores.map(c=>`<option value="${c.id}" ${e.euSou===c.id?'selected':''}>${escHtml(c.nome)}</option>`).join(''); }
 }
+// ── comentários da equipe por análise (offline, viajam no arquivo) ──
+function _equipeComentarios(blocoId){ const e=_equipe(); e.comentarios=e.comentarios||{}; return e.comentarios[blocoId]||(e.comentarios[blocoId]=[]); }
+function _equipeRenderComentarios(blocoId){
+  const wrap=document.getElementById('coment-lista-'+blocoId); if(!wrap) return;
+  const arr=_equipeComentarios(blocoId);
+  wrap.innerHTML = arr.length ? arr.map((c,i)=>`<div style="border-left:2px solid ${c.cor||'var(--line2)'};padding:3px 8px;margin-bottom:5px;background:var(--bg4);border-radius:0 5px 5px 0"><div style="font-size:.58rem;color:${c.cor||'var(--t3)'};font-weight:600">${escHtml(c.autor||'')} <span style="color:var(--t3);font-weight:400">· ${escHtml(c.data||'')}</span><button onclick="equipeDelComentario('${blocoId}',${i})" title="apagar" style="border:none;background:none;color:var(--t3);cursor:pointer;float:right;font-size:.6rem">✕</button></div><div style="font-size:.63rem;color:var(--t1);line-height:1.4">${escHtml(c.texto||'')}</div></div>`).join('') : '<div style="font-size:.58rem;color:var(--t3);font-style:italic">Sem comentários nesta análise.</div>';
+}
+function equipeAddComentario(blocoId){
+  const ta=document.getElementById('coment-input-'+blocoId); if(!ta) return; const txt=ta.value.trim(); if(!txt) return;
+  const e=_equipe(); const cb=e.euSou?(_colab(e.euSou)||{}):{};
+  _equipeComentarios(blocoId).push({ autor: cb.nome||'Equipe', cor: cb.cor||'var(--t3)', texto:txt, data:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) });
+  ta.value=''; if(typeof autoSave==='function')autoSave();
+  _equipeRenderComentarios(blocoId); if(typeof atualizarCompletude==='function')atualizarCompletude();
+}
+function equipeDelComentario(blocoId,i){ _equipeComentarios(blocoId).splice(i,1); if(typeof autoSave==='function')autoSave(); _equipeRenderComentarios(blocoId); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
+function equipeToggleComentarios(blocoId, btn){
+  const bl=btn.closest('.block'); if(!bl) return;
+  const body=bl.querySelector(':scope > .block-body'); if(!body) return;
+  let panel=body.querySelector(':scope > .coment-panel');
+  if(panel){ const vis=panel.style.display!=='none'; panel.style.display=vis?'none':'block'; if(!vis)_equipeRenderComentarios(blocoId); return; }
+  panel=document.createElement('div'); panel.className='coment-panel';
+  panel.innerHTML=`<div style="font-size:.6rem;font-weight:700;color:var(--t2);margin-bottom:5px">💬 Comentários da equipe</div><div id="coment-lista-${blocoId}"></div><div style="display:flex;gap:6px;margin-top:6px"><textarea id="coment-input-${blocoId}" placeholder="comentar para a equipe…" style="flex:1;min-height:34px;font-size:.62rem;padding:5px 7px;border:1px solid var(--line2);border-radius:5px;box-sizing:border-box"></textarea><button class="add-btn" onclick="equipeAddComentario('${blocoId}')" style="font-size:.6rem;align-self:flex-end">comentar</button></div>`;
+  body.insertBefore(panel, body.firstChild);
+  _equipeRenderComentarios(blocoId);
+}
 
 function _contarPreenchimento(scope){
   // Núcleo do diagnóstico = campos estruturados (ratings, selects, inputs, números).
@@ -11422,6 +11450,13 @@ function atualizarCompletude(){
       let ov=header.querySelector(':scope > .bloco-override');
       if(alheio){ if(!ov){ ov=document.createElement('button'); ov.className='bloco-override'; ov.type='button'; ov.textContent='✎ editar assim mesmo'; ov.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeOverride(escId); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(ov,chev); else header.appendChild(ov); } }
       else if(ov){ ov.remove(); }
+      // botão de comentários da equipe (aparece se há colaboradores ou comentários)
+      const nc=(eq&&eq.comentarios&&eq.comentarios[escId]||[]).length;
+      let cbtn=header.querySelector(':scope > .coment-btn');
+      if((eq&&eq.colaboradores&&eq.colaboradores.length) || nc>0){
+        if(!cbtn){ cbtn=document.createElement('button'); cbtn.className='coment-btn'; cbtn.type='button'; cbtn.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeToggleComentarios(escId, cbtn); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(cbtn,chev); else header.appendChild(cbtn); }
+        cbtn.textContent='💬'+(nc?' '+nc:''); cbtn.title=nc?(nc+' comentário(s) da equipe'):'Comentar com a equipe';
+      } else if(cbtn){ cbtn.remove(); }
     }
   });
   // por aba (barra + % na nav)

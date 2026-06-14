@@ -67,3 +67,45 @@ test('Equipe: colaboradores, atribuição, bloqueio do bloco do outro e override
   });
   expect(semBadge).toBe(true);
 });
+
+test('Equipe: comentários por análise (autor + data, persistem)', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1700);
+
+  // sem colaboradores não há botão de comentário
+  const semTeam = await page.evaluate(() => {
+    escopoAplicarPreset('pleno'); atualizarCompletude();
+    return !!document.getElementById('l-ca').closest('.block').querySelector('.coment-btn');
+  });
+  expect(semTeam).toBe(false);
+
+  // com colaborador + "sou": botão aparece e o comentário carimba autor/data
+  const c = await page.evaluate(() => {
+    equipeAddColab('Ana'); equipeSetSou(state.equipe.colaboradores[0].id); atualizarCompletude();
+    const bloco = document.getElementById('l-ca').closest('.block');
+    const escId = bloco.getAttribute('data-escopo-id');
+    const cbtn = bloco.querySelector(':scope > .block-header .coment-btn');
+    equipeToggleComentarios(escId, cbtn);
+    document.getElementById('coment-input-' + escId).value = 'Verificar zoneamento';
+    equipeAddComentario(escId);
+    const arr = state.equipe.comentarios[escId];
+    return { botao: !!cbtn, n: arr.length, autor: arr[0]?.autor, temData: !!arr[0]?.data, badge: bloco.querySelector('.coment-btn').textContent };
+  });
+  expect(c.botao).toBe(true);
+  expect(c.n).toBe(1);
+  expect(c.autor).toBe('Ana');
+  expect(c.temData).toBe(true);
+  expect(c.badge).toContain('1');
+
+  // persiste no reload
+  await page.waitForTimeout(1400);
+  await page.reload();
+  await page.waitForTimeout(1700);
+  const persist = await page.evaluate(() => {
+    const k = Object.keys(state.equipe?.comentarios || {})[0];
+    return k ? state.equipe.comentarios[k][0]?.texto : null;
+  });
+  expect(persist).toBe('Verificar zoneamento');
+});
