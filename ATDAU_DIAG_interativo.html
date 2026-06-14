@@ -5581,6 +5581,52 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
   </div>
 
+  <!-- Blocos D: dimensões territoriais (escala ampliada / Plano Diretor) -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">⛰️</span><span class="block-title">Meio físico regional</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Geologia, geomorfologia, pedologia, hipsometria e declividade do território — condicionam fundação, infiltração, drenagem e aptidão do sítio. Consulte a fonte oficial e registre a leitura.</div>
+      <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <a href="https://geosgb.sgb.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🪨 GeoSGB · Serviço Geológico do Brasil →</a>
+        <a href="https://ide-sisema.meioambiente.mg.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🗺️ IDE-Sisema (MG) →</a>
+      </div>
+      <div class="form-field"><label>Leitura do meio físico</label><textarea id="din-meiofisico" oninput="dinSetCampo('meiofisico', this.value)" placeholder="Substrato geológico, formas de relevo, tipos de solo, classes de declividade — e implicações para o projeto (fundação, drenagem, cortes/aterros)." style="min-height:60px"></textarea></div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="block-header"><span class="block-icon">⚠️</span><span class="block-title">Suscetibilidade e riscos naturais</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Áreas suscetíveis a inundação e a movimentos de massa (escorregamentos) — restrição direta de onde e como ocupar.</div>
+      <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <a href="https://www.sgb.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🌊 Cartas de suscetibilidade (SGB/CPRM) →</a>
+        <a href="https://www.gov.br/cemaden/pt-br" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">📡 CEMADEN →</a>
+      </div>
+      <div class="form-field"><label>Leitura de suscetibilidade / riscos</label><textarea id="din-suscet" oninput="dinSetCampo('suscet', this.value)" placeholder="Áreas suscetíveis no entorno, relação com o lote, condicionantes de ocupação." style="min-height:60px"></textarea></div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="block-header"><span class="block-icon">📈</span><span class="block-title">Economia e atividades produtivas</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">PIB, setores e empresas, vetores econômicos — a dinâmica econômica que sustenta (ou pressiona) o território.</div>
+      <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <a href="https://cidades.ibge.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">📊 IBGE Cidades (PIB, empresas) →</a>
+        <a href="https://bi.mte.gov.br/bgcaged/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">👔 RAIS / CAGED →</a>
+      </div>
+      <div class="form-field"><label>Leitura econômica</label><textarea id="din-economia" oninput="dinSetCampo('economia', this.value)" placeholder="Base econômica, setores predominantes, vetores de crescimento/declínio — e o que isso significa para o programa e a demanda do projeto." style="min-height:60px"></textarea></div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🧭</span><span class="block-title">Turismo e atratividade</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Vetor turístico do território (relevante em cidades históricas/naturais) — atrativos, fluxo, sazonalidade.</div>
+      <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <a href="https://www.mapa.turismo.gov.br/mapa/init.html" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🧭 Mapa do Turismo Brasileiro →</a>
+        <a href="https://cadastur.turismo.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🏨 Cadastur →</a>
+      </div>
+      <div class="form-field"><label>Leitura do turismo / atratividade</label><textarea id="din-turismo" oninput="dinSetCampo('turismo', this.value)" placeholder="Atrativos, fluxo turístico, sazonalidade, e implicações para o projeto." style="min-height:60px"></textarea></div>
+    </div>
+  </div>
+
   <!-- Bloco C: leitura + registro que vai ao export -->
   <div class="block block-open">
     <div class="block-header"><span class="block-icon">💬</span><span class="block-title">Leitura da dinâmica → registro do projeto</span></div>
@@ -8830,6 +8876,7 @@ function renderDinamica(){
   const mb=document.getElementById('din-mb-url'); if(mb && document.activeElement!==mb) mb.value=d.mb_url||'';
   const num=document.getElementById('din-numeros'); if(num && document.activeElement!==num) num.value=d.numeros||'';
   const lt=document.getElementById('din-leitura'); if(lt && document.activeElement!==lt) lt.value=d.leitura||'';
+  ['meiofisico','suscet','economia','turismo'].forEach(k=>{ const el=document.getElementById('din-'+k); if(el && document.activeElement!==el) el.value=d[k]||''; });
   if(typeof renderFindings==='function') renderFindings(14);
 }
 
@@ -11793,10 +11840,15 @@ function gerarRelatorioPDF(){
   }
 
   // ─── DINÂMICA TERRITORIAL (números-chave + leitura) ───
-  if(state.dinamica && (state.dinamica.numeros || state.dinamica.leitura)){
+  const _din=state.dinamica||{};
+  if(_din.numeros||_din.leitura||_din.meiofisico||_din.suscet||_din.economia||_din.turismo){
     titulo('Dinâmica territorial');
-    if(state.dinamica.numeros){ subt('Números-chave (MapBiomas)'); paragrafo(state.dinamica.numeros); }
-    if(state.dinamica.leitura){ subt('Leitura da dinâmica socioespacial e econômica'); paragrafo(state.dinamica.leitura); }
+    if(_din.numeros){ subt('Números-chave (MapBiomas)'); paragrafo(_din.numeros); }
+    if(_din.meiofisico){ subt('Meio físico regional'); paragrafo(_din.meiofisico); }
+    if(_din.suscet){ subt('Suscetibilidade e riscos naturais'); paragrafo(_din.suscet); }
+    if(_din.economia){ subt('Economia e atividades produtivas'); paragrafo(_din.economia); }
+    if(_din.turismo){ subt('Turismo e atratividade'); paragrafo(_din.turismo); }
+    if(_din.leitura){ subt('Leitura da dinâmica socioespacial e econômica'); paragrafo(_din.leitura); }
     espaco(2);
   }
 
