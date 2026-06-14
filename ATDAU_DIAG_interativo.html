@@ -11359,8 +11359,8 @@ function renderMural(){
   if(!ids.length){ wrap.innerHTML='<div style="font-size:.6rem;color:var(--t3);border-top:1px dashed var(--line2);padding-top:8px">💬 <strong>Mural da equipe</strong> — nenhum comentário ainda. Comente em qualquer análise pelo botão 💬 no cabeçalho do bloco.</div>'; return; }
   let html=`<div style="border-top:1px dashed var(--line2);padding-top:8px"><div style="font-size:.64rem;font-weight:700;color:var(--t2);margin-bottom:6px">💬 Mural da equipe (${totalN})</div>`;
   ids.forEach(bid=>{
-    const bl=document.querySelector('.block[data-escopo-id="'+bid+'"]');
-    const titulo=(bl&&bl.getAttribute('data-escopo-titulo'))||bid;
+    const bl=document.querySelector('.block[data-escopo-id="'+bid+'"], .block[data-coment-id="'+bid+'"]');
+    const titulo=(bl&&(bl.getAttribute('data-escopo-titulo')||bl.getAttribute('data-coment-titulo')))||bid;
     html+=`<div style="margin-bottom:8px"><div style="font-size:.58rem;font-weight:600;color:var(--teal);display:flex;align-items:center;gap:6px;flex-wrap:wrap">${escHtml(titulo)} <button onclick="equipeIrParaBloco('${bid}')" class="instr-btn" style="font-size:.52rem;padding:1px 7px">ir →</button></div>`;
     com[bid].forEach(c=>{ html+=`<div style="border-left:2px solid ${c.cor||'var(--line2)'};padding:2px 8px;margin-top:3px;font-size:.6rem;line-height:1.4"><span style="color:${c.cor||'var(--t3)'};font-weight:600">${escHtml(c.autor||'')}</span> <span style="color:var(--t3)">· ${escHtml(c.data||'')}</span><br>${escHtml(c.texto||'')}</div>`; });
     html+='</div>';
@@ -11368,9 +11368,24 @@ function renderMural(){
   wrap.innerHTML=html+'</div>';
 }
 function equipeIrParaBloco(bid){
-  const m=/^esc-(\d+)-/.exec(bid); if(!m) return;
+  const m=/^(?:esc|cmt)-(\d+)-/.exec(bid); if(!m) return;
   if(typeof irPara==='function') irPara(+m[1], document.getElementById('nav-'+m[1]));
-  setTimeout(()=>{ const bl=document.querySelector('.block[data-escopo-id="'+bid+'"]'); if(bl){ bl.classList.add('block-open'); bl.scrollIntoView({block:'center'}); const cb=bl.querySelector(':scope > .block-header .coment-btn'); if(cb && !bl.querySelector('.coment-panel')) equipeToggleComentarios(bid, cb); } }, 320);
+  setTimeout(()=>{ const bl=document.querySelector('.block[data-escopo-id="'+bid+'"], .block[data-coment-id="'+bid+'"]'); if(bl){ bl.classList.add('block-open'); bl.scrollIntoView({block:'center'}); const cb=bl.querySelector(':scope > .block-header .coment-btn'); if(cb && !bl.querySelector('.coment-panel')) equipeToggleComentarios(bid, cb); } }, 320);
+}
+let _comentIdsFeitos=false;
+function _atribuirComentIds(){ // ids de comentário p/ blocos de conteúdo sem id de escopo (ex.: Identificação)
+  if(_comentIdsFeitos) return; _comentIdsFeitos=true;
+  document.querySelectorAll('.panel[id^="panel-"]').forEach(panel=>{
+    const m=/^panel-(\d+)$/.exec(panel.id); if(!m) return; const n=m[1];
+    let i=0;
+    panel.querySelectorAll('.block').forEach(bl=>{
+      if(bl.id==='escopo-block'||bl.id==='equipe-block') return;
+      if(bl.getAttribute('data-escopo-id')) return; // já comenta pelo id de escopo
+      const t=bl.querySelector(':scope > .block-header .block-title'); if(!t) return;
+      bl.setAttribute('data-coment-id','cmt-'+n+'-'+(i++));
+      bl.setAttribute('data-coment-titulo', t.textContent.trim());
+    });
+  });
 }
 
 function _contarPreenchimento(scope){
@@ -11416,6 +11431,7 @@ function _contarPreenchimento(scope){
 
 function atualizarCompletude(){
   if(!_essMarcado){ _marcarCamposEssenciais(); _essMarcado=true; }
+  if(typeof _atribuirComentIds==='function') _atribuirComentIds();
   // por bloco (badge no cabeçalho)
   document.querySelectorAll('.block').forEach(block=>{
     if(block.classList.contains('module-block') && !block.classList.contains('mod-active')) {
@@ -11474,11 +11490,14 @@ function atualizarCompletude(){
       let ov=header.querySelector(':scope > .bloco-override');
       if(alheio){ if(!ov){ ov=document.createElement('button'); ov.className='bloco-override'; ov.type='button'; ov.textContent='✎ editar assim mesmo'; ov.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeOverride(escId); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(ov,chev); else header.appendChild(ov); } }
       else if(ov){ ov.remove(); }
-      // botão de comentários — sempre visível (serve para notas suas e da equipe)
-      const nc=((eq&&eq.comentarios&&eq.comentarios[escId])||[]).length;
+    }
+    // botão de comentários em QUALQUER bloco de conteúdo (inclui Identificação)
+    const cid = escId || block.getAttribute('data-coment-id');
+    if(cid){
+      const nc=((state.equipe&&state.equipe.comentarios&&state.equipe.comentarios[cid])||[]).length;
       let cbtn=header.querySelector(':scope > .coment-btn');
-      if(!cbtn){ cbtn=document.createElement('button'); cbtn.className='coment-btn'; cbtn.type='button'; cbtn.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeToggleComentarios(escId, cbtn); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(cbtn,chev); else header.appendChild(cbtn); }
-      cbtn.textContent='💬'+(nc?' '+nc:''); cbtn.title=nc?(nc+' comentário(s)'):'Comentar nesta análise';
+      if(!cbtn){ cbtn=document.createElement('button'); cbtn.className='coment-btn'; cbtn.type='button'; cbtn.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeToggleComentarios(cid, cbtn); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(cbtn,chev); else header.appendChild(cbtn); }
+      cbtn.textContent='💬'+(nc?' '+nc:''); cbtn.title=nc?(nc+' comentário(s)'):'Comentar';
     }
   });
   // por aba (barra + % na nav)
