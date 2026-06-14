@@ -6071,6 +6071,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
             <label>Coordenadas (lng, lat)</label>
             <input type="text" id="ma-edit-coords" readonly style="font-family:var(--mono);color:var(--t3)">
           </div>
+          <div class="form-field span2">
+            <label>Fotos do local</label>
+            <div id="ma-edit-fotos" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+            <input type="file" id="ma-edit-foto-input" accept="image/*" multiple style="display:none" onchange="maAddFotos(this)">
+            <button type="button" class="instr-btn" onclick="document.getElementById('ma-edit-foto-input').click()" style="font-size:.62rem">📷 Adicionar foto</button>
+          </div>
         </div>
         <div class="ma-modal-actions" style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
           <button class="instr-btn" onclick="maDeleteCurrent()" style="color:#e0506a;border-color:rgba(224,80,106,.3)">🗑️ Excluir</button>
@@ -19572,6 +19578,26 @@ function maRenderMarkers() {
   if (typeof maRefreshLegenda==='function') maRefreshLegenda();
 }
 
+// ── fotos da anotação (base64, com downscale p/ não inchar o store) ──
+let _maEditFotos = [];
+function _imgToDataURL(file, maxDim){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{ const img=new Image(); img.onload=()=>{ const s=Math.min(1,(maxDim||1100)/Math.max(img.width,img.height)); const w=Math.max(1,Math.round(img.width*s)), h=Math.max(1,Math.round(img.height*s)); const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); try{ res(cv.toDataURL('image/jpeg',0.82)); }catch(e){ res(fr.result); } }; img.onerror=rej; img.src=fr.result; };
+    fr.onerror=rej; fr.readAsDataURL(file);
+  });
+}
+async function maAddFotos(input){
+  const files=[...(input.files||[])]; input.value='';
+  for(const f of files){ if(!/^image\//.test(f.type)) continue; try{ _maEditFotos.push(await _imgToDataURL(f,1100)); }catch(e){} }
+  _maRenderEditFotos();
+}
+function _maRenderEditFotos(){
+  const wrap=document.getElementById('ma-edit-fotos'); if(!wrap) return;
+  wrap.innerHTML=_maEditFotos.map((d,i)=>`<div style="position:relative"><img src="${d}" style="width:64px;height:64px;object-fit:cover;border-radius:5px;border:1px solid var(--line2)"><button type="button" onclick="maRemoveFoto(${i})" title="remover" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#e0506a;color:white;cursor:pointer;font-size:.62rem;line-height:1">✕</button></div>`).join('');
+}
+function maRemoveFoto(i){ _maEditFotos.splice(i,1); _maRenderEditFotos(); }
+
 function maRenderList() {
   const list = document.getElementById('ma-lista');
   const counter = document.getElementById('ma-counter');
@@ -19584,10 +19610,13 @@ function maRenderList() {
   }
   list.innerHTML = all.map(ann => {
     const cat = MA_CATEGORIES.find(c => c.id === ann.category) || MA_CATEGORIES[0];
+    const fotos = ann.fotos || [];
+    const thumb = fotos.length ? `<img src="${fotos[0]}" style="width:26px;height:26px;object-fit:cover;border-radius:4px;flex:none;margin-left:auto" title="${fotos.length} foto(s)">${fotos.length>1?`<span style="font-size:.5rem;color:var(--t3);flex:none">+${fotos.length-1}</span>`:''}` : '';
     return `<div class="ma-lista-item" onclick="maOpenEditModal('${ann.id}')">
       <span class="ma-list-dot" style="background:${cat.color}"></span>
       <span class="ma-list-title">${(ann.title||'sem título').replace(/</g,'&lt;')}</span>
       ${ann.fixed ? '<span class="ma-list-fixed" title="Anotação fixa">📌</span>' : ''}
+      ${thumb}
     </div>`;
   }).join('');
 }
@@ -19607,6 +19636,7 @@ function maOpenEditModal(id) {
   document.getElementById('ma-edit-notes').value = ann.notes || '';
   document.getElementById('ma-edit-coords').value = ann.coords ? `${ann.coords[0].toFixed(6)}, ${ann.coords[1].toFixed(6)}` : '';
   document.getElementById('ma-edit-fixed').value = ann.fixed ? 'true' : 'false';
+  _maEditFotos = (ann.fotos||[]).slice(); _maRenderEditFotos();
   document.getElementById('ma-modal').classList.add('open');
   // Centralizar no marker
   if (_maInst && ann.coords) _maInst.flyTo({center: ann.coords, zoom: 17, duration: 600});
@@ -19619,7 +19649,8 @@ function maSaveCurrent() {
     title:    document.getElementById('ma-edit-title').value,
     description: document.getElementById('ma-edit-desc').value,
     notes:    document.getElementById('ma-edit-notes').value,
-    fixed:    document.getElementById('ma-edit-fixed').value === 'true'
+    fixed:    document.getElementById('ma-edit-fixed').value === 'true',
+    fotos:    _maEditFotos.slice()
   };
   MapaAnotadoStore.update(_maEditingId, patch);
   maRenderMarkers();

@@ -68,3 +68,41 @@ test('Mapa Anotado: adicionar e editar funcionam pela UI real', async ({ page })
   });
   expect(toggle).toBe(true);
 });
+
+test('Mapa Anotado: anexar foto à anotação (multimodal) persiste + miniatura na lista', async ({ page }) => {
+  page.on('dialog', d => d.accept().catch(() => {}));
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1600);
+  await page.locator('#nav-9').click();
+  await page.waitForTimeout(900);
+  await page.evaluate(() => document.getElementById('ma-mapa')?.scrollIntoView({ block: 'center' }));
+  await page.waitForFunction(() => typeof _maInst !== 'undefined' && _maInst && _maInst.isStyleLoaded(), null, { timeout: 20000 });
+  await page.waitForTimeout(800);
+
+  await page.evaluate(() => { const id = MapaAnotadoStore.add({ category: 'foto', title: 'Esquina', coords: [-43.8, -19.7] }); maOpenEditModal(id); });
+
+  // anexar uma imagem real pelo input de arquivo
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  await page.setInputFiles('#ma-edit-foto-input', { name: 'f.png', mimeType: 'image/png', buffer: png });
+  await page.waitForTimeout(600);
+  expect(await page.evaluate(() => document.querySelectorAll('#ma-edit-fotos img').length)).toBe(1);
+
+  const r = await page.evaluate(() => {
+    maSaveCurrent();
+    const ann = MapaAnotadoStore.getAll().find(a => a.title === 'Esquina');
+    const thumb = !![...document.querySelectorAll('.ma-lista-item')].find(el => /Esquina/.test(el.textContent) && el.querySelector('img'));
+    return { n: (ann?.fotos || []).length, dataUrl: /^data:image/.test(ann?.fotos?.[0] || ''), thumb };
+  });
+  expect(r.n).toBe(1);
+  expect(r.dataUrl).toBe(true);
+  expect(r.thumb).toBe(true);
+
+  // persiste no reload
+  await page.waitForTimeout(1200);
+  await page.reload();
+  await page.waitForTimeout(1500);
+  const persist = await page.evaluate(() => (MapaAnotadoStore.getAll().find(a => a.title === 'Esquina')?.fotos || []).length);
+  expect(persist).toBe(1);
+});
