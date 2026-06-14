@@ -1225,7 +1225,7 @@ select option{background:var(--bg3)}
 .bloco-resp-chip{display:inline-flex;align-items:center;gap:4px;border-radius:12px;padding:1px 8px;font-size:.56rem;font-weight:600;margin-left:6px;white-space:nowrap}
 .bloco-override{border:1px solid var(--line2);background:var(--bg4);color:var(--t2);border-radius:5px;cursor:pointer;font-size:.58rem;padding:2px 8px;margin-left:6px;white-space:nowrap}
 .bloco-override:hover{border-color:var(--teal);color:var(--teal)}
-.coment-btn{border:none;background:none;cursor:pointer;font-size:.62rem;color:var(--t3);padding:1px 5px;margin-left:4px}
+.coment-btn{border:none;background:none;cursor:pointer;font-size:.82rem;line-height:1;color:var(--t3);padding:1px 5px;margin-left:4px}
 .coment-btn:hover{color:var(--teal)}
 .coment-panel{border:1px solid var(--line2);border-radius:6px;padding:8px 10px;margin-bottom:10px;background:var(--bg3)}
 /* campo essencial: losango âmbar no rótulo, sinaliza que define o projeto */
@@ -1369,6 +1369,23 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <strong>As etapas que antecedem o projeto.</strong> A ABNT NBR 13532:1995 (e a NBR 13531:1995) fixam a sequência das etapas do projeto de arquitetura: <em>levantamento de dados → programa de necessidades → estudo de viabilidade → estudo preliminar → anteprojeto → projeto legal → projeto básico → projeto para execução</em>. Esta ferramenta cobre as etapas <strong>anteriores ao projeto</strong>: levantamento e diagnóstico, viabilidade, estudo de referências projetuais e programação. Na prática, porém, o processo não é estritamente linear: o programa de necessidades <strong>retroalimenta-se com o diagnóstico</strong> e com as diretrizes — amadurecem juntos ao longo do percurso (KOWALTOWSKI et al., 2011). A ordem das abas é uma referência, não uma camisa de força.
   </div>
 
+  <div class="block" id="equipe-block">
+    <div class="block-header"><span class="block-icon">👥</span><span class="block-title">Equipe e atribuições</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.62rem;margin-bottom:10px">Trabalho em <strong>equipe assíncrono</strong>: cadastre os colaboradores e, na lista de <em>Escopo</em> abaixo, atribua um <strong>responsável</strong> por análise. Na sua sessão, escolha <strong>"sou"</strong> — as análises de outros ficam <strong>somente-leitura</strong> (com opção de editar mesmo assim). No fim, cada um salva seu arquivo e os arquivos são <strong>juntados</strong>. <em>(Sem servidor, não há edição simultânea em tempo real — a junção é o merge dos JSONs.)</em></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input type="text" id="equipe-novo" placeholder="nome do colaborador" onkeydown="if(event.key==='Enter'){equipeAddColab(this.value);this.value=''}" style="flex:1;min-width:160px;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.66rem;box-sizing:border-box">
+        <button class="add-btn" onclick="var i=document.getElementById('equipe-novo');equipeAddColab(i.value);i.value=''">+ Adicionar</button>
+      </div>
+      <div id="equipe-colabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.64rem;color:var(--t2);font-weight:600">Nesta sessão, eu sou:</span>
+        <select id="equipe-sou" onchange="equipeSetSou(this.value)" style="font-size:.66rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:5px 8px"></select>
+      </div>
+      <div id="equipe-mural" style="margin-top:12px"></div>
+    </div>
+  </div>
+
   <div class="block block-open" id="escopo-block">
     <div class="block-header"><span class="block-icon">🎯</span><span class="block-title">Escopo do diagnóstico</span></div>
     <div class="block-body">
@@ -1381,22 +1398,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <span id="escopo-contador" style="font-size:.6rem;color:var(--teal);font-weight:600;margin-left:auto"></span>
       </div>
       <div id="escopo-container"></div>
-    </div>
-  </div>
-
-  <div class="block" id="equipe-block">
-    <div class="block-header"><span class="block-icon">👥</span><span class="block-title">Equipe e atribuições</span></div>
-    <div class="block-body">
-      <div class="info-box" style="font-size:.62rem;margin-bottom:10px">Trabalho em <strong>equipe assíncrono</strong>: cadastre os colaboradores e, na lista de <em>Escopo</em> acima, atribua um <strong>responsável</strong> por análise. Na sua sessão, escolha <strong>"sou"</strong> — as análises de outros ficam <strong>somente-leitura</strong> (com opção de editar mesmo assim). No fim, cada um salva seu arquivo e os arquivos são <strong>juntados</strong>. <em>(Sem servidor, não há edição simultânea em tempo real — a junção é o merge dos JSONs.)</em></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-        <input type="text" id="equipe-novo" placeholder="nome do colaborador" onkeydown="if(event.key==='Enter'){equipeAddColab(this.value);this.value=''}" style="flex:1;min-width:160px;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.66rem;box-sizing:border-box">
-        <button class="add-btn" onclick="var i=document.getElementById('equipe-novo');equipeAddColab(i.value);i.value=''">+ Adicionar</button>
-      </div>
-      <div id="equipe-colabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <span style="font-size:.64rem;color:var(--t2);font-weight:600">Nesta sessão, eu sou:</span>
-        <select id="equipe-sou" onchange="equipeSetSou(this.value)" style="font-size:.66rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:5px 8px"></select>
-      </div>
     </div>
   </div>
 
@@ -5599,7 +5600,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="block">
     <div class="block-header"><span class="block-icon">⚠️</span><span class="block-title">Suscetibilidade e riscos naturais</span></div>
     <div class="block-body">
-      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Áreas suscetíveis a inundação e a movimentos de massa (escorregamentos) — restrição direta de onde e como ocupar.</div>
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Áreas suscetíveis a inundação e a movimentos de massa (escorregamentos) — restrição direta de onde e como ocupar. <strong>Escala territorial</strong> (cartas de suscetibilidade do município). A avaliação no <strong>próprio lote/entorno</strong> fica em <strong>01 · Contexto Urbano → Áreas de risco — Inundação e Geológico</strong>; as duas se complementam.</div>
       <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
         <a href="https://www.sgb.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🌊 Cartas de suscetibilidade (SGB/CPRM) →</a>
         <a href="https://www.gov.br/cemaden/pt-br" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">📡 CEMADEN →</a>
@@ -7984,9 +7985,10 @@ function setupBlockCollapse() {
     });
   });
 
-  // Abrir primeiro bloco de cada painel automaticamente
+  // Abrir primeiro bloco de cada painel automaticamente (pula o módulo de Equipe,
+  // que é controle opcional — deixa o Escopo como o bloco aberto na Identificação)
   document.querySelectorAll('.panel').forEach(panel => {
-    const first = panel.querySelector(':scope > .block');
+    const first = panel.querySelector(':scope > .block:not(#equipe-block)');
     if (first) first.classList.add('block-open');
   });
 }
@@ -11322,6 +11324,7 @@ function renderEquipe(){
   }
   const sel=document.getElementById('equipe-sou');
   if(sel){ sel.innerHTML='<option value="">— ninguém (edito tudo) —</option>'+e.colaboradores.map(c=>`<option value="${c.id}" ${e.euSou===c.id?'selected':''}>${escHtml(c.nome)}</option>`).join(''); }
+  if(typeof renderMural==='function') renderMural();
 }
 // ── comentários da equipe por análise (offline, viajam no arquivo) ──
 function _equipeComentarios(blocoId){ const e=_equipe(); e.comentarios=e.comentarios||{}; return e.comentarios[blocoId]||(e.comentarios[blocoId]=[]); }
@@ -11335,9 +11338,9 @@ function equipeAddComentario(blocoId){
   const e=_equipe(); const cb=e.euSou?(_colab(e.euSou)||{}):{};
   _equipeComentarios(blocoId).push({ autor: cb.nome||'Equipe', cor: cb.cor||'var(--t3)', texto:txt, data:new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) });
   ta.value=''; if(typeof autoSave==='function')autoSave();
-  _equipeRenderComentarios(blocoId); if(typeof atualizarCompletude==='function')atualizarCompletude();
+  _equipeRenderComentarios(blocoId); if(typeof renderMural==='function')renderMural(); if(typeof atualizarCompletude==='function')atualizarCompletude();
 }
-function equipeDelComentario(blocoId,i){ _equipeComentarios(blocoId).splice(i,1); if(typeof autoSave==='function')autoSave(); _equipeRenderComentarios(blocoId); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
+function equipeDelComentario(blocoId,i){ _equipeComentarios(blocoId).splice(i,1); if(typeof autoSave==='function')autoSave(); _equipeRenderComentarios(blocoId); if(typeof renderMural==='function')renderMural(); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
 function equipeToggleComentarios(blocoId, btn){
   const bl=btn.closest('.block'); if(!bl) return;
   const body=bl.querySelector(':scope > .block-body'); if(!body) return;
@@ -11347,6 +11350,27 @@ function equipeToggleComentarios(blocoId, btn){
   panel.innerHTML=`<div style="font-size:.6rem;font-weight:700;color:var(--t2);margin-bottom:5px">💬 Comentários da equipe</div><div id="coment-lista-${blocoId}"></div><div style="display:flex;gap:6px;margin-top:6px"><textarea id="coment-input-${blocoId}" placeholder="comentar para a equipe…" style="flex:1;min-height:34px;font-size:.62rem;padding:5px 7px;border:1px solid var(--line2);border-radius:5px;box-sizing:border-box"></textarea><button class="add-btn" onclick="equipeAddComentario('${blocoId}')" style="font-size:.6rem;align-self:flex-end">comentar</button></div>`;
   body.insertBefore(panel, body.firstChild);
   _equipeRenderComentarios(blocoId);
+}
+function renderMural(){
+  const wrap=document.getElementById('equipe-mural'); if(!wrap) return;
+  const com=_equipe().comentarios||{};
+  const ids=Object.keys(com).filter(k=>(com[k]||[]).length);
+  const totalN=ids.reduce((s,k)=>s+com[k].length,0);
+  if(!ids.length){ wrap.innerHTML='<div style="font-size:.6rem;color:var(--t3);border-top:1px dashed var(--line2);padding-top:8px">💬 <strong>Mural da equipe</strong> — nenhum comentário ainda. Comente em qualquer análise pelo botão 💬 no cabeçalho do bloco.</div>'; return; }
+  let html=`<div style="border-top:1px dashed var(--line2);padding-top:8px"><div style="font-size:.64rem;font-weight:700;color:var(--t2);margin-bottom:6px">💬 Mural da equipe (${totalN})</div>`;
+  ids.forEach(bid=>{
+    const bl=document.querySelector('.block[data-escopo-id="'+bid+'"]');
+    const titulo=(bl&&bl.getAttribute('data-escopo-titulo'))||bid;
+    html+=`<div style="margin-bottom:8px"><div style="font-size:.58rem;font-weight:600;color:var(--teal);display:flex;align-items:center;gap:6px;flex-wrap:wrap">${escHtml(titulo)} <button onclick="equipeIrParaBloco('${bid}')" class="instr-btn" style="font-size:.52rem;padding:1px 7px">ir →</button></div>`;
+    com[bid].forEach(c=>{ html+=`<div style="border-left:2px solid ${c.cor||'var(--line2)'};padding:2px 8px;margin-top:3px;font-size:.6rem;line-height:1.4"><span style="color:${c.cor||'var(--t3)'};font-weight:600">${escHtml(c.autor||'')}</span> <span style="color:var(--t3)">· ${escHtml(c.data||'')}</span><br>${escHtml(c.texto||'')}</div>`; });
+    html+='</div>';
+  });
+  wrap.innerHTML=html+'</div>';
+}
+function equipeIrParaBloco(bid){
+  const m=/^esc-(\d+)-/.exec(bid); if(!m) return;
+  if(typeof irPara==='function') irPara(+m[1], document.getElementById('nav-'+m[1]));
+  setTimeout(()=>{ const bl=document.querySelector('.block[data-escopo-id="'+bid+'"]'); if(bl){ bl.classList.add('block-open'); bl.scrollIntoView({block:'center'}); const cb=bl.querySelector(':scope > .block-header .coment-btn'); if(cb && !bl.querySelector('.coment-panel')) equipeToggleComentarios(bid, cb); } }, 320);
 }
 
 function _contarPreenchimento(scope){
@@ -11450,13 +11474,11 @@ function atualizarCompletude(){
       let ov=header.querySelector(':scope > .bloco-override');
       if(alheio){ if(!ov){ ov=document.createElement('button'); ov.className='bloco-override'; ov.type='button'; ov.textContent='✎ editar assim mesmo'; ov.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeOverride(escId); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(ov,chev); else header.appendChild(ov); } }
       else if(ov){ ov.remove(); }
-      // botão de comentários da equipe (aparece se há colaboradores ou comentários)
-      const nc=(eq&&eq.comentarios&&eq.comentarios[escId]||[]).length;
+      // botão de comentários — sempre visível (serve para notas suas e da equipe)
+      const nc=((eq&&eq.comentarios&&eq.comentarios[escId])||[]).length;
       let cbtn=header.querySelector(':scope > .coment-btn');
-      if((eq&&eq.colaboradores&&eq.colaboradores.length) || nc>0){
-        if(!cbtn){ cbtn=document.createElement('button'); cbtn.className='coment-btn'; cbtn.type='button'; cbtn.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeToggleComentarios(escId, cbtn); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(cbtn,chev); else header.appendChild(cbtn); }
-        cbtn.textContent='💬'+(nc?' '+nc:''); cbtn.title=nc?(nc+' comentário(s) da equipe'):'Comentar com a equipe';
-      } else if(cbtn){ cbtn.remove(); }
+      if(!cbtn){ cbtn=document.createElement('button'); cbtn.className='coment-btn'; cbtn.type='button'; cbtn.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeToggleComentarios(escId, cbtn); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(cbtn,chev); else header.appendChild(cbtn); }
+      cbtn.textContent='💬'+(nc?' '+nc:''); cbtn.title=nc?(nc+' comentário(s)'):'Comentar nesta análise';
     }
   });
   // por aba (barra + % na nav)

@@ -74,12 +74,12 @@ test('Equipe: comentários por análise (autor + data, persistem)', async ({ pag
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(1700);
 
-  // sem colaboradores não há botão de comentário
+  // o botão de comentário aparece sempre (serve para notas suas e da equipe)
   const semTeam = await page.evaluate(() => {
     escopoAplicarPreset('pleno'); atualizarCompletude();
     return !!document.getElementById('l-ca').closest('.block').querySelector('.coment-btn');
   });
-  expect(semTeam).toBe(false);
+  expect(semTeam).toBe(true);
 
   // com colaborador + "sou": botão aparece e o comentário carimba autor/data
   const c = await page.evaluate(() => {
@@ -91,13 +91,14 @@ test('Equipe: comentários por análise (autor + data, persistem)', async ({ pag
     document.getElementById('coment-input-' + escId).value = 'Verificar zoneamento';
     equipeAddComentario(escId);
     const arr = state.equipe.comentarios[escId];
-    return { botao: !!cbtn, n: arr.length, autor: arr[0]?.autor, temData: !!arr[0]?.data, badge: bloco.querySelector('.coment-btn').textContent };
+    return { botao: !!cbtn, n: arr.length, autor: arr[0]?.autor, temData: !!arr[0]?.data, badge: bloco.querySelector('.coment-btn').textContent, mural: (document.getElementById('equipe-mural').textContent || '').includes('Verificar zoneamento') };
   });
   expect(c.botao).toBe(true);
   expect(c.n).toBe(1);
   expect(c.autor).toBe('Ana');
   expect(c.temData).toBe(true);
   expect(c.badge).toContain('1');
+  expect(c.mural).toBe(true); // o comentário aparece no mural global da Equipe
 
   // persiste no reload
   await page.waitForTimeout(1400);
