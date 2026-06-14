@@ -131,3 +131,45 @@ test('Mapa Anotado: clicar no marcador (modo Ver) abre popup de leitura com text
   expect(r.foto).toBe(true);
   expect(r.editar).toBe(true);
 });
+
+test('Mapa Anotado: anexar áudio (upload) persiste + indicador 🎤 na lista e player no popup', async ({ page }) => {
+  page.on('dialog', d => d.accept().catch(() => {}));
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1600);
+  await page.locator('#nav-9').click();
+  await page.waitForTimeout(900);
+  await page.evaluate(() => document.getElementById('ma-mapa')?.scrollIntoView({ block: 'center' }));
+  await page.waitForFunction(() => typeof _maInst !== 'undefined' && _maInst && _maInst.isStyleLoaded(), null, { timeout: 20000 });
+  await page.waitForTimeout(800);
+
+  await page.evaluate(() => { const id = MapaAnotadoStore.add({ category: 'foto', title: 'Depoimento', coords: [-43.8, -19.7] }); maOpenEditModal(id); });
+
+  // anexar um "áudio" pelo input real (bytes quaisquer com mimeType audio/webm)
+  const buf = Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x01, 0x02, 0x03, 0x04]);
+  await page.setInputFiles('#ma-edit-audio-input', { name: 'nota.webm', mimeType: 'audio/webm', buffer: buf });
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => document.querySelectorAll('#ma-edit-audios audio').length)).toBe(1);
+
+  const r = await page.evaluate(() => {
+    maSaveCurrent();
+    const ann = MapaAnotadoStore.getAll().find(a => a.title === 'Depoimento');
+    const listInd = !![...document.querySelectorAll('.ma-lista-item')].find(el => /Depoimento/.test(el.textContent) && /🎤/.test(el.textContent));
+    _maMode = 'view';
+    maOpenPopup(ann);
+    const pop = document.querySelector('.maplibregl-popup');
+    return { n: (ann?.audios || []).length, dataUrl: /^data:audio/.test(ann?.audios?.[0] || ''), listInd, popupPlayer: !!pop?.querySelector('audio') };
+  });
+  expect(r.n).toBe(1);
+  expect(r.dataUrl).toBe(true);
+  expect(r.listInd).toBe(true);
+  expect(r.popupPlayer).toBe(true);
+
+  // persiste no reload
+  await page.waitForTimeout(1200);
+  await page.reload();
+  await page.waitForTimeout(1500);
+  const persist = await page.evaluate(() => (MapaAnotadoStore.getAll().find(a => a.title === 'Depoimento')?.audios || []).length);
+  expect(persist).toBe(1);
+});

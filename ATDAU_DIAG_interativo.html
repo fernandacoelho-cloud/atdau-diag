@@ -6077,6 +6077,16 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
             <input type="file" id="ma-edit-foto-input" accept="image/*" multiple style="display:none" onchange="maAddFotos(this)">
             <button type="button" class="instr-btn" onclick="document.getElementById('ma-edit-foto-input').click()" style="font-size:.62rem">📷 Adicionar foto</button>
           </div>
+          <div class="form-field span2">
+            <label>Áudio do local</label>
+            <div id="ma-edit-audios" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button type="button" class="instr-btn" onclick="maToggleRec(this)" style="font-size:.62rem">🎤 Gravar</button>
+              <button type="button" class="instr-btn" onclick="document.getElementById('ma-edit-audio-input').click()" style="font-size:.62rem">📤 Upload</button>
+              <input type="file" id="ma-edit-audio-input" accept="audio/*" multiple style="display:none" onchange="maAddAudios(this)">
+              <span id="ma-rec-status" style="font-size:.56rem;color:var(--t3)"></span>
+            </div>
+          </div>
         </div>
         <div class="ma-modal-actions" style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
           <button class="instr-btn" onclick="maDeleteCurrent()" style="color:#e0506a;border-color:rgba(224,80,106,.3)">🗑️ Excluir</button>
@@ -19371,7 +19381,15 @@ const MapaAnotadoStore = {
   save() {
     try {
       localStorage.setItem(MA_STORAGE_KEY, JSON.stringify(this.data));
-    } catch(e) { console.error('MapaAnotadoStore save:', e); }
+    } catch(e) {
+      console.error('MapaAnotadoStore save:', e);
+      // cota estourada (fotos/áudio em base64 são pesados): avisa uma vez, sem repetir a cada save
+      const cota = e && (e.name === 'QuotaExceededError' || e.code === 22 || /quota/i.test(e.message||''));
+      if (cota && !this._quotaAvisado) {
+        this._quotaAvisado = true;
+        try { alert('⚠️ Armazenamento local cheio — a última foto/áudio pode NÃO ter sido salva.\n\nExporte o projeto (para preservar o que já existe) e remova mídias antigas das anotações.'); } catch(_){}
+      }
+    }
   },
   add(ann) {
     ann.id = ann.id || ('ma-' + Date.now() + '-' + Math.random().toString(36).slice(2,6));
@@ -19550,6 +19568,7 @@ function maCloseAllPopups(){ if(_maPopup){ try{_maPopup.remove();}catch(e){} _ma
 function _maPopupHTML(ann){
   const cat = MA_CATEGORIES.find(c=>c.id===ann.category)||MA_CATEGORIES[0];
   const fotos = ann.fotos||[];
+  const audios = ann.audios||[];
   return `<div style="min-width:190px;max-width:280px;font-family:var(--f)">
     <div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:6px">
       <span style="font-size:1rem">${cat.icon}</span>
@@ -19558,6 +19577,7 @@ function _maPopupHTML(ann){
     ${ann.description?`<div style="font-size:.62rem;color:var(--t1);margin-bottom:5px;line-height:1.4">${escHtml(ann.description)}</div>`:''}
     ${ann.notes?`<div style="font-size:.58rem;color:var(--t2);font-style:italic;margin-bottom:5px;line-height:1.4">📝 ${escHtml(ann.notes)}</div>`:''}
     ${fotos.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${fotos.map(f=>`<img src="${f}" style="width:62px;height:62px;object-fit:cover;border-radius:4px;border:1px solid var(--line2)">`).join('')}</div>`:''}
+    ${audios.length?`<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px">${audios.map(a=>`<audio controls preload="none" src="${a}" style="width:100%;height:30px"></audio>`).join('')}</div>`:''}
     <button onclick="maCloseAllPopups();maOpenEditModal('${ann.id}')" class="instr-btn" style="font-size:.58rem;padding:3px 10px">✏️ editar</button>
   </div>`;
 }
@@ -19587,9 +19607,12 @@ function maRenderMarkers() {
            style="overflow:visible;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))">
         ${isFixed ? `<circle cx="0" cy="0" r="${size*0.46}" fill="none" stroke="${cat.color}" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.6"/>` : ''}
         <circle cx="0" cy="0" r="${size*0.32}" fill="${cat.color}" stroke="#fff" stroke-width="2"/>
-        <text x="0" y="${size*0.12}" text-anchor="middle" font-size="${size*0.42}" 
+        <text x="0" y="${size*0.12}" text-anchor="middle" font-size="${size*0.42}"
               dominant-baseline="middle">${cat.icon}</text>
       </svg>`;
+    if ((ann.audios||[]).length) {
+      el.innerHTML += `<span title="tem áudio" style="position:absolute;bottom:-2px;right:-2px;font-size:9px;background:#fff;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.4);line-height:1">🎤</span>`;
+    }
     el.title = ann.title || cat.label;
     el.onclick = (ev) => {
       ev.stopPropagation();
@@ -19623,6 +19646,43 @@ function _maRenderEditFotos(){
 }
 function maRemoveFoto(i){ _maEditFotos.splice(i,1); _maRenderEditFotos(); }
 
+// ── áudio da anotação (base64; gravação em bitrate baixo p/ não estourar o store) ──
+let _maEditAudios = [];
+let _maRec = null, _maRecChunks = [];
+function maToggleRec(btn){
+  if(_maRec && _maRec.state==='recording'){ _maRec.stop(); return; }
+  if(typeof MediaRecorder==='undefined' || !navigator.mediaDevices){ alert('Gravação não suportada neste navegador. Use o botão Upload.'); return; }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    _maRecChunks=[];
+    try{ _maRec=new MediaRecorder(stream,{audioBitsPerSecond:32000}); }catch(e){ _maRec=new MediaRecorder(stream); }
+    _maRec.ondataavailable=e=>{ if(e.data && e.data.size) _maRecChunks.push(e.data); };
+    _maRec.onstop=()=>{
+      const blob=new Blob(_maRecChunks,{type:(_maRec && _maRec.mimeType)||'audio/webm'});
+      const fr=new FileReader();
+      fr.onload=()=>{ _maEditAudios.push(fr.result); _maRenderEditAudios(); };
+      fr.readAsDataURL(blob);
+      try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+      const s=document.getElementById('ma-rec-status'); if(s) s.textContent='';
+      if(btn){ btn.textContent='🎤 Gravar'; btn.style.color=''; }
+      _maRec=null;
+    };
+    _maRec.start();
+    const s=document.getElementById('ma-rec-status'); if(s) s.textContent='🔴 gravando… clique para parar';
+    if(btn){ btn.textContent='⏹ Parar'; btn.style.color='#e0506a'; }
+  }).catch(err=>alert('Não foi possível acessar o microfone: '+(err && err.message || err)));
+}
+function _fileToDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
+async function maAddAudios(input){
+  const files=[...(input.files||[])]; input.value='';
+  for(const f of files){ if(!/^audio\//.test(f.type)) continue; try{ _maEditAudios.push(await _fileToDataURL(f)); }catch(e){} }
+  _maRenderEditAudios();
+}
+function _maRenderEditAudios(){
+  const wrap=document.getElementById('ma-edit-audios'); if(!wrap) return;
+  wrap.innerHTML=_maEditAudios.map((d,i)=>`<div style="display:flex;gap:6px;align-items:center"><audio controls preload="none" src="${d}" style="flex:1;height:30px"></audio><button type="button" onclick="maRemoveAudio(${i})" title="remover" style="border:none;background:#e0506a;color:#fff;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:.62rem;line-height:1;flex:none">✕</button></div>`).join('');
+}
+function maRemoveAudio(i){ _maEditAudios.splice(i,1); _maRenderEditAudios(); }
+
 function maRenderList() {
   const list = document.getElementById('ma-lista');
   const counter = document.getElementById('ma-counter');
@@ -19636,11 +19696,14 @@ function maRenderList() {
   list.innerHTML = all.map(ann => {
     const cat = MA_CATEGORIES.find(c => c.id === ann.category) || MA_CATEGORIES[0];
     const fotos = ann.fotos || [];
+    const audios = ann.audios || [];
+    const audioInd = audios.length ? `<span title="${audios.length} áudio(s)" style="font-size:.6rem;flex:none;margin-left:${fotos.length?'4px':'auto'}">🎤${audios.length>1?audios.length:''}</span>` : '';
     const thumb = fotos.length ? `<img src="${fotos[0]}" style="width:26px;height:26px;object-fit:cover;border-radius:4px;flex:none;margin-left:auto" title="${fotos.length} foto(s)">${fotos.length>1?`<span style="font-size:.5rem;color:var(--t3);flex:none">+${fotos.length-1}</span>`:''}` : '';
     return `<div class="ma-lista-item" onclick="maOpenEditModal('${ann.id}')">
       <span class="ma-list-dot" style="background:${cat.color}"></span>
       <span class="ma-list-title">${(ann.title||'sem título').replace(/</g,'&lt;')}</span>
       ${ann.fixed ? '<span class="ma-list-fixed" title="Anotação fixa">📌</span>' : ''}
+      ${audioInd}
       ${thumb}
     </div>`;
   }).join('');
@@ -19662,6 +19725,7 @@ function maOpenEditModal(id) {
   document.getElementById('ma-edit-coords').value = ann.coords ? `${ann.coords[0].toFixed(6)}, ${ann.coords[1].toFixed(6)}` : '';
   document.getElementById('ma-edit-fixed').value = ann.fixed ? 'true' : 'false';
   _maEditFotos = (ann.fotos||[]).slice(); _maRenderEditFotos();
+  _maEditAudios = (ann.audios||[]).slice(); _maRenderEditAudios();
   document.getElementById('ma-modal').classList.add('open');
   // Centralizar no marker
   if (_maInst && ann.coords) _maInst.flyTo({center: ann.coords, zoom: 17, duration: 600});
@@ -19675,7 +19739,8 @@ function maSaveCurrent() {
     description: document.getElementById('ma-edit-desc').value,
     notes:    document.getElementById('ma-edit-notes').value,
     fixed:    document.getElementById('ma-edit-fixed').value === 'true',
-    fotos:    _maEditFotos.slice()
+    fotos:    _maEditFotos.slice(),
+    audios:   _maEditAudios.slice()
   };
   MapaAnotadoStore.update(_maEditingId, patch);
   maRenderMarkers();
