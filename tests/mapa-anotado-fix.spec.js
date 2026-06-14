@@ -106,3 +106,28 @@ test('Mapa Anotado: anexar foto à anotação (multimodal) persiste + miniatura 
   const persist = await page.evaluate(() => (MapaAnotadoStore.getAll().find(a => a.title === 'Esquina')?.fotos || []).length);
   expect(persist).toBe(1);
 });
+
+test('Mapa Anotado: clicar no marcador (modo Ver) abre popup de leitura com texto e foto', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto(DIAG_URL);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1600);
+  await page.locator('#nav-9').click();
+  await page.waitForTimeout(900);
+  await page.evaluate(() => document.getElementById('ma-mapa')?.scrollIntoView({ block: 'center' }));
+  await page.waitForFunction(() => typeof _maInst !== 'undefined' && _maInst && _maInst.isStyleLoaded(), null, { timeout: 20000 });
+  await page.waitForTimeout(800);
+
+  const r = await page.evaluate(() => {
+    const id = MapaAnotadoStore.add({ category: 'tombado', title: 'Igreja Matriz', description: 'bem tombado', notes: 'fachada', coords: [-43.8, -19.7], fotos: ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='] });
+    _maMode = 'view';
+    maOpenPopup(MapaAnotadoStore.getAll().find(a => a.id === id));
+    const pop = document.querySelector('.maplibregl-popup');
+    return { abriu: !!pop, titulo: /Igreja Matriz/.test(pop?.textContent || ''), desc: /bem tombado/.test(pop?.textContent || ''), foto: !!pop?.querySelector('img'), editar: !!pop?.querySelector('button') };
+  });
+  expect(r.abriu).toBe(true);
+  expect(r.titulo).toBe(true);
+  expect(r.desc).toBe(true);
+  expect(r.foto).toBe(true);
+  expect(r.editar).toBe(true);
+});

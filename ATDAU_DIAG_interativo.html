@@ -19544,6 +19544,30 @@ function maToggleCategoryVisibility(catId) {
   maRenderMarkers();
 }
 
+// popup leve de leitura ao clicar/passar sobre o marcador (texto + fotos)
+let _maPopup = null;
+function maCloseAllPopups(){ if(_maPopup){ try{_maPopup.remove();}catch(e){} _maPopup=null; } }
+function _maPopupHTML(ann){
+  const cat = MA_CATEGORIES.find(c=>c.id===ann.category)||MA_CATEGORIES[0];
+  const fotos = ann.fotos||[];
+  return `<div style="min-width:190px;max-width:280px;font-family:var(--f)">
+    <div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:6px">
+      <span style="font-size:1rem">${cat.icon}</span>
+      <div style="min-width:0"><strong style="font-size:.72rem">${escHtml(ann.title||'(sem título)')}</strong><br><small style="color:var(--t3);font-size:.55rem">${escHtml(cat.label)}${ann.fixed?' · 📌 fixa':''}</small></div>
+    </div>
+    ${ann.description?`<div style="font-size:.62rem;color:var(--t1);margin-bottom:5px;line-height:1.4">${escHtml(ann.description)}</div>`:''}
+    ${ann.notes?`<div style="font-size:.58rem;color:var(--t2);font-style:italic;margin-bottom:5px;line-height:1.4">📝 ${escHtml(ann.notes)}</div>`:''}
+    ${fotos.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${fotos.map(f=>`<img src="${f}" style="width:62px;height:62px;object-fit:cover;border-radius:4px;border:1px solid var(--line2)">`).join('')}</div>`:''}
+    <button onclick="maCloseAllPopups();maOpenEditModal('${ann.id}')" class="instr-btn" style="font-size:.58rem;padding:3px 10px">✏️ editar</button>
+  </div>`;
+}
+function maOpenPopup(ann){
+  if(!_maInst||!ann||!ann.coords||typeof maplibregl==='undefined') return;
+  maCloseAllPopups();
+  _maPopup = new maplibregl.Popup({closeButton:true, closeOnClick:true, maxWidth:'300px', offset:16})
+    .setLngLat(ann.coords).setHTML(_maPopupHTML(ann)).addTo(_maInst);
+}
+
 function maRenderMarkers() {
   if (!_maInst) return;
   _maMarkers.forEach(m => m.remove());
@@ -19570,8 +19594,9 @@ function maRenderMarkers() {
     el.onclick = (ev) => {
       ev.stopPropagation();
       if (_maMode === 'edit') maOpenEditModal(ann.id);
-      else maOpenEditModal(ann.id); // view também abre modal (modo leitura)
+      else maOpenPopup(ann); // modo Ver → popup leve de leitura (texto + fotos)
     };
+    el.addEventListener('mouseenter', () => { if (_maMode !== 'edit' && _maMode !== 'add') maOpenPopup(ann); });
     const marker = new maplibregl.Marker({element:el, anchor:'center'}).setLngLat(ann.coords).addTo(_maInst);
     _maMarkers.push(marker);
   });
