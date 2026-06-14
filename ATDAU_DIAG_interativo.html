@@ -1219,6 +1219,12 @@ select option{background:var(--bg3)}
 .form-field:hover .campo-toggle{opacity:.7}
 .campo-toggle:hover{opacity:1;color:var(--teal)}
 .form-field.campo-off .campo-toggle{opacity:.85;color:var(--t3)}
+/* EQUIPE — bloco de outro colaborador: somente-leitura + chip do responsável */
+.block.bloco-alheio > .block-body{opacity:.6}
+.block.bloco-alheio .form-field input,.block.bloco-alheio .form-field select,.block.bloco-alheio .form-field textarea{pointer-events:none}
+.bloco-resp-chip{display:inline-flex;align-items:center;gap:4px;border-radius:12px;padding:1px 8px;font-size:.56rem;font-weight:600;margin-left:6px;white-space:nowrap}
+.bloco-override{border:1px solid var(--line2);background:var(--bg4);color:var(--t2);border-radius:5px;cursor:pointer;font-size:.58rem;padding:2px 8px;margin-left:6px;white-space:nowrap}
+.bloco-override:hover{border-color:var(--teal);color:var(--teal)}
 /* campo essencial: losango âmbar no rótulo, sinaliza que define o projeto */
 .form-field.is-essencial > label::after{content:' ◆';color:var(--gold);font-size:.82em}
 
@@ -1372,6 +1378,22 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <span id="escopo-contador" style="font-size:.6rem;color:var(--teal);font-weight:600;margin-left:auto"></span>
       </div>
       <div id="escopo-container"></div>
+    </div>
+  </div>
+
+  <div class="block" id="equipe-block">
+    <div class="block-header"><span class="block-icon">👥</span><span class="block-title">Equipe e atribuições</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.62rem;margin-bottom:10px">Trabalho em <strong>equipe assíncrono</strong>: cadastre os colaboradores e, na lista de <em>Escopo</em> acima, atribua um <strong>responsável</strong> por análise. Na sua sessão, escolha <strong>"sou"</strong> — as análises de outros ficam <strong>somente-leitura</strong> (com opção de editar mesmo assim). No fim, cada um salva seu arquivo e os arquivos são <strong>juntados</strong>. <em>(Sem servidor, não há edição simultânea em tempo real — a junção é o merge dos JSONs.)</em></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input type="text" id="equipe-novo" placeholder="nome do colaborador" onkeydown="if(event.key==='Enter'){equipeAddColab(this.value);this.value=''}" style="flex:1;min-width:160px;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.66rem;box-sizing:border-box">
+        <button class="add-btn" onclick="var i=document.getElementById('equipe-novo');equipeAddColab(i.value);i.value=''">+ Adicionar</button>
+      </div>
+      <div id="equipe-colabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.64rem;color:var(--t2);font-weight:600">Nesta sessão, eu sou:</span>
+        <select id="equipe-sou" onchange="equipeSetSou(this.value)" style="font-size:.66rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:5px 8px"></select>
+      </div>
     </div>
   </div>
 
@@ -7875,6 +7897,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Catálogo IPEA/IBGE — render inicial (com UF=MG default)
   if(typeof renderCatalogoIpea==='function') renderCatalogoIpea();
   aplicarModoCampo(!!state.modo_campo); // restaura preferência salva
+  if(typeof renderEquipe==='function') renderEquipe();
   if(typeof renderEscopo==='function') renderEscopo();
   atualizarCompletude();
   // completude reage a qualquer edição de campo (delegado, fora dos mapas)
@@ -11172,7 +11195,9 @@ function renderEscopo(){
     blocos.forEach(bl=>{
       const id=bl.getAttribute('data-escopo-id'); const tit=bl.getAttribute('data-escopo-titulo')||id;
       const on=escopoBlocoAtivo(id); total++; if(on)ativos++;
-      html+=`<label style="display:flex;align-items:center;gap:7px;padding:2px 4px;border-radius:5px;cursor:pointer;font-size:.63rem;line-height:1.2;${on?'':'opacity:.5'}"><input type="checkbox" ${on?'checked':''} onchange="escopoToggleBloco('${id}',this.checked)" style="width:13px;height:13px;flex:none"><span>${escHtml(tit)}</span></label>`;
+      const _eq=_equipe();
+      const resp = _eq.colaboradores.length ? `<select onchange="equipeSetResp('${id}',this.value)" onclick="event.stopPropagation()" title="Responsável por esta análise" style="flex:none;font-size:.54rem;max-width:90px;border:1px solid var(--line2);border-radius:4px;background:var(--bg3);color:var(--t2);padding:1px 2px"><option value="">— livre —</option>${_eq.colaboradores.map(c=>`<option value="${c.id}" ${_eq.responsaveis[id]===c.id?'selected':''}>${escHtml(c.nome)}</option>`).join('')}<option value="shared" ${_eq.responsaveis[id]==='shared'?'selected':''}>👥 todos</option></select>` : '';
+      html+=`<div style="display:flex;align-items:center;gap:6px;padding:2px 4px;font-size:.63rem;line-height:1.2;${on?'':'opacity:.5'}"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;min-width:0"><input type="checkbox" ${on?'checked':''} onchange="escopoToggleBloco('${id}',this.checked)" style="width:13px;height:13px;flex:none"><span>${escHtml(tit)}</span></label>${resp}</div>`;
     });
   });
   html+='</div>';
@@ -11223,6 +11248,32 @@ function _escopoAplicarCampos(){ // reflete o estado de cada campo (mute + ícon
   });
 }
 
+// ══════════════════════════════════════════════════
+// EQUIPE — trabalho assíncrono: atribui um responsável por análise (bloco), e
+// na sessão de cada um os blocos dos outros ficam somente-leitura. Pendura no
+// mesmo modelo do Escopo (data-escopo-id). Sem backend: não é tempo real; o
+// merge dos arquivos é a junção (Fatia 2).
+// ══════════════════════════════════════════════════
+const EQUIPE_CORES=['#1f6f5c','#c9923b','#7E5A9B','#b53a3a','#3B6B8C','#3D8B5A','#a16207','#5c92f5'];
+function _equipe(){ if(!state.equipe||typeof state.equipe!=='object') state.equipe={colaboradores:[],responsaveis:{},euSou:null}; const e=state.equipe; e.colaboradores=e.colaboradores||[]; e.responsaveis=e.responsaveis||{}; if(!('euSou'in e))e.euSou=null; return e; }
+function _colab(id){ return _equipe().colaboradores.find(c=>c.id===id)||null; }
+const _equipeOverride=new Set();
+function equipeAddColab(nome){ nome=(nome||'').trim(); if(!nome) return; const e=_equipe(); const max=e.colaboradores.reduce((m,c)=>Math.max(m,+(String(c.id).slice(1))||0),0); const id='c'+(max+1); e.colaboradores.push({id,nome,cor:EQUIPE_CORES[e.colaboradores.length%EQUIPE_CORES.length]}); if(typeof autoSave==='function')autoSave(); renderEquipe(); renderEscopo(); }
+function equipeRemColab(id){ const e=_equipe(); e.colaboradores=e.colaboradores.filter(c=>c.id!==id); Object.keys(e.responsaveis).forEach(b=>{ if(e.responsaveis[b]===id) delete e.responsaveis[b]; }); if(e.euSou===id)e.euSou=null; if(typeof autoSave==='function')autoSave(); renderEquipe(); renderEscopo(); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
+function equipeSetSou(id){ _equipe().euSou=id||null; _equipeOverride.clear(); if(typeof autoSave==='function')autoSave(); renderEquipe(); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
+function equipeSetResp(blocoId, v){ const e=_equipe(); if(!v) delete e.responsaveis[blocoId]; else e.responsaveis[blocoId]=v; if(typeof autoSave==='function')autoSave(); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
+function equipeOverride(blocoId){ _equipeOverride.add(blocoId); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
+function blocoMeu(escId){ const e=state.equipe; if(!e||!e.euSou) return true; if(_equipeOverride.has(escId)) return true; const r=e.responsaveis&&e.responsaveis[escId]; if(!r||r==='shared') return true; return r===e.euSou; }
+function renderEquipe(){
+  const e=_equipe();
+  const wrap=document.getElementById('equipe-colabs');
+  if(wrap){
+    wrap.innerHTML = e.colaboradores.length ? e.colaboradores.map(c=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${c.cor}1f;border:1px solid ${c.cor};color:${c.cor};border-radius:14px;padding:2px 6px 2px 9px;font-size:.62rem;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:${c.cor}"></span>${escHtml(c.nome)}<button onclick="equipeRemColab('${c.id}')" title="remover" style="border:none;background:none;color:${c.cor};cursor:pointer;font-size:.7rem;line-height:1;padding:0 1px">✕</button></span>`).join('') : '<span style="font-size:.6rem;color:var(--t3)">Nenhum colaborador ainda. Adicione os nomes da equipe.</span>';
+  }
+  const sel=document.getElementById('equipe-sou');
+  if(sel){ sel.innerHTML='<option value="">— ninguém (edito tudo) —</option>'+e.colaboradores.map(c=>`<option value="${c.id}" ${e.euSou===c.id?'selected':''}>${escHtml(c.nome)}</option>`).join(''); }
+}
+
 function _contarPreenchimento(scope){
   // Núcleo do diagnóstico = campos estruturados (ratings, selects, inputs, números).
   // Observações/notas (textareas e ids obs/nota/coment) são opcionais: ficam fora
@@ -11233,6 +11284,7 @@ function _contarPreenchimento(scope){
     if(!el.id && !el.name) return false;
     if(['file','hidden','button','submit','reset','color','range','checkbox','radio'].includes(el.type)) return false;
     if(el.closest('.module-block:not(.mod-active)')) return false; // módulo desativado: fora de escopo
+    if(el.closest('#escopo-block, #equipe-block')) return false;    // controles de escopo/equipe não são diagnóstico
     if(el.closest('.block-map-wrap')) return false;                // controles do mapa não são diagnóstico
     if(el.closest('.subpanel:not(.active)')) return false;         // subaba inativa
     if(el.disabled) return false;
@@ -11307,6 +11359,23 @@ function atualizarCompletude(){
     badge.classList.toggle('ess-pend', essPend);
     badge.title = `${ok} de ${total} campos preenchidos neste bloco`
       + (essPend ? ` · ${essTotal-essOk} campo(s) essencial(is) ainda vazio(s)` : '');
+    // EQUIPE: chip do responsável + bloqueio dos blocos de outros colaboradores
+    if(escId){
+      const eq=state.equipe; const r=eq&&eq.responsaveis&&eq.responsaveis[escId];
+      let chip=header.querySelector(':scope > .bloco-resp-chip');
+      if(r){
+        const cb=(r!=='shared')?(_colab(r)||{}):{};
+        const nome=r==='shared'?'todos':(cb.nome||'?'); const cor=r==='shared'?'var(--teal)':(cb.cor||'var(--t3)');
+        if(!chip){ chip=document.createElement('span'); chip.className='bloco-resp-chip'; header.insertBefore(chip, badge); }
+        chip.style.background=(r==='shared'?'rgba(31,111,92,.1)':cor+'1f'); chip.style.color=cor; chip.style.border='1px solid '+cor;
+        chip.textContent=(r==='shared'?'👥 ':'👤 ')+nome;
+      } else if(chip){ chip.remove(); }
+      const alheio = typeof blocoMeu==='function' && !blocoMeu(escId);
+      block.classList.toggle('bloco-alheio', !!alheio);
+      let ov=header.querySelector(':scope > .bloco-override');
+      if(alheio){ if(!ov){ ov=document.createElement('button'); ov.className='bloco-override'; ov.type='button'; ov.textContent='✎ editar assim mesmo'; ov.onclick=(e)=>{ e.stopPropagation(); e.preventDefault(); equipeOverride(escId); }; const chev=header.querySelector('.block-chevron'); if(chev) header.insertBefore(ov,chev); else header.appendChild(ov); } }
+      else if(ov){ ov.remove(); }
+    }
   });
   // por aba (barra + % na nav)
   document.querySelectorAll('.panel').forEach(panel=>{
