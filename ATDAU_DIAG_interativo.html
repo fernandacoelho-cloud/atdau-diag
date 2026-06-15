@@ -5799,6 +5799,16 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
   </div>
 
+  <!-- Matriz de relações entre ambientes -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🔀</span><span class="block-title">Matriz de relações entre ambientes</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Defina o grau de relação entre os ambientes do programa — clique na célula para alternar: <strong style="color:#1d9e75">▲ obrigatório</strong> · <strong style="color:#c9923b">○ desejável</strong> · <strong style="color:#b53a3a">✕ evitar</strong>. Orienta a setorização e o partido. Os ambientes vêm da lista viva acima.</div>
+      <div id="matriz-relacoes" style="overflow-x:auto"></div>
+      <button class="instr-btn" onclick="exportarMatrizSVG()" style="font-size:.62rem;margin-top:8px">🖼️ Exportar diagrama SVG</button>
+    </div>
+  </div>
+
   <!-- Programa dimensionado -->
   <div class="block block-open">
     <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Programa dimensionado</span></div>
@@ -8003,6 +8013,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   buildUsosGrid();
   carregarDados();
   if(typeof renderVUERadar==='function') renderVUERadar();
+  if(typeof renderMatrizRelacoes==='function') renderMatrizRelacoes();
   renderAllFindings();
   renderSwot();
   renderDiretrizes();
@@ -9335,6 +9346,7 @@ function delProgramaItem(id) {
 }
 
 function renderPrograma() {
+  if(typeof renderMatrizRelacoes==='function') renderMatrizRelacoes();
   const cont = document.getElementById('programa-lista');
   if (!cont) return;
   const lista = Array.isArray(state.programa) ? state.programa : [];
@@ -9362,6 +9374,60 @@ function renderPrograma() {
 }
 
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Matriz de relações entre ambientes (adjacências) ──
+const _MAT_SYM={obrig:'▲',desej:'○',evitar:'✕'};
+const _MAT_COR={obrig:'#1d9e75',desej:'#c9923b',evitar:'#b53a3a'};
+function _matrizKey(a,b){ a=String(a); b=String(b); return a<b?a+'|'+b:b+'|'+a; }
+function _matrizGet(a,b){ const r=state.prog_relacoes; return r?(r[_matrizKey(a,b)]||''):''; }
+function matrizCiclar(a,b){
+  if(!state.prog_relacoes||typeof state.prog_relacoes!=='object') state.prog_relacoes={};
+  const k=_matrizKey(a,b); const ordem=['','obrig','desej','evitar'];
+  const next=ordem[(ordem.indexOf(state.prog_relacoes[k]||'')+1)%ordem.length];
+  if(next) state.prog_relacoes[k]=next; else delete state.prog_relacoes[k];
+  if(typeof autoSave==='function')autoSave(); renderMatrizRelacoes();
+}
+function renderMatrizRelacoes(){
+  const host=document.getElementById('matriz-relacoes'); if(!host) return;
+  const lista=Array.isArray(state.programa)?state.programa:[];
+  if(lista.length<2){ host.innerHTML='<div style="font-size:.6rem;color:var(--t3);font-style:italic">Adicione ao menos 2 ambientes na lista viva acima para montar a matriz.</div>'; return; }
+  let h='<table style="border-collapse:collapse;font-size:.58rem"><thead><tr><th></th>';
+  lista.forEach(p=>{ h+=`<th style="padding:2px 4px;color:var(--t2);font-weight:600;max-width:74px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(p.item)}">${escHtml((p.item||'').slice(0,12))}</th>`; });
+  h+='</tr></thead><tbody>';
+  lista.forEach((pa,i)=>{
+    h+=`<tr><td style="padding:2px 6px;color:var(--t2);font-weight:600;white-space:nowrap;text-align:right;max-width:130px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(pa.item)}">${escHtml((pa.item||'').slice(0,18))}</td>`;
+    lista.forEach((pb,j)=>{
+      if(j<=i){ h+='<td style="background:var(--bg2);border:1px solid var(--line);width:22px;height:22px"></td>'; return; }
+      const v=_matrizGet(pa.id,pb.id);
+      h+=`<td onclick="matrizCiclar('${pa.id}','${pb.id}')" title="${escHtml(pa.item)} × ${escHtml(pb.item)}" style="border:1px solid var(--line);text-align:center;cursor:pointer;width:22px;height:22px;color:${v?_MAT_COR[v]:'var(--t3)'};font-weight:700">${v?_MAT_SYM[v]:''}</td>`;
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table><div style="font-size:.56rem;color:var(--t3);margin-top:6px"><span style="color:#1d9e75">▲ obrigatório</span> · <span style="color:#c9923b">○ desejável</span> · <span style="color:#b53a3a">✕ evitar</span> · clique para alternar</div>';
+  host.innerHTML=h;
+}
+function exportarMatrizSVG(){
+  const lista=Array.isArray(state.programa)?state.programa:[];
+  if(lista.length<2){ if(typeof mostrarStatus==='function')mostrarStatus('Adicione ao menos 2 ambientes.'); return; }
+  const n=lista.length, cell=26, labelW=140, labelH=130, pad=12;
+  const W=labelW+n*cell+pad*2, H=labelH+n*cell+pad*2+34;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#ffffff"/>`;
+  svg+=`<text x="${pad}" y="${pad+12}" font-family="sans-serif" font-size="13" font-weight="700" fill="#2a2a28">Matriz de relações entre ambientes</text>`;
+  const ox=pad+labelW, oy=pad+labelH+8;
+  lista.forEach((p,j)=>{ const x=ox+j*cell+cell/2; svg+=`<text x="${x}" y="${oy-5}" font-family="sans-serif" font-size="9" fill="#555" transform="rotate(-90 ${x} ${oy-5})" text-anchor="start">${escHtml((p.item||'').slice(0,18))}</text>`; });
+  lista.forEach((pa,i)=>{
+    const y=oy+i*cell;
+    svg+=`<text x="${ox-6}" y="${y+cell/2+3}" font-family="sans-serif" font-size="9" fill="#555" text-anchor="end">${escHtml((pa.item||'').slice(0,22))}</text>`;
+    lista.forEach((pb,j)=>{
+      const x=ox+j*cell;
+      svg+=`<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${j<=i?'#f0efec':'#ffffff'}" stroke="#dddddd"/>`;
+      if(j>i){ const v=_matrizGet(pa.id,pb.id); if(v) svg+=`<text x="${x+cell/2}" y="${y+cell/2+4}" font-family="sans-serif" font-size="13" font-weight="700" fill="${_MAT_COR[v]}" text-anchor="middle">${_MAT_SYM[v]}</text>`; }
+    });
+  });
+  svg+=`<text x="${pad}" y="${H-8}" font-family="sans-serif" font-size="9" fill="#777">▲ obrigatório · ○ desejável · ✕ evitar · Suite ATDAU</text></svg>`;
+  const blob=new Blob([svg],{type:'image/svg+xml'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='atdau-matriz-relacoes.svg'; document.body.appendChild(a); a.click(); setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); },100);
+  if(typeof mostrarStatus==='function')mostrarStatus('Matriz exportada em SVG ✓');
+}
 
 // ── Vínculo: uma diretriz ajusta/cria item do programa ──
 function abrirVinculoPrograma(dirTexto) {
@@ -12118,6 +12184,11 @@ function gerarRelatorioPDF(){
   if(Array.isArray(state.programa) && state.programa.length){
     titulo('Programa de necessidades');
     state.programa.forEach(p=>{ if(!p) return; const t=(p.item||p.nome||'').toString().trim(); if(!t) return; const a=p.area?(' — '+p.area+' m²'):''; const o=p.obs?(' ('+p.obs+')'):''; item(t+a+o); });
+    // matriz de relações entre ambientes (obrigatórias / a evitar)
+    const _rel=state.prog_relacoes||{}; const _nome=id=>{ const x=(state.programa||[]).find(q=>String(q.id)===String(id)); return x?(x.item||x.nome||''):''; };
+    const _LBLREL={obrig:'obrigatória',desej:'desejável',evitar:'evitar'};
+    const relList=Object.keys(_rel).map(k=>{ const [a,b]=k.split('|'); const na=_nome(a), nb=_nome(b); if(!na||!nb) return null; return _MAT_SYM[_rel[k]]+' '+na+' × '+nb+' ('+(_LBLREL[_rel[k]]||_rel[k])+')'; }).filter(Boolean);
+    if(relList.length){ subt('Relações entre ambientes'); relList.forEach(r=>item(r)); }
     const ench=state['prog-enunciado']||''; if(ench){ subt('Enunciado do problema de projeto'); paragrafo(ench); }
     espaco(2);
   }
