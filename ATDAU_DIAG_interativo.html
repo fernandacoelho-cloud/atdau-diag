@@ -6012,6 +6012,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
       <div class="instr-section-title">Categorias de anotação <span style="font-size:.6rem;color:var(--t3);font-weight:500;text-transform:none;letter-spacing:0">— clique para ligar/desligar como camada · Shift+clique para selecionar como categoria de adição</span></div>
       <div id="ma-categories" class="ma-categories"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap">
+        <span style="font-size:.56rem;color:var(--t3)">Categoria personalizada:</span>
+        <input type="text" id="ma-cat-nova-nome" placeholder="nome…" maxlength="40" style="font-size:.6rem;padding:3px 7px;border:1px solid var(--line2);border-radius:5px;background:var(--bg3);color:var(--t1);max-width:160px">
+        <input type="color" id="ma-cat-nova-cor" value="#3D8B5A" title="Cor da categoria" style="width:26px;height:24px;border:1px solid var(--line2);border-radius:5px;background:none;cursor:pointer;padding:0">
+        <button class="instr-btn" onclick="maAddCategoria()" style="font-size:.6rem">➕ Criar</button>
+      </div>
 
       <div class="ma-toolbar">
         <button class="ma-mode-btn active" data-mode="view" onclick="maSetMode('view')">👁️ Ver</button>
@@ -11197,6 +11203,7 @@ function carregarDados(){
       const loaded=JSON.parse(raw);
       Object.assign(state,loaded);
       preencherDados();
+      if(typeof maSyncCategorias==='function'){ maSyncCategorias(); if(typeof maRenderCategories==='function') maRenderCategories(); }
       renderAllFindings();
       if(typeof renderViabilidade==='function') renderViabilidade();
       if(typeof renderAnalogas==='function') renderAnalogas();
@@ -19520,6 +19527,10 @@ const MA_CATEGORIES = [
   { id:'ator-politico',icon:'🏛️', label:'Atores políticos',       color:'#5c92f5', desc:'Associações de moradores, igrejas, ONGs, lideranças, equipamentos públicos com influência política' },
   { id:'cultural',    icon:'🎭',  label:'Manifestações culturais',color:'#d65cf5', desc:'Festas, blocos, feiras, cultos, espaços de prática cultural permanente ou cíclica' },
   { id:'foto',        icon:'📸',  label:'Foto contextual',        color:'#7c8a99', desc:'Ponto de registro fotográfico que contextualiza o território (complementa o álbum por subtema)' },
+  // Itinerários culturais (Berti/ICOMOS) e leitura perceptiva do SEL (Tardim)
+  { id:'patrimonio-imaterial', icon:'🪔', label:'Patrimônio imaterial', color:'#d4a017', desc:'Saberes, ofícios, festas, cantos, rezas — bens culturais imateriais associados ao percurso' },
+  { id:'ponto-interpretacao',  icon:'ℹ️', label:'Ponto de interpretação', color:'#3B6B8C', desc:'Parada de leitura do itinerário cultural — mirante, painel, nó interpretativo' },
+  { id:'elemento-cenico',      icon:'🌄', label:'Elemento cênico',     color:'#2E8B57', desc:'Elemento de valor cênico/visual na paisagem (Tardim) — marco, visada, área de emersão visual' },
 ];
 
 const MA_STORAGE_KEY = 'atdau-diag-mapa-anotado';
@@ -19686,9 +19697,34 @@ function maSetAddCategory(catId) {
   maRenderCategories();
 }
 
+// ── categorias personalizadas (item 4): hidratam MA_CATEGORIES a partir do state ──
+function maSyncCategorias(){
+  // remove customs anteriores e re-hidrata (idempotente); mutação do array canônico
+  for(let i=MA_CATEGORIES.length-1;i>=0;i--){ if(MA_CATEGORIES[i].custom) MA_CATEGORIES.splice(i,1); }
+  const customs = Array.isArray(state.ma_categorias)?state.ma_categorias:[];
+  customs.forEach(c=>{ if(c&&c.id&&!MA_CATEGORIES.some(x=>x.id===c.id)) MA_CATEGORIES.push({ id:c.id, icon:c.icon||'📍', label:c.label||c.id, color:c.color||'#888', desc:c.desc||'Categoria personalizada', custom:true }); });
+}
+function maAddCategoria(){
+  const nomeI=document.getElementById('ma-cat-nova-nome'); const corI=document.getElementById('ma-cat-nova-cor');
+  const nome=((nomeI&&nomeI.value)||'').trim(); if(!nome){ if(typeof mostrarStatus==='function')mostrarStatus('Dê um nome à categoria.'); return; }
+  const cor=(corI&&corI.value)||'#3D8B5A';
+  if(!Array.isArray(state.ma_categorias)) state.ma_categorias=[];
+  const id='cat-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  state.ma_categorias.push({ id, label:nome, color:cor, icon:'📍' });
+  if(typeof salvar==='function')salvar(); else if(typeof autoSave==='function')autoSave();
+  maSyncCategorias(); maRenderCategories(); if(typeof maRefreshLegenda==='function')maRefreshLegenda();
+  if(nomeI)nomeI.value='';
+}
+function maRemCategoria(id){
+  if(!Array.isArray(state.ma_categorias))return;
+  state.ma_categorias=state.ma_categorias.filter(c=>c.id!==id);
+  if(typeof salvar==='function')salvar(); else if(typeof autoSave==='function')autoSave();
+  maSyncCategorias(); maRenderCategories(); if(typeof maRenderMarkers==='function')maRenderMarkers(); if(typeof maRefreshLegenda==='function')maRefreshLegenda();
+}
 function maRenderCategories() {
   const wrap = document.getElementById('ma-categories');
   if (!wrap) return;
+  maSyncCategorias();
   wrap.innerHTML = MA_CATEGORIES.map(cat => {
     const count = MapaAnotadoStore.getByCategory(cat.id).length;
     const active = MapaAnotadoStore.isCategoryActive(cat.id);
@@ -19703,6 +19739,7 @@ function maRenderCategories() {
               ${indicator}<span class="ma-cat-dot" style="background:${cat.color}"></span>
               ${cat.icon} ${cat.label}
               <span class="ma-cat-count">${count}</span>
+              ${cat.custom?`<span onclick="event.stopPropagation();maRemCategoria('${cat.id}')" title="remover categoria personalizada" style="margin-left:3px;color:#e0506a;cursor:pointer;font-weight:700">✕</span>`:''}
             </div>`;
   }).join('');
   // Botão de ajuda
