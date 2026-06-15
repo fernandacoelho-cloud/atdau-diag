@@ -17685,11 +17685,12 @@ function renderVerbos() {
       <div class="verbos-grupo-header" style="border-left-color:${ginfo.color}">${ginfo.icon} ${ginfo.label}</div>
       <div class="verbos-chips">
         ${verbosGrupo.map(v => `
-          <button class="verbo-chip${_verbosSelecionados.has(v.id)?' selected':''}" 
+          <button class="verbo-chip${_verbosSelecionados.has(v.id)?' selected':''}"
                   onclick="toggleVerbo('${v.id}')"
+                  onmouseenter="verboHover(this,'${v.id}')" onmouseleave="hideInfo()"
                   data-grupo="${v.grupo}">
             ${v.label}
-            <span class="verbo-info" onclick="event.stopPropagation();showInfo(this, ${JSON.stringify(v.expl)})">ⓘ</span>
+            <span class="verbo-info" onclick="event.stopPropagation();verboInfo(this,'${v.id}')">ⓘ</span>
           </button>`).join('')}
       </div>
     </div>`;
@@ -19725,6 +19726,23 @@ function sidraRestore() {
 // ══════════════════════════════════════════════════════════════════════
 // POPOVER de informações (tooltips)
 // ══════════════════════════════════════════════════════════════════════
+// ── tooltips de conceito dos verbos operativos (hover) ──
+function hideInfo(){ document.querySelectorAll('.info-popover.hover').forEach(p=>p.remove()); }
+function hoverInfo(anchor, label, body){
+  document.querySelectorAll('.info-popover').forEach(p=>p.remove());
+  const pop=document.createElement('div'); pop.className='info-popover hover';
+  pop.innerHTML=`<strong style="color:var(--teal)">${escHtml(label)}</strong><br>${escHtml(body)}`;
+  document.body.appendChild(pop);
+  const r=anchor.getBoundingClientRect(); let left=r.left, top=r.bottom+8;
+  const pr=pop.getBoundingClientRect();
+  if(left+pr.width>window.innerWidth-12) left=window.innerWidth-pr.width-12;
+  if(top+pr.height>window.innerHeight-12) top=r.top-pr.height-8;
+  pop.style.left=Math.max(8,left)+'px'; pop.style.top=Math.max(8,top)+'px';
+}
+function _verbo(id){ return (typeof VERBOS_OPERATIVOS!=='undefined')?VERBOS_OPERATIVOS.find(v=>v.id===id):null; }
+function verboHover(anchor,id){ const v=_verbo(id); if(v) hoverInfo(anchor, v.label, v.expl); }
+function verboInfo(anchor,id){ const v=_verbo(id); if(v) showInfo(anchor, v.label+' — '+v.expl); }
+
 function showInfo(anchor, text) {
   // Fecha qualquer popover aberto
   document.querySelectorAll('.info-popover').forEach(p => p.remove());
