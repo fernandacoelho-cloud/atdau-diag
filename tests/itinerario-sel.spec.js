@@ -1,9 +1,9 @@
 // tests/itinerario-sel.spec.js
-// A discussão SEL + itinerário cultural reverbera agora na Categoria/subtipos:
-// - nova Categoria 'Itinerário cultural / Rota' (proj-modulo=itinerario) com subtipos
-//   de rota, escopo Patrimonial/Cultural, cascata p/ recorte=rota e ativa o bloco de
-//   Pesquisa histórica;
-// - 'Paisagístico' relabel → '/ Sistema de espaços livres (SEL)' com subtipos SEL.
+// Opção A (fiel a Berti): itinerário cultural NÃO é categoria solta — é leitura
+// territorial dentro do Paisagismo (paisagem cultural). A categoria 'Paisagístico /
+// SEL e paisagem cultural' reúne subtipos SEL + paisagem cultural; escolher um
+// subtipo de itinerário (rota) faz cascata para recorte=rota + escopo Patrimonial/
+// Cultural. O VUE foi movido p/ a Síntese (após o diagnóstico — Carta de Burra).
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,50 +11,44 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIAG_URL = 'file://' + path.resolve(__dirname, '..', 'ATDAU_DIAG_interativo.html').replace(/\\/g, '/');
 
-test('Itinerário cultural e SEL como categorias: subtipos, cascata e bloco histórico', async ({ page }) => {
+test('Paisagismo/paisagem cultural: itinerário como subtipo cascateia recorte=rota; sem categoria solta', async ({ page }) => {
   await page.goto(DIAG_URL);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(1600);
 
-  const itin = await page.evaluate(() => {
-    const sel = document.getElementById('proj-modulo');
-    const temOpcao = [...sel.options].some(o => o.value === 'itinerario');
-    sel.value = 'itinerario'; sel.dispatchEvent(new Event('change'));
-    const hist = [...document.querySelectorAll('.module-block')].find(b => /Pesquisa histórica/.test(b.textContent));
+  // 'itinerario' deixou de ser categoria; Paisagístico reúne SEL + paisagem cultural
+  const cat = await page.evaluate(() => {
+    const opts = [...document.getElementById('proj-modulo').options].map(o => o.value);
+    const sel = document.getElementById('proj-modulo'); sel.value = 'paisagistico'; sel.dispatchEvent(new Event('change'));
     return {
-      temOpcao,
+      temItinerario: opts.includes('itinerario'),
+      label: [...sel.options].find(o => o.value === 'paisagistico').textContent,
       subs: [...document.getElementById('proj-tipo').options].map(o => o.textContent),
-      escopo: document.getElementById('proj-escopo').value,
+    };
+  });
+  expect(cat.temItinerario).toBe(false);
+  expect(cat.label).toMatch(/paisagem cultural/i);
+  expect(cat.subs).toContain('Parque linear');             // SEL
+  expect(cat.subs).toContain('Itinerário cultural / rota'); // paisagem cultural
+
+  // escolher subtipo de itinerário → cascata recorte=rota + escopo Patrimonial/Cultural + cartão
+  const sub = await page.evaluate(() => {
+    const t = document.getElementById('proj-tipo'); t.value = 'Itinerário cultural / rota'; t.dispatchEvent(new Event('change'));
+    return {
       recorte: document.getElementById('proj-tipologia-recorte').value,
-      histAtivo: hist ? hist.classList.contains('mod-active') : false,
+      escopo: document.getElementById('proj-escopo').value,
+      card: /percurso/i.test(document.getElementById('recorte-orientacao').textContent || ''),
     };
   });
-  expect(itin.temOpcao).toBe(true);
-  expect(itin.subs).toContain('Rota de peregrinação');
-  expect(itin.escopo).toBe('Patrimonial / Cultural');
-  expect(itin.recorte).toBe('rota');
-  expect(itin.histAtivo).toBe(true);
+  expect(sub.recorte).toBe('rota');
+  expect(sub.escopo).toBe('Patrimonial / Cultural');
+  expect(sub.card).toBe(true);
 
-  const sel = await page.evaluate(() => {
-    const s = document.getElementById('proj-modulo'); s.value = 'paisagistico'; s.dispatchEvent(new Event('change'));
-    return {
-      label: [...s.options].find(o => o.value === 'paisagistico').textContent,
-      subs: [...document.getElementById('proj-tipo').options].map(o => o.textContent),
-    };
-  });
-  expect(sel.label).toMatch(/SEL/);
-  expect(sel.subs).toContain('Parque linear');
-  expect(sel.subs).toContain('Corredor verde / ecológico');
-
-  // persistência do itinerário (módulo + subtipo)
-  await page.evaluate(() => {
-    const s = document.getElementById('proj-modulo'); s.value = 'itinerario'; s.dispatchEvent(new Event('change'));
-    const t = document.getElementById('proj-tipo'); t.value = 'Rota de peregrinação'; t.dispatchEvent(new Event('change'));
-  });
-  await page.waitForTimeout(1400);
-  await page.reload();
-  await page.waitForTimeout(1700);
-  const persist = await page.evaluate(() => ({ mod: document.getElementById('proj-modulo').value, sub: document.getElementById('proj-tipo').value }));
-  expect(persist.mod).toBe('itinerario');
-  expect(persist.sub).toBe('Rota de peregrinação');
+  // VUE foi para a Síntese (painel-7), não está mais na Identificação (painel-0)
+  const vue = await page.evaluate(() => ({
+    inPanel7: !!document.querySelector('#panel-7 #vue-render'),
+    inPanel0: !!document.querySelector('#panel-0 #vue-render'),
+  }));
+  expect(vue.inPanel7).toBe(true);
+  expect(vue.inPanel0).toBe(false);
 });

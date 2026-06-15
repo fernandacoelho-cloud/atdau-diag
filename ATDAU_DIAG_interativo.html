@@ -1417,10 +1417,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <select id="proj-modulo" onchange="setModule(this.value,true)">
             <option value="arquitetonico">🏗️ Projeto Arquitetônico</option>
             <option value="urbano">🌆 Projeto Urbano</option>
-            <option value="paisagistico">🌳 Paisagístico / Sistema de espaços livres (SEL)</option>
+            <option value="paisagistico">🌳 Paisagístico / SEL e paisagem cultural</option>
             <option value="retrofit">🔨 Retrofit / Requalificação Arquitetônica</option>
             <option value="patrimonio">🏛️ Patrimônio / Restauro</option>
-            <option value="itinerario">🧭 Itinerário cultural / Rota</option>
             <option value="his">🏘️ HIS — Habitação de Interesse Social</option>
             <option value="requalif_urbana">🔄 Requalificação Urbana</option>
             <option value="parcelamento">📐 Parcelamento do Solo</option>
@@ -1430,7 +1429,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         </div>
         <div class="form-field">
           <label>Tipologia específica / subtipo</label>
-          <select id="proj-tipo" onchange="if(typeof autoSave==='function')autoSave()">
+          <select id="proj-tipo" onchange="onSubtipoChange()">
             <option value="">Selecione…</option>
             <option>Residência unifamiliar</option>
             <option>Residência multifamiliar</option>
@@ -1523,49 +1522,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="proj-justif-recorte" placeholder="Ex.: A área de estudo foi delimitada pela bacia hidrográfica do córrego X; o entorno imediato adotou o pedestrian shed de 5 minutos (400 m), conforme a unidade de vizinhança (Perry, 1929) atualizada pela noção de proximidade da cidade de 15 minutos (Moreno et al., 2021)."></textarea>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="block-header">
-      <span class="block-icon">🏛️</span>
-      <span class="block-title">Potencial de Valor Universal Excepcional (VUE) — itinerários culturais</span>
-    </div>
-    <div class="block-body">
-      <div class="info-box" style="margin-bottom:10px">
-        Para projetos de <strong>itinerários culturais</strong> (rotas de peregrinação, turismo cultural). Avalia o potencial de reconhecimento como <strong>Patrimônio Mundial</strong> (UNESCO/ICOMOS) em 4 dimensões (Gomes &amp; Santiago, 2020) — <strong>Baixo / Médio / Alto</strong>. É orientação projetual, não candidatura formal.
-      </div>
-      <div class="form-grid">
-        <div class="form-field span2">
-          <label>Espacial <span style="font-weight:400;color:var(--t3)">— conjunto territorial coerente e contínuo (nós, trechos, paisagem), não pontos isolados</span></label>
-          <div style="display:flex;gap:8px;align-items:flex-start">
-            <select id="vue-espacial-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
-            <textarea id="vue-espacial-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
-          </div>
-        </div>
-        <div class="form-field span2">
-          <label>Temporal <span style="font-weight:400;color:var(--t3)">— profundidade histórica e continuidade de uso que sustentam a narrativa</span></label>
-          <div style="display:flex;gap:8px;align-items:flex-start">
-            <select id="vue-temporal-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
-            <textarea id="vue-temporal-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
-          </div>
-        </div>
-        <div class="form-field span2">
-          <label>Cultural <span style="font-weight:400;color:var(--t3)">— intercâmbio de valores, saberes e influências ao longo do percurso (material e imaterial)</span></label>
-          <div style="display:flex;gap:8px;align-items:flex-start">
-            <select id="vue-cultural-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
-            <textarea id="vue-cultural-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
-          </div>
-        </div>
-        <div class="form-field span2">
-          <label>Propósito <span style="font-weight:400;color:var(--t3)">— sentido comum que articula os bens (peregrinação, comércio, fé, ofício) conferindo unidade</span></label>
-          <div style="display:flex;gap:8px;align-items:flex-start">
-            <select id="vue-proposito-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
-            <textarea id="vue-proposito-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
-          </div>
-        </div>
-      </div>
-      <div id="vue-render" style="margin-top:10px"></div>
     </div>
   </div>
 
@@ -3611,7 +3567,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <!-- MÓDULO: Patrimônio / Restauro — Pesquisa Histórica -->
-  <div class="block module-block" data-modules="patrimonio itinerario">
+  <div class="block module-block" data-modules="patrimonio">
     <div class="block-header"><span class="block-icon">📚</span><span class="block-title">Pesquisa histórica e análise de integridade</span><button class="block-photos-toggle" data-block-id="b-pesquisa-historica-e-analise-de-integrid" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">Ref: Carta de Veneza (ICOMOS, 1964) · Carta de Burra (ICOMOS, 1979) · Carta de Nara (1994) · IPHAN Instrução Normativa 01/2015.</div>
@@ -5742,6 +5698,46 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <label>Síntese interpretativa — aspectos de destaque</label>
         <textarea id="swot-narrativa" placeholder="Redija em 3–5 frases os aspectos mais relevantes do diagnóstico que orientarão o partido arquitetônico..." style="min-height:100px"></textarea>
       </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Significância e potencial de VUE — paisagem cultural / itinerários culturais</span></div>
+    <div class="block-body">
+      <div class="info-box" style="margin-bottom:10px">
+        Para projetos de <strong>itinerários culturais / paisagem cultural</strong>. Síntese de <strong>significância</strong>, feita <strong>após o diagnóstico</strong> (Carta de Burra: entender a significância antes das diretrizes; ICOMOS Itinerários Culturais 2008: significância após o inventário de bens materiais e imateriais). Consolida os achados (paisagem, patrimônio material e imaterial do Mapa Anotado) e estima o potencial de <strong>Valor Universal Excepcional</strong> (UNESCO/ICOMOS) em 4 dimensões (Gomes &amp; Santiago, 2020) — <strong>Baixo / Médio / Alto</strong>. Orientação projetual, não candidatura formal.
+      </div>
+      <div class="form-grid">
+        <div class="form-field span2">
+          <label>Espacial <span style="font-weight:400;color:var(--t3)">— conjunto territorial coerente e contínuo (nós, trechos, paisagem), não pontos isolados</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-espacial-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-espacial-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do diagnóstico" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+        <div class="form-field span2">
+          <label>Temporal <span style="font-weight:400;color:var(--t3)">— profundidade histórica e continuidade de uso que sustentam a narrativa</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-temporal-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-temporal-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do diagnóstico" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+        <div class="form-field span2">
+          <label>Cultural <span style="font-weight:400;color:var(--t3)">— intercâmbio de valores, saberes e influências ao longo do percurso (material e imaterial)</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-cultural-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-cultural-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do diagnóstico" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+        <div class="form-field span2">
+          <label>Propósito <span style="font-weight:400;color:var(--t3)">— sentido comum que articula os bens (peregrinação, comércio, fé, ofício) conferindo unidade</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-proposito-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-proposito-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do diagnóstico" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+      </div>
+      <div id="vue-render" style="margin-top:10px"></div>
     </div>
   </div>
 </div>
@@ -12107,20 +12103,6 @@ function gerarRelatorioPDF(){
     espaco(3);
   }
 
-  // ─── VUE — potencial de Valor Universal Excepcional (itinerários culturais) ───
-  {
-    const NIV={'1':'Baixo','2':'Médio','3':'Alto'};
-    const dimsV=[['Espacial','vue-espacial'],['Temporal','vue-temporal'],['Cultural','vue-cultural'],['Propósito','vue-proposito']];
-    const linhasV=[]; let somaV=0, contV=0;
-    dimsV.forEach(([lbl,base])=>{ const n=state[base+'-nivel']; const j=(state[base+'-justif']||'').toString().trim(); if(n){ const v=parseInt(n,10); if(v>=1){somaV+=v;contV++;} linhasV.push({lbl,niv:NIV[n]||n,j}); } });
-    if(linhasV.length){
-      titulo('Potencial de Valor Universal Excepcional (VUE)');
-      linhasV.forEach(l=>{ subt(l.lbl+' — '+l.niv); if(l.j) paragrafo(l.j); });
-      if(contV) paragrafo('Média das dimensões avaliadas: '+(somaV/contV).toFixed(2)+'/3.');
-      espaco(2);
-    }
-  }
-
   // ─── DADOS INSERIDOS — dimensões do diagnóstico (dump por bloco) ───
   dumpPainel(11, 'Estudo de viabilidade');
   dumpPainel(1,  'Contexto urbano');
@@ -12185,6 +12167,20 @@ function gerarRelatorioPDF(){
   }
   if(state.swot_narrativa){ subt('Leitura interpretativa do diagnóstico'); paragrafo(state.swot_narrativa); espaco(1); }
   espaco(2);
+
+  // ─── SIGNIFICÂNCIA E POTENCIAL DE VUE (paisagem cultural / itinerários) — síntese pós-diagnóstico ───
+  {
+    const NIV={'1':'Baixo','2':'Médio','3':'Alto'};
+    const dimsV=[['Espacial','vue-espacial'],['Temporal','vue-temporal'],['Cultural','vue-cultural'],['Propósito','vue-proposito']];
+    const linhasV=[]; let somaV=0, contV=0;
+    dimsV.forEach(([lbl,base])=>{ const n=state[base+'-nivel']; const j=(state[base+'-justif']||'').toString().trim(); if(n){ const v=parseInt(n,10); if(v>=1){somaV+=v;contV++;} linhasV.push({lbl,niv:NIV[n]||n,j}); } });
+    if(linhasV.length){
+      titulo('Significância e potencial de VUE (itinerários culturais)');
+      linhasV.forEach(l=>{ subt(l.lbl+' — '+l.niv); if(l.j) paragrafo(l.j); });
+      if(contV) paragrafo('Média das dimensões avaliadas: '+(somaV/contV).toFixed(2)+'/3.');
+      espaco(2);
+    }
+  }
 
   // ─── PROGRAMA DE NECESSIDADES ───
   if(Array.isArray(state.programa) && state.programa.length){
@@ -16233,8 +16229,8 @@ const MODULES_DEF = {
     color:'var(--blue)'
   },
   paisagistico: {
-    label:'Paisagístico / Sistema de espaços livres (SEL)', icon:'🌳',
-    desc:'Blocos extras ativos: Inventário de vegetação e ecologia · Sistema hídrico e ciclo da água. Leitura por sistema de espaços livres (Tardim): verbos SEL no painel 08 e categorias perceptivas no Mapa Anotado.',
+    label:'Paisagístico / SEL e paisagem cultural', icon:'🌳',
+    desc:'Blocos extras ativos: Inventário de vegetação e ecologia · Sistema hídrico e ciclo da água. Leitura multiescalar: sistema de espaços livres (Tardim) e, em escala territorial, paisagem cultural / itinerários culturais (Berti) — verbos SEL no painel 08, categorias perceptivas e de patrimônio no Mapa Anotado. Subtipos de itinerário acionam o recorte por percurso (rota) e a avaliação de significância/VUE na Síntese.',
     color:'#22c474'
   },
   retrofit: {
@@ -16266,11 +16262,6 @@ const MODULES_DEF = {
     label:'Plano Urbano / Masterplan', icon:'🗺️',
     desc:'Blocos extras ativos: Morfologia e estrutura urbana · Análise socioeconômica · Sistema hídrico.',
     color:'#e0506a'
-  },
-  itinerario: {
-    label:'Itinerário cultural / Rota', icon:'🧭',
-    desc:'Bloco extra ativo: Pesquisa histórica e integridade. Recorte por percurso (rota); avaliação de potencial VUE (UNESCO/ICOMOS) na Identificação; patrimônio imaterial e pontos de interpretação no Mapa Anotado.',
-    color:'#d4a017'
   }
 };
 
@@ -16279,8 +16270,7 @@ const MODULES_DEF = {
 const MODULO_SUBTIPOS = {
   arquitetonico:['Residência unifamiliar','Residência multifamiliar','Equipamento de educação — Creche / EMEI','Equipamento de educação — Ensino Fundamental','Equipamento de educação — Ensino Médio','Equipamento de saúde — UBS','Equipamento de saúde — UPA / Hospital','Equipamento social — CRAS / CREAS','Equipamento cultural — biblioteca / museu / CEU','Equipamento esportivo — quadra / ginásio','Equipamento religioso','Comercial / serviços','Institucional / administrativo','Industrial / logístico','Uso misto (residencial + comércio)'],
   urbano:['Praça / parque / espaço público','Redesenho de via / calçadão','Uso misto (residencial + comércio)','Plano de bairro / setor'],
-  paisagistico:['Praça / parque / espaço público','Parque linear','Corredor verde / ecológico','Sistema de praças e largos','Orla / fundo de vale','Arborização e infraestrutura verde'],
-  itinerario:['Rota de peregrinação','Roteiro turístico-cultural','Caminho / trilha patrimonial','Itinerário religioso','Circuito de bens culturais'],
+  paisagistico:['Praça / parque / espaço público','Parque linear','Corredor verde / ecológico','Sistema de praças e largos','Orla / fundo de vale','Arborização e infraestrutura verde','Paisagem cultural','Itinerário cultural / rota','Caminho de peregrinação','Rota temática / identitária'],
   retrofit:['Residência unifamiliar','Residência multifamiliar','Equipamento cultural — biblioteca / museu / CEU','Comercial / serviços','Institucional / administrativo','Equipamento religioso'],
   patrimonio:['Equipamento cultural — biblioteca / museu / CEU','Equipamento religioso','Institucional / administrativo'],
   his:['HIS — unidades térreas','HIS — sobrados / multifamiliar','Residência multifamiliar','Regularização fundiária (REURB)'],
@@ -16289,7 +16279,19 @@ const MODULO_SUBTIPOS = {
   plano_urbano:['Plano de bairro / setor','Plano Diretor municipal']
 };
 // Categoria → lógica de recorte padrão (cascata p/ o bloco Recorte + cartão percurso/CAU)
-const MODULO_RECORTE = { arquitetonico:'arq', urbano:'urb', paisagistico:'pais', retrofit:'arq', patrimonio:'arq', his:'arq', requalif_urbana:'urb', parcelamento:'urb', plano_urbano:'urb', itinerario:'rota' };
+const MODULO_RECORTE = { arquitetonico:'arq', urbano:'urb', paisagistico:'pais', retrofit:'arq', patrimonio:'arq', his:'arq', requalif_urbana:'urb', parcelamento:'urb', plano_urbano:'urb' };
+// Subtipos de itinerário cultural (dentro do Paisagismo) — leitura territorial por
+// percurso (Berti). Acionam recorte=rota e escopo Patrimonial/Cultural.
+const ITINERARIO_SUBTIPOS = ['Itinerário cultural / rota','Caminho de peregrinação','Rota temática / identitária'];
+function onSubtipoChange(){
+  if(typeof autoSave==='function')autoSave();
+  const sel=document.getElementById('proj-tipo'); const v=sel?sel.value:'';
+  if(ITINERARIO_SUBTIPOS.includes(v)){
+    const rec=document.getElementById('proj-tipologia-recorte');
+    if(rec){ rec.value='rota'; state['proj-tipologia-recorte']='rota'; if(typeof renderRecorteOrientacao==='function') renderRecorteOrientacao(); }
+    const sc=document.getElementById('proj-escopo'); if(sc){ sc.value='Patrimonial / Cultural'; state['proj-escopo']=sc.value; }
+  }
+}
 function renderSubtipos(){
   const sel=document.getElementById('proj-tipo'); if(!sel) return;
   const mod=state['proj-modulo']||(document.getElementById('proj-modulo')||{}).value||'arquitetonico';
@@ -16326,7 +16328,7 @@ function setModule(moduleId, fromUser) {
     paisagistico:'Paisagístico', retrofit:'Arquitetônico',
     patrimonio:'Arquitetônico', his:'Arquitetônico',
     requalif_urbana:'Urbanístico', parcelamento:'Urbanístico',
-    plano_urbano:'Urbanístico', itinerario:'Patrimonial / Cultural'
+    plano_urbano:'Urbanístico'
   };
   const sc = document.getElementById('proj-escopo');
   if (sc && scopeMap[moduleId]) { sc.value = scopeMap[moduleId]; state['proj-escopo']=sc.value; }
