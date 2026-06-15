@@ -17397,7 +17397,14 @@ const VERBOS_OPERATIVOS = [
   { id:'tecer',      label:'Tecer',      grupo:'paisagem', fonte:'UP', expl:'Entrelaçar a infraestrutura verde-azul ao tecido urbano. Ex: rede contínua de praças, fundos de vale e arborização viária.' },
   { id:'drenar',     label:'Drenar',     grupo:'paisagem', fonte:'UP', expl:'Conduzir e infiltrar as águas pluviais como elemento de projeto (drenagem urbana sustentável, SuDS). Ex: jardins de chuva e biovaletas.' },
   { id:'sombrear',   label:'Sombrear',   grupo:'paisagem', fonte:'UP', expl:'Projetar sombra e conforto térmico no espaço público com vegetação e elementos. Ex: alameda arbórea que reduz ilha de calor.' },
-  { id:'permeabilizar',label:'Permeabilizar',grupo:'paisagem', fonte:'UP', expl:'Ampliar superfícies permeáveis, reduzir escoamento e recarregar o solo. Ex: pisos drenantes e canteiros infiltrantes.' }
+  { id:'permeabilizar',label:'Permeabilizar',grupo:'paisagem', fonte:'UP', expl:'Ampliar superfícies permeáveis, reduzir escoamento e recarregar o solo. Ex: pisos drenantes e canteiros infiltrantes.' },
+  // Sistema de espaços livres (Tardim) — verbos de ação na paisagem/SEL
+  { id:'sel-acrescentar', label:'Acrescentar', grupo:'sel', fonte:'Tardim', expl:'Adicionar novos espaços livres onde há carência, ampliando a oferta do sistema. Ex: criar uma praça num vazio urbano subutilizado.' },
+  { id:'sel-demarcar',    label:'Demarcar',    grupo:'sel', fonte:'Tardim', expl:'Delimitar e qualificar espaços livres existentes, tornando-os legíveis e apropriáveis. Ex: demarcar o fundo de vale como parque.' },
+  { id:'sel-conectar',    label:'Conectar',    grupo:'sel', fonte:'Tardim', expl:'Ligar espaços livres entre si formando rede contínua (conectividade verde). Ex: corredor verde unindo praças e a orla do córrego.' },
+  { id:'sel-adequar',     label:'Adequar',     grupo:'sel', fonte:'Tardim', expl:'Requalificar os espaços livres às necessidades de uso e ao suporte biofísico. Ex: adequar drenagem e vegetação de uma praça alagável.' },
+  { id:'sel-articular',   label:'Articular',   grupo:'sel', fonte:'Tardim', expl:'Relacionar o sistema de espaços livres com os espaços construídos e a mobilidade. Ex: articular o parque linear com as ruas e o transporte.' },
+  { id:'sel-enlacar',     label:'Enlaçar',     grupo:'sel', fonte:'Tardim', expl:'Entrelaçar escalas e sistemas (água, vegetação, percursos) num todo paisagístico contínuo. Ex: enlaçar APP, arborização viária e praças.' }
 ];
 
 const VERBOS_GRUPOS = {
@@ -17407,7 +17414,8 @@ const VERBOS_GRUPOS = {
   volume:     { label:'Volume · operações volumétricas (Operative Design)', icon:'🧊', color:'#e0734a' },
   programa:   { label:'Programa · organização dos usos',        icon:'📋', color:'#f0bf3a' },
   urbano:     { label:'Escala urbana · tecido e centralidades', icon:'🏙️', color:'#7b6cf6' },
-  paisagem:   { label:'Paisagem · diálogo com a envolvente',    icon:'🌳', color:'#d65cf5' }
+  paisagem:   { label:'Paisagem · diálogo com a envolvente',    icon:'🌳', color:'#d65cf5' },
+  sel:        { label:'Sistema de espaços livres · ação na paisagem (Tardim)', icon:'🌿', color:'#3D8B5A' }
 };
 
 let _verbosSelecionados = new Set();
