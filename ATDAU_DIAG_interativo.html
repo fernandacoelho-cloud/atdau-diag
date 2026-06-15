@@ -6024,7 +6024,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <span class="sec-ref">Mansfeld · participação como pré-requisito de sustentabilidade</span>
   </div>
   <div class="info-box">
-    <strong>Por que mapear stakeholders e participação?</strong> Mansfeld mostra que ignorar a comunidade pode levar ao <strong>fracasso do projeto</strong> — sobretudo em itinerários culturais e intervenções de uso coletivo. Participação desde o planejamento reduz conflitos e amplia o apoio local; é pré-requisito da sustentabilidade sociocultural. Marque os <strong>locais de reunião/oficina</strong> no Mapa Anotado (categoria 👥 Ponto de reunião).
+    <strong>Por que mapear stakeholders e participação?</strong> Mansfeld mostra que ignorar a comunidade pode levar ao <strong>fracasso do projeto</strong> — sobretudo em itinerários culturais e intervenções de uso coletivo. Participação desde o planejamento reduz conflitos e amplia o apoio local; é pré-requisito da sustentabilidade sociocultural. Marque os <strong>locais de reunião/oficina</strong> no Mapa Anotado (categoria 👥 Ponto de reunião).<br><span style="font-size:.92em;color:var(--t3)">Base: Arnstein (1969), <em>escada da participação cidadã</em>; Freeman (1984), teoria de stakeholders; Mansfeld, participação em itinerários culturais.</span>
   </div>
 
   <div class="block">
@@ -6044,7 +6044,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="block">
     <div class="block-header"><span class="block-icon">🎛️</span><span class="block-title">Matriz interesse × influência (Mendelow)</span></div>
     <div class="block-body">
-      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Cada ator é posicionado pela combinação interesse × influência, indicando a estratégia de engajamento por quadrante.</div>
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Cada ator é posicionado pela combinação interesse × influência, indicando a estratégia de engajamento por quadrante. <span style="color:var(--t3)">Grade poder/interesse — Mendelow (1991); Eden &amp; Ackermann (1998).</span></div>
       <div id="gov-matriz"></div>
     </div>
   </div>
@@ -6053,6 +6053,25 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header"><span class="block-icon">🗣️</span><span class="block-title">Participação, metas comunitárias e sessões (VS / NGT)</span></div>
     <div class="block-body">
       <div class="form-grid">
+        <div class="form-field span2"><label>Grau de participação pretendido <span style="font-weight:400;color:var(--t3)">— escada de Arnstein (1969): da não-participação ao controle cidadão</span></label>
+          <select id="gov-arnstein" onchange="if(typeof autoSave==='function')autoSave()">
+            <option value="">Selecione…</option>
+            <optgroup label="Não-participação">
+              <option>1 · Manipulação</option>
+              <option>2 · Terapia</option>
+            </optgroup>
+            <optgroup label="Concessão mínima (tokenismo)">
+              <option>3 · Informação</option>
+              <option>4 · Consulta</option>
+              <option>5 · Pacificação</option>
+            </optgroup>
+            <optgroup label="Poder cidadão">
+              <option>6 · Parceria</option>
+              <option>7 · Delegação de poder</option>
+              <option>8 · Controle cidadão</option>
+            </optgroup>
+          </select>
+        </div>
         <div class="form-field span2"><label>Metas e demandas da comunidade</label><textarea id="gov-metas" placeholder="O que a comunidade espera e o que teme? Demandas prioritárias levantadas."></textarea></div>
         <div class="form-field span2"><label>Resultados de sessões participativas (Visioning Sessions / Nominal Group Technique)</label><textarea id="gov-sessoes" placeholder="Síntese das oficinas/sessões: consensos, divergências, prioridades votadas."></textarea></div>
         <div class="form-field span2"><label>Estratégia de engajamento e governança futura</label><textarea id="gov-engajamento" placeholder="Como a comunidade participa do projeto e da gestão futura? Acordos, conselhos gestores, corresponsabilidade."></textarea></div>
@@ -9445,7 +9464,7 @@ function govRender(){
       ${cell('🙂 Manter satisfeito · alta influência + baixo interesse','rgba(240,191,58,.08)',quad(false,true))}
       ${cell('📣 Manter informado · baixa influência + alto interesse','rgba(92,146,245,.08)',quad(true,false))}
       ${cell('👀 Monitorar · baixa influência + baixo interesse','rgba(136,135,128,.08)',quad(false,false))}
-    </div><div style="font-size:.52rem;color:var(--t3);margin-top:6px">Estratégia de engajamento por quadrante (matriz de Mendelow).</div>`;
+    </div><div style="font-size:.52rem;color:var(--t3);margin-top:6px">Estratégia de engajamento por quadrante (grade poder/interesse — Mendelow, 1991; Eden &amp; Ackermann, 1998).</div>`;
   }
 }
 
@@ -11325,7 +11344,7 @@ const EXTRA_PERSIST_IDS = [
   'vue-espacial-nivel','vue-espacial-justif','vue-temporal-nivel','vue-temporal-justif',
   'vue-cultural-nivel','vue-cultural-justif','vue-proposito-nivel','vue-proposito-justif',
   // Governança e participação (Mansfeld) · painel 15
-  'gov-metas','gov-sessoes','gov-engajamento'
+  'gov-arnstein','gov-metas','gov-sessoes','gov-engajamento'
 ];
 
 function coletarDados(){
@@ -12286,10 +12305,11 @@ function gerarRelatorioPDF(){
   // ─── GOVERNANÇA E PARTICIPAÇÃO (Mansfeld) ───
   {
     const sks=Array.isArray(state.gov_stakeholders)?state.gov_stakeholders:[];
-    const gm=state['gov-metas']||'', gs=state['gov-sessoes']||'', ge=state['gov-engajamento']||'';
-    if(sks.length || gm || gs || ge){
+    const gm=state['gov-metas']||'', gs=state['gov-sessoes']||'', ge=state['gov-engajamento']||'', ga=state['gov-arnstein']||'';
+    if(sks.length || gm || gs || ge || ga){
       titulo('Governança e participação comunitária');
       if(sks.length){ subt('Stakeholders / atores'); sks.forEach(s=>{ if(s&&s.nome) item(s.nome+(s.tipo?(' — '+s.tipo):'')+' · interesse '+(GOV_NIV[s.interesse]||s.interesse)+', influência '+(GOV_NIV[s.influencia]||s.influencia)); }); }
+      if(ga){ subt('Grau de participação pretendido (escada de Arnstein)'); paragrafo(ga); }
       if(gm){ subt('Metas e demandas da comunidade'); paragrafo(gm); }
       if(gs){ subt('Sessões participativas (VS/NGT)'); paragrafo(gs); }
       if(ge){ subt('Estratégia de engajamento e governança'); paragrafo(ge); }
