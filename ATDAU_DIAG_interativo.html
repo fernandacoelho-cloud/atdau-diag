@@ -12638,6 +12638,7 @@ const ML_LAYERS = [
   { id:'segur',     name:'Segurança Urbana',     color:'#b53a3a', geom:['polygon','polyline','point'], icon:'🚨', desc:'Pontos críticos, áreas inseguras, iluminação deficiente, rotas seguras' },
   { id:'lynch',     name:'Imageabilidade',color:'#a07cf0', geom:['polygon','polyline','point'],  icon:'👁️', desc:'Marcos, nós, caminhos, bordas, bairros (Kevin Lynch)' },
   { id:'eixos',     name:'Eixos / Ventos / Solar',color:'#5cc8f0', geom:['polygon','polyline','point'],          icon:'➡️', desc:'Eixos visuais, direção dos ventos, incidência solar' },
+  { id:'rota',      name:'Rota cultural + buffer', color:'#d4a017', geom:['polyline','polygon'], icon:'🧭', desc:'Itinerário cultural (Berti): desenhe o percurso (linha) e gere o buffer — a área de estudo do percurso (1/3/5 km), renderizada como mancha semitransparente.' },
   { id:'notas',     name:'Notas / Outros',        color:'#f58b40', geom:['polygon','polyline','point'], icon:'✏️', desc:'Qualquer elemento de análise livre' },
   { id:'swot',      name:'Síntese SWOT',          color:null,      geom:['polygon','polyline','point'], icon:'🎯', desc:'Potencialidade / Fragilidade / Oportunidade / Ameaça desenhadas sobre o território' },
 ];
@@ -13696,7 +13697,7 @@ function mlRenderDrawBar() {
     <div class="ml-drawbar-geoms">
       ${l.geom.map(g=>`<button class="ml-draw-btn" id="btn-draw-${l.id}-${g}" onclick="mlSelectDraw('${l.id}','${g}')" title="Desenhar ${g==='polygon'?'polígono':g==='polyline'?'linha':'ponto'}">${geomLabel[g]}</button>`).join('')}
       <button class="ml-draw-btn" onclick="mlUndoLastDraw()" title="Remover a última feição desenhada nesta camada">↶ Desfazer</button>
-    </div>${extra}${catSel}`;
+    </div>${l.id==='rota'?`<div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;border-top:1px solid var(--line2);padding-top:6px"><span style="font-size:.62rem;color:var(--t2)">Buffer do percurso:</span><select id="rota-buffer-km" style="font-size:.62rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 5px"><option value="1">1 km</option><option value="3">3 km</option><option value="5">5 km</option></select><button class="ml-draw-btn" onclick="rotaGerarBuffer()" title="Gera a área de estudo do percurso (turf.js — precisa de internet)">⭕ Gerar buffer</button></div>`:''}${extra}${catSel}`;
 }
 
 // Desfazer: remove a feição mais recente da camada ativa (maior id)
@@ -14505,6 +14506,41 @@ function exportarPacoteSEL(){
     features:feats };
   baixarArquivo('atdau-pacote-sel.geojson', JSON.stringify(fc,null,2), 'application/json');
   if(typeof mostrarStatus==='function') mostrarStatus('Pacote SEL exportado ('+feats.length+' feições'+(nAnot?' · '+nAnot+' anotações':'')+') ✓');
+}
+// turf.js sob demanda (geometria vetorial — buffer de rota, álgebra de mapas).
+// Vem de CDN: só funciona online (como o jsPDF do relatório).
+let _turfLoading=null;
+function _ensureTurf(cb){
+  if(window.turf){ cb(true); return; }
+  if(_turfLoading){ _turfLoading.push(cb); return; }
+  _turfLoading=[cb];
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js';
+  s.onload=()=>{ const q=_turfLoading; _turfLoading=null; q.forEach(f=>f(!!window.turf)); };
+  s.onerror=()=>{ const q=_turfLoading; _turfLoading=null; q.forEach(f=>f(false)); };
+  document.head.appendChild(s);
+}
+// L2 — itinerário cultural: buffer (área de estudo) a partir do percurso desenhado
+function rotaGerarBuffer(){
+  const kmEl=document.getElementById('rota-buffer-km'); const km=parseFloat(kmEl&&kmEl.value)||1;
+  const linhas=(_mlFeatures.rota||[]).filter(f=>f&&f.geom&&f.geom.type==='LineString');
+  if(!linhas.length){ alert('Desenhe o percurso primeiro: na camada "Rota cultural + buffer", clique no botão de LINHA e trace a rota no mapa (duplo-clique para concluir).'); return; }
+  _ensureTurf(function(ok){
+    if(!ok){ alert('Não foi possível carregar a biblioteca de geometria (turf.js).\n\nEsta função precisa de internet (como o Relatório PDF).'); return; }
+    // remove buffers anteriores; mantém as linhas
+    _mlFeatures.rota=(_mlFeatures.rota||[]).filter(f=>!(f.props&&f.props.tipo==='buffer'));
+    let n=0;
+    linhas.forEach(f=>{
+      try{
+        const buffered=turf.buffer({type:'Feature',geometry:f.geom,properties:{}}, km, {units:'kilometers'});
+        if(buffered&&buffered.geometry){ _mlFeatures.rota.push({ id:'rota-buf-'+Date.now().toString(36)+Math.random().toString(36).slice(2,4), geom:buffered.geometry, props:{ layer:'rota', tipo:'buffer', label:'Buffer '+km+' km', cor:'#e8c97a' } }); n++; }
+      }catch(e){ console.warn('rotaGerarBuffer:',e); }
+    });
+    state.rota_buffer_km=km;
+    if(typeof mlRefreshSource==='function') mlRefreshSource('rota');
+    if(typeof mlSaveState==='function'){ try{ mlSaveState(); }catch(e){} }
+    if(typeof mostrarStatus==='function') mostrarStatus('Buffer de '+km+' km gerado ('+n+' polígono(s)) ✓');
+  });
 }
 function mlExport() {
   const allFeatures = [];
