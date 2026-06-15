@@ -1382,6 +1382,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <span style="font-size:.64rem;color:var(--t2);font-weight:600">Nesta sessão, eu sou:</span>
         <select id="equipe-sou" onchange="equipeSetSou(this.value)" style="font-size:.66rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t1);border-radius:6px;padding:5px 8px"></select>
       </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;border-top:1px solid var(--line2);padding-top:10px">
+        <span style="font-size:.62rem;color:var(--t2);font-weight:600">Juntar o trabalho:</span>
+        <label for="equipe-merge-file" class="add-btn" style="cursor:pointer;color:var(--blue);border-color:rgba(79,155,248,.3)" title="Mescla o arquivo .atdau.json de um colaborador: traz os blocos sob responsabilidade dele + comentários + anotações de campo">🔀 Mesclar arquivo de colaborador</label>
+        <input type="file" id="equipe-merge-file" accept=".json" style="display:none" onchange="equipeMesclarArquivo(this)">
+        <span style="font-size:.55rem;color:var(--t3)">cada colaborador exporta com "Salvar projeto"; mescle os arquivos aqui, um a um.</span>
+      </div>
       <div id="equipe-mural" style="margin-top:12px"></div>
     </div>
   </div>
@@ -11918,6 +11924,54 @@ const PROJ_STORES = [
   'atdau-diag-setores'      // setores SIDRA carregados
 ];
 
+// Equipe Fatia 2 — merge: junta o arquivo .atdau.json de um colaborador ao projeto
+// atual COMBINANDO POR RESPONSÁVEL: traz os campos dos blocos sob responsabilidade
+// daquele colaborador (identificado por "eu sou" no arquivo) + une comentários e
+// anotações de campo. Sem servidor; a junção é o merge dos JSONs.
+function equipeMesclarArquivo(input){
+  const file=input.files&&input.files[0]; if(!file){ return; } input.value='';
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    let proj; try{ proj=JSON.parse(ev.target.result); }catch(e){ alert('Arquivo inválido (não é um projeto .atdau.json).'); return; }
+    const raw = proj && proj.stores && proj.stores['atdau-diag-v1'];
+    let cs; try{ cs=JSON.parse(raw); }catch(e){ alert('Arquivo de projeto sem estado válido.'); return; }
+    const ce = cs.equipe||{};
+    const contribId = ce.euSou;
+    const contribNome = contribId ? ((ce.colaboradores||[]).find(c=>c.id===contribId)||{}).nome : null;
+    if(!contribNome){ alert('O arquivo não identifica o colaborador.\n\nPeça para a pessoa definir "Nesta sessão, eu sou" na Equipe antes de salvar o projeto.'); return; }
+    const e=_equipe();
+    const meu = e.colaboradores.find(c=> (c.nome||'').trim().toLowerCase()===contribNome.trim().toLowerCase());
+    if(!meu){ alert('O colaborador "'+contribNome+'" não está na equipe deste projeto.\n\nCadastre-o (com o mesmo nome) antes de mesclar.'); return; }
+    _escopoAtribuirIds();
+    let nCampos=0, nBlocos=0;
+    Object.keys(e.responsaveis||{}).forEach(escId=>{
+      if(e.responsaveis[escId]!==meu.id) return;
+      const bloco=document.querySelector('[data-escopo-id="'+escId+'"]'); if(!bloco){ return; }
+      let mexeu=false;
+      bloco.querySelectorAll('input,select,textarea').forEach(el=>{
+        if(!el.id) return; if(['file','hidden','button','submit','reset'].includes(el.type)) return;
+        if(Object.prototype.hasOwnProperty.call(cs, el.id)){ state[el.id]=cs[el.id]; nCampos++; mexeu=true; }
+      });
+      if(mexeu) nBlocos++;
+    });
+    // comentários: união (dedup por autor+data+texto)
+    let nCom=0;
+    if(ce.comentarios){ e.comentarios=e.comentarios||{}; Object.keys(ce.comentarios).forEach(bid=>{ const arr=e.comentarios[bid]||(e.comentarios[bid]=[]); (ce.comentarios[bid]||[]).forEach(c=>{ if(!arr.some(x=>x.autor===c.autor&&x.data===c.data&&x.texto===c.texto)){ arr.push(c); nCom++; } }); }); }
+    // anotações do Mapa Anotado: união por id
+    let nAnot=0;
+    const maRaw=proj.stores && proj.stores['atdau-diag-mapa-anotado'];
+    if(maRaw && typeof MapaAnotadoStore!=='undefined'){ try{ const md=JSON.parse(maRaw); if(Array.isArray(md.annotations)){ md.annotations.forEach(a=>{ if(a&&a.id && !MapaAnotadoStore.getAll().some(x=>x.id===a.id)){ MapaAnotadoStore.data.annotations.push(a); nAnot++; } }); if(nAnot) MapaAnotadoStore.save(); } }catch(e2){} }
+    if(typeof preencherDados==='function') preencherDados();
+    if(typeof salvar==='function') salvar();
+    if(typeof renderEquipe==='function') renderEquipe();
+    if(typeof renderEscopo==='function') renderEscopo();
+    if(typeof atualizarCompletude==='function') atualizarCompletude();
+    if(typeof maRenderMarkers==='function') maRenderMarkers();
+    if(typeof maRenderList==='function') maRenderList();
+    alert('Mesclado de '+contribNome+':\n• '+nCampos+' campo(s) em '+nBlocos+' bloco(s) sob responsabilidade dele\n• '+nCom+' comentário(s)\n• '+nAnot+' anotação(ões) de campo');
+  };
+  reader.readAsText(file);
+}
 function salvarProjeto(){
   coletarDados();
   if(typeof mlSaveState==='function' && typeof _mlMap!=='undefined' && _mlMap) {
