@@ -5502,6 +5502,19 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <button onclick="mlClearAll()" class="add-btn" style="color:var(--red);border-color:rgba(224,80,106,.3)">🗑 Limpar tudo</button>
   </div>
 
+  <details style="margin:8px 0;border:1px solid var(--line2);border-radius:8px;padding:8px 12px;background:var(--bg3)" ontoggle="if(this.open)mlAlgebraPopulate()">
+    <summary style="cursor:pointer;font-size:.66rem;font-weight:700;color:#1f8d49">🧮 Álgebra de mapas — Soluções baseadas na Natureza (SbN) / resiliência</summary>
+    <div style="font-size:.6rem;color:var(--t2);line-height:1.5;margin:8px 0">Cruze duas camadas de <strong>polígonos</strong> para gerar uma nova. Ex.: <strong>Vazios urbanos</strong> ∩ <strong>Hidrografia/APP</strong> = <strong>oportunidades de SbN</strong> (parques alagáveis, biovaletas). Usa turf.js (precisa de internet).</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <select id="mlalg-a" style="font-size:.62rem;background:var(--bg4);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 6px"></select>
+      <select id="mlalg-op" style="font-size:.62rem;background:var(--bg4);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 6px"><option value="intersect">∩ interseção</option><option value="union">∪ união</option><option value="difference">− diferença (A − B)</option></select>
+      <select id="mlalg-b" style="font-size:.62rem;background:var(--bg4);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 6px"></select>
+      <span style="font-size:.66rem;color:var(--t3)">→</span>
+      <select id="mlalg-target" style="font-size:.62rem;background:var(--bg4);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 6px"></select>
+      <button class="add-btn" onclick="mlAlgebra()" style="background:rgba(42,168,74,.14);color:#1f8d49;border-color:rgba(42,168,74,.4)">Calcular</button>
+    </div>
+  </details>
+
   <!-- Layout mapa + sidebar -->
   <div style="display:flex;gap:10px;align-items:flex-start">
 
@@ -12639,6 +12652,8 @@ const ML_LAYERS = [
   { id:'lynch',     name:'Imageabilidade',color:'#a07cf0', geom:['polygon','polyline','point'],  icon:'👁️', desc:'Marcos, nós, caminhos, bordas, bairros (Kevin Lynch)' },
   { id:'eixos',     name:'Eixos / Ventos / Solar',color:'#5cc8f0', geom:['polygon','polyline','point'],          icon:'➡️', desc:'Eixos visuais, direção dos ventos, incidência solar' },
   { id:'rota',      name:'Rota cultural + buffer', color:'#d4a017', geom:['polyline','polygon'], icon:'🧭', desc:'Itinerário cultural (Berti): desenhe o percurso (linha) e gere o buffer — a área de estudo do percurso (1/3/5 km), renderizada como mancha semitransparente.' },
+  { id:'vulner',    name:'Vulnerabilidade climática', color:'#b5462e', geom:['polygon','point'], icon:'🌡️', desc:'Áreas vulneráveis a inundação, ilha de calor ou deslizamento — risco climático que prioriza Soluções baseadas na Natureza.' },
+  { id:'sbn',       name:'Oportunidades SbN',     color:'#2aa84a', geom:['polygon','point'], icon:'🌧️', desc:'Soluções baseadas na Natureza (parques alagáveis, biovaletas, recarga). Gere por álgebra de mapas (ex.: vazio ∩ hidrografia) ou desenhe.' },
   { id:'notas',     name:'Notas / Outros',        color:'#f58b40', geom:['polygon','polyline','point'], icon:'✏️', desc:'Qualquer elemento de análise livre' },
   { id:'swot',      name:'Síntese SWOT',          color:null,      geom:['polygon','polyline','point'], icon:'🎯', desc:'Potencialidade / Fragilidade / Oportunidade / Ameaça desenhadas sobre o território' },
 ];
@@ -14540,6 +14555,38 @@ function rotaGerarBuffer(){
     if(typeof mlRefreshSource==='function') mlRefreshSource('rota');
     if(typeof mlSaveState==='function'){ try{ mlSaveState(); }catch(e){} }
     if(typeof mostrarStatus==='function') mostrarStatus('Buffer de '+km+' km gerado ('+n+' polígono(s)) ✓');
+  });
+}
+// L4 — álgebra de mapas (SbN/resiliência): cruza duas camadas de polígonos via turf
+function mlAlgebraPopulate(){
+  const polyLayers=ML_LAYERS.filter(l=>l.geom.includes('polygon'));
+  const opts=polyLayers.map(l=>`<option value="${l.id}">${l.icon} ${escHtml(l.name)}</option>`).join('');
+  ['mlalg-a','mlalg-b','mlalg-target'].forEach((id,i)=>{ const s=document.getElementById(id); if(s&&!s.options.length){ s.innerHTML=opts; } });
+  const t=document.getElementById('mlalg-target'); if(t && [...t.options].some(o=>o.value==='sbn')) t.value='sbn';
+  const b=document.getElementById('mlalg-b'); if(b && [...b.options].some(o=>o.value==='agua')) b.value='agua';
+}
+function mlAlgebra(){
+  const aId=(document.getElementById('mlalg-a')||{}).value, op=(document.getElementById('mlalg-op')||{}).value, bId=(document.getElementById('mlalg-b')||{}).value, tId=(document.getElementById('mlalg-target')||{}).value;
+  if(!aId||!bId||!tId){ alert('Escolha as camadas A, B e a de destino.'); return; }
+  const toFeat=f=>({type:'Feature',geometry:f.geom,properties:{}});
+  const polysA=(_mlFeatures[aId]||[]).filter(f=>f&&f.geom&&f.geom.type==='Polygon').map(toFeat);
+  const polysB=(_mlFeatures[bId]||[]).filter(f=>f&&f.geom&&f.geom.type==='Polygon').map(toFeat);
+  if(!polysA.length||!polysB.length){ alert('As duas camadas precisam ter POLÍGONOS desenhados.\n\nDica: para usar a hidrografia, gere antes um buffer dela (mancha) — a interseção é entre áreas.'); return; }
+  _ensureTurf(function(ok){
+    if(!ok){ alert('Não foi possível carregar a biblioteca de geometria (turf.js). Precisa de internet.'); return; }
+    const results=[];
+    try{
+      if(op==='intersect'){ polysA.forEach(a=>polysB.forEach(b=>{ const r=turf.intersect(a,b); if(r&&r.geometry) results.push(r.geometry); })); }
+      else if(op==='union'){ const all=polysA.concat(polysB); let u=all[0]; for(let i=1;i<all.length;i++){ try{ u=turf.union(u,all[i]); }catch(e){} } if(u&&u.geometry) results.push(u.geometry); }
+      else if(op==='difference'){ polysA.forEach(a=>{ let d=a; polysB.forEach(b=>{ if(d){ try{ d=turf.difference(d,b); }catch(e){} } }); if(d&&d.geometry) results.push(d.geometry); }); }
+    }catch(e){ alert('Falha no cálculo: '+e.message); return; }
+    if(!results.length){ alert('Sem resultado: as camadas não se cruzam dessa forma. Confira se há sobreposição entre os polígonos.'); return; }
+    const tl=ML_LAYERS.find(l=>l.id===tId);
+    if(!_mlFeatures[tId]) _mlFeatures[tId]=[];
+    results.forEach(g=>{ _mlFeatures[tId].push({ id:'alg-'+Date.now().toString(36)+Math.random().toString(36).slice(2,4), geom:g, props:{ layer:tId, origem:'algebra', label:op, cor:(tl&&tl.color)||'#1f8d49' } }); });
+    if(typeof mlRefreshSource==='function') mlRefreshSource(tId);
+    if(typeof mlSaveState==='function'){ try{ mlSaveState(); }catch(e){} }
+    if(typeof mostrarStatus==='function') mostrarStatus('Álgebra de mapas: '+results.length+' polígono(s) em '+(tl?tl.name:tId)+' ✓');
   });
 }
 function mlExport() {
