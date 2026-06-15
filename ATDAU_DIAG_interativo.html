@@ -1526,6 +1526,49 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <div class="block">
     <div class="block-header">
+      <span class="block-icon">🏛️</span>
+      <span class="block-title">Potencial de Valor Universal Excepcional (VUE) — itinerários culturais</span>
+    </div>
+    <div class="block-body">
+      <div class="info-box" style="margin-bottom:10px">
+        Para projetos de <strong>itinerários culturais</strong> (rotas de peregrinação, turismo cultural). Avalia o potencial de reconhecimento como <strong>Patrimônio Mundial</strong> (UNESCO/ICOMOS) em 4 dimensões (Gomes &amp; Santiago, 2020) — <strong>Baixo / Médio / Alto</strong>. É orientação projetual, não candidatura formal.
+      </div>
+      <div class="form-grid">
+        <div class="form-field span2">
+          <label>Espacial <span style="font-weight:400;color:var(--t3)">— conjunto territorial coerente e contínuo (nós, trechos, paisagem), não pontos isolados</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-espacial-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-espacial-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+        <div class="form-field span2">
+          <label>Temporal <span style="font-weight:400;color:var(--t3)">— profundidade histórica e continuidade de uso que sustentam a narrativa</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-temporal-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-temporal-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+        <div class="form-field span2">
+          <label>Cultural <span style="font-weight:400;color:var(--t3)">— intercâmbio de valores, saberes e influências ao longo do percurso (material e imaterial)</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-cultural-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-cultural-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+        <div class="form-field span2">
+          <label>Propósito <span style="font-weight:400;color:var(--t3)">— sentido comum que articula os bens (peregrinação, comércio, fé, ofício) conferindo unidade</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="vue-proposito-nivel" onchange="vueChanged()" style="flex:none;min-width:96px"><option value="">—</option><option value="1">Baixo</option><option value="2">Médio</option><option value="3">Alto</option></select>
+            <textarea id="vue-proposito-justif" oninput="vueChanged()" placeholder="Justificativa — evidências do território" style="flex:1;min-height:34px"></textarea>
+          </div>
+        </div>
+      </div>
+      <div id="vue-render" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-header">
       <span class="block-icon">👥</span>
       <span class="block-title">Perfil do cliente, usuários e público-alvo</span>
     </div>
@@ -7959,6 +8002,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   buildRatings();
   buildUsosGrid();
   carregarDados();
+  if(typeof renderVUERadar==='function') renderVUERadar();
   renderAllFindings();
   renderSwot();
   renderDiretrizes();
@@ -10875,6 +10919,45 @@ function renderRecorteOrientacao(){
 }
 
 // ══════════════════════════════════════════════════
+// AVALIAÇÃO DE POTENCIAL VUE (UNESCO/ICOMOS) — itinerários culturais
+// 4 dimensões (Gomes & Santiago, 2020) × Baixo/Médio/Alto (1–3). Radar de 4 eixos
+// espelhando o padrão visual do radar de viabilidade, sem acoplá-lo aos terrenos.
+// ══════════════════════════════════════════════════
+const VUE_DIMS = [
+  { id:'espacial', label:'Espacial' },
+  { id:'temporal', label:'Temporal' },
+  { id:'cultural', label:'Cultural' },
+  { id:'proposito', label:'Propósito' }
+];
+function _vueScore(dim){ const el=document.getElementById('vue-'+dim+'-nivel'); const n=el?parseInt(el.value,10):0; return n>=1?n:0; }
+function vueChanged(){ if(typeof autoSave==='function')autoSave(); renderVUERadar(); }
+function _vueRadarSVG(scores){
+  const N=VUE_DIMS.length, S=300, cx=S/2, cy=S/2, R=S*0.32;
+  const ang=i=>-Math.PI/2+i*2*Math.PI/N;
+  const ptAt=(i,f)=>[cx+Math.cos(ang(i))*R*f, cy+Math.sin(ang(i))*R*f];
+  let svg=`<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:300px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">`;
+  for(let g=1;g<=3;g++){ const pts=VUE_DIMS.map((_,i)=>ptAt(i,g/3).map(n=>n.toFixed(1)).join(',')).join(' '); svg+=`<polygon points="${pts}" fill="none" stroke="#ddd" stroke-width="0.7"/>`; }
+  VUE_DIMS.forEach((d,i)=>{ const [x,y]=ptAt(i,1); svg+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#ddd" stroke-width="0.7"/>`; const [lx,ly]=ptAt(i,1.18); const anchor=Math.abs(lx-cx)<10?'middle':(lx>cx?'start':'end'); svg+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-size="9" fill="#666" font-family="sans-serif">${escHtml(d.label)}</text>`; });
+  const cor='#c95f3f'; const pts=scores.map((v,i)=>ptAt(i,(v>=1?v:0)/3).map(n=>n.toFixed(1)).join(',')).join(' ');
+  svg+=`<polygon points="${pts}" fill="${cor}" fill-opacity="0.15" stroke="${cor}" stroke-width="1.6"/>`;
+  return svg+`</svg>`;
+}
+function renderVUERadar(){
+  const host=document.getElementById('vue-render'); if(!host) return;
+  const scores=VUE_DIMS.map(d=>_vueScore(d.id));
+  const ok=scores.filter(s=>s>0);
+  if(!ok.length){ host.innerHTML='<div style="font-size:.58rem;color:var(--t3);font-style:italic">Avalie as dimensões acima para ver o radar e a leitura de potencial.</div>'; return; }
+  const media=ok.reduce((a,b)=>a+b,0)/ok.length;
+  let leitura='';
+  if(ok.length===VUE_DIMS.length){
+    leitura = media>=2.5 ? 'Potencial ALTO para VUE — as quatro dimensões se sustentam; vale aprofundar a candidatura.'
+            : media>=1.75 ? 'Potencial MÉDIO — há base, mas alguma dimensão precisa de mais evidência/argumentação.'
+            : 'Potencial BAIXO — as dimensões ainda são frágeis para um VUE; reforce a narrativa ou reposicione o objeto.';
+  } else { leitura = `Faltam ${VUE_DIMS.length-ok.length} dimensão(ões) para a leitura completa.`; }
+  host.innerHTML = `${_vueRadarSVG(scores)}<div style="font-size:.62rem;color:var(--t2);margin-top:6px;text-align:center">Média: <strong>${media.toFixed(2)}</strong>/3 · ${escHtml(leitura)}</div>`;
+}
+
+// ══════════════════════════════════════════════════
 // VALORES E QUESTÕES ORIENTADORAS (Hershberger, 1999)
 // HECTTEAS: 5 áreas padrão + 3 expansíveis
 // Cada questão gera necessidades (função/qualidade + tags extras)
@@ -11097,7 +11180,10 @@ const EXTRA_PERSIST_IDS = [
   'vc-cen-otim','vc-cen-real','vc-cen-pess','vc-priv-riscos',
   'vc-pub-custo','vc-pub-benef','vc-pub-programa','vc-pub-etp','vc-pub-efetividade',
   'vc-conclusao',
-  'prog-req-func','prog-req-desemp','prog-req-econ','prog-enunciado'
+  'prog-req-func','prog-req-desemp','prog-req-econ','prog-enunciado',
+  // Avaliação VUE (UNESCO/ICOMOS) · Identificação — itinerários culturais
+  'vue-espacial-nivel','vue-espacial-justif','vue-temporal-nivel','vue-temporal-justif',
+  'vue-cultural-nivel','vue-cultural-justif','vue-proposito-nivel','vue-proposito-justif'
 ];
 
 function coletarDados(){
@@ -11947,6 +12033,20 @@ function gerarRelatorioPDF(){
     if(tipoRec){ paragrafo('Tipologia: '+(RLBL[tipoRec]||tipoRec)+' — '+(RFORMA[tipoRec]||'')+'.'); }
     if(justifRec){ subt('Justificativa do recorte adotado'); paragrafo(justifRec); }
     espaco(3);
+  }
+
+  // ─── VUE — potencial de Valor Universal Excepcional (itinerários culturais) ───
+  {
+    const NIV={'1':'Baixo','2':'Médio','3':'Alto'};
+    const dimsV=[['Espacial','vue-espacial'],['Temporal','vue-temporal'],['Cultural','vue-cultural'],['Propósito','vue-proposito']];
+    const linhasV=[]; let somaV=0, contV=0;
+    dimsV.forEach(([lbl,base])=>{ const n=state[base+'-nivel']; const j=(state[base+'-justif']||'').toString().trim(); if(n){ const v=parseInt(n,10); if(v>=1){somaV+=v;contV++;} linhasV.push({lbl,niv:NIV[n]||n,j}); } });
+    if(linhasV.length){
+      titulo('Potencial de Valor Universal Excepcional (VUE)');
+      linhasV.forEach(l=>{ subt(l.lbl+' — '+l.niv); if(l.j) paragrafo(l.j); });
+      if(contV) paragrafo('Média das dimensões avaliadas: '+(somaV/contV).toFixed(2)+'/3.');
+      espaco(2);
+    }
   }
 
   // ─── DADOS INSERIDOS — dimensões do diagnóstico (dump por bloco) ───
