@@ -1414,7 +1414,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         </div>
         <div class="form-field">
           <label>Categoria do projeto <small style="color:var(--t3);font-weight:400">(define o módulo de análise)</small></label>
-          <select id="proj-modulo" onchange="setModule(this.value)">
+          <select id="proj-modulo" onchange="setModule(this.value,true)">
             <option value="arquitetonico">🏗️ Projeto Arquitetônico</option>
             <option value="urbano">🌆 Projeto Urbano</option>
             <option value="paisagistico">🌳 Projeto Paisagístico</option>
@@ -1429,7 +1429,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         </div>
         <div class="form-field">
           <label>Tipologia específica / subtipo</label>
-          <select id="proj-tipo">
+          <select id="proj-tipo" onchange="if(typeof autoSave==='function')autoSave()">
             <option value="">Selecione…</option>
             <option>Residência unifamiliar</option>
             <option>Residência multifamiliar</option>
@@ -11355,6 +11355,10 @@ function carregarDados(){
       const loaded=JSON.parse(raw);
       Object.assign(state,loaded);
       preencherDados();
+      // restoreModule roda num listener de 'document' que dispara ANTES deste (window),
+      // quando o state ainda não foi carregado — reaplica aqui com o módulo já restaurado
+      // (também filtra os subtipos pela categoria salva).
+      if(typeof restoreModule==='function') restoreModule();
       if(typeof maSyncCategorias==='function'){ maSyncCategorias(); if(typeof maRenderCategories==='function') maRenderCategories(); }
       renderAllFindings();
       if(typeof renderViabilidade==='function') renderViabilidade();
@@ -16263,7 +16267,31 @@ const MODULES_DEF = {
   }
 };
 
-function setModule(moduleId) {
+// Subtipos pertinentes a cada categoria/módulo (a categoria é a fonte; o subtipo
+// se relaciona a ela). "Outro" é sempre incluído.
+const MODULO_SUBTIPOS = {
+  arquitetonico:['Residência unifamiliar','Residência multifamiliar','Equipamento de educação — Creche / EMEI','Equipamento de educação — Ensino Fundamental','Equipamento de educação — Ensino Médio','Equipamento de saúde — UBS','Equipamento de saúde — UPA / Hospital','Equipamento social — CRAS / CREAS','Equipamento cultural — biblioteca / museu / CEU','Equipamento esportivo — quadra / ginásio','Equipamento religioso','Comercial / serviços','Institucional / administrativo','Industrial / logístico','Uso misto (residencial + comércio)'],
+  urbano:['Praça / parque / espaço público','Redesenho de via / calçadão','Uso misto (residencial + comércio)','Plano de bairro / setor'],
+  paisagistico:['Praça / parque / espaço público'],
+  retrofit:['Residência unifamiliar','Residência multifamiliar','Equipamento cultural — biblioteca / museu / CEU','Comercial / serviços','Institucional / administrativo','Equipamento religioso'],
+  patrimonio:['Equipamento cultural — biblioteca / museu / CEU','Equipamento religioso','Institucional / administrativo'],
+  his:['HIS — unidades térreas','HIS — sobrados / multifamiliar','Residência multifamiliar','Regularização fundiária (REURB)'],
+  requalif_urbana:['Praça / parque / espaço público','Redesenho de via / calçadão','Uso misto (residencial + comércio)','Plano de bairro / setor'],
+  parcelamento:['Loteamento residencial','Loteamento misto','Condomínio horizontal','Regularização fundiária (REURB)'],
+  plano_urbano:['Plano de bairro / setor','Plano Diretor municipal']
+};
+// Categoria → lógica de recorte padrão (cascata p/ o bloco Recorte + cartão percurso/CAU)
+const MODULO_RECORTE = { arquitetonico:'arq', urbano:'urb', paisagistico:'pais', retrofit:'arq', patrimonio:'arq', his:'arq', requalif_urbana:'urb', parcelamento:'urb', plano_urbano:'urb' };
+function renderSubtipos(){
+  const sel=document.getElementById('proj-tipo'); if(!sel) return;
+  const mod=state['proj-modulo']||(document.getElementById('proj-modulo')||{}).value||'arquitetonico';
+  const lista=MODULO_SUBTIPOS[mod]||[];
+  const atual=sel.value||state['proj-tipo']||'';
+  sel.innerHTML='<option value="">Selecione…</option>'+lista.map(s=>`<option>${s}</option>`).join('')+'<option>Outro</option>';
+  sel.value=atual;                 // se o subtipo não pertence à categoria, vira '' (1ª opção)
+  state['proj-tipo']=sel.value;
+}
+function setModule(moduleId, fromUser) {
   if (!MODULES_DEF[moduleId]) return;
   state['proj-modulo'] = moduleId;
   const mod = MODULES_DEF[moduleId];
@@ -16289,10 +16317,25 @@ function setModule(moduleId) {
     arquitetonico:'Arquitetônico', urbano:'Urbanístico',
     paisagistico:'Paisagístico', retrofit:'Arquitetônico',
     patrimonio:'Arquitetônico', his:'Arquitetônico',
+    requalif_urbana:'Urbanístico', parcelamento:'Urbanístico',
     plano_urbano:'Urbanístico'
   };
   const sc = document.getElementById('proj-escopo');
-  if (sc && scopeMap[moduleId]) sc.value = scopeMap[moduleId];
+  if (sc && scopeMap[moduleId]) { sc.value = scopeMap[moduleId]; state['proj-escopo']=sc.value; }
+
+  // Subtipos pertinentes à categoria (preserva o salvo se ainda válido)
+  renderSubtipos();
+
+  // Cascata (só em mudança do usuário): a categoria sugere a lógica de recorte e
+  // atualiza o cartão "Percurso de uso + CAU". No load, preserva o recorte salvo.
+  if (fromUser) {
+    const recSel = document.getElementById('proj-tipologia-recorte');
+    if (recSel && MODULO_RECORTE[moduleId]) {
+      recSel.value = MODULO_RECORTE[moduleId];
+      state['proj-tipologia-recorte'] = recSel.value;
+      if (typeof renderRecorteOrientacao==='function') renderRecorteOrientacao();
+    }
+  }
 
   autoSave();
   if(typeof atualizarCompletude==='function') atualizarCompletude();
