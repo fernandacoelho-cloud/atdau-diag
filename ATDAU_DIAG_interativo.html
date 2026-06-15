@@ -5974,46 +5974,22 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
       <div class="suite-links" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px">
         <div class="suite-link-card">
-          <div class="suite-link-icon">📋</div>
-          <div class="suite-link-title">ATDAU-02-01-PROG</div>
-          <div class="suite-link-desc">Programa arquitetônico — abre os ambientes específicos do projeto. As 10 dimensões estratégicas orientam a decisão por ambiente.</div>
-          <div class="suite-link-status">🟡 Em desenvolvimento</div>
-        </div>
-        <div class="suite-link-card">
           <div class="suite-link-icon">🏗️</div>
-          <div class="suite-link-title">ATDAU-03-01-MASSA (T01)</div>
-          <div class="suite-link-desc">Estudo paramétrico de massas — recebe topografia, lote, diretrizes de implantação.</div>
+          <div class="suite-link-title">ATDAU — Estudo Preliminar / Implantação (T01)</div>
+          <div class="suite-link-desc">Próximo passo do fluxo: estudo paramétrico de implantação e massas. Recebe o terreno, as condicionantes (orientação solar, ventos, sombreamento, hidrografia) e as diretrizes deste diagnóstico para informar o partido no lote.</div>
           <div class="suite-link-status">🟢 Em uso</div>
+          <a href="https://atdau.netlify.app" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:.6rem;color:var(--teal);text-decoration:none;font-weight:700">🔗 Abrir a ferramenta</a>
         </div>
-        <div class="suite-link-card">
-          <div class="suite-link-icon">🌡️</div>
-          <div class="suite-link-title">ATDAU-03-02-AMBPRE</div>
-          <div class="suite-link-desc">Análises ambientais preliminares — recebe orientação solar, ventos, máscara de obstrução.</div>
+        <div class="suite-link-card suite-link-card-future" style="text-align:center;align-items:center;justify-content:center">
+          <div class="suite-link-icon">🧩</div>
+          <div class="suite-link-desc" style="flex:none">As demais ferramentas da Suite ATDAU (programa, análises ambientais, verificação legal, patrimônio…) estão <strong>em desenvolvimento</strong>.</div>
           <div class="suite-link-status">🟡 Em desenvolvimento</div>
-        </div>
-        <div class="suite-link-card">
-          <div class="suite-link-icon">🔊</div>
-          <div class="suite-link-title">ATDAU-04-01-ACUSTICA</div>
-          <div class="suite-link-desc">Análise acústica — recebe diretrizes de conforto acústico, NBR 10152/15575.</div>
-          <div class="suite-link-status">🟡 Em desenvolvimento</div>
-        </div>
-        <div class="suite-link-card">
-          <div class="suite-link-icon">⚖️</div>
-          <div class="suite-link-title">ATDAU-05-01-LEGAL</div>
-          <div class="suite-link-desc">Verificação legal — recebe zoneamento, parâmetros do plano diretor, código de obras.</div>
-          <div class="suite-link-status">🟡 Em desenvolvimento</div>
-        </div>
-        <div class="suite-link-card suite-link-card-future">
-          <div class="suite-link-icon">🏛️</div>
-          <div class="suite-link-title">ATDAU-Patrimônio (futura)</div>
-          <div class="suite-link-desc">Projetos de restauro merecem ferramenta dedicada — Cartas de Veneza/Burra/Nara, inventários IPHAN/IEPHA, registro de etapas. Quando o módulo "Patrimônio / Restauro" estiver selecionado no Panel 0, esta ferramenta complementará o DIAG.</div>
-          <div class="suite-link-status">🔵 Roadmap (ano 4)</div>
         </div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
         <button class="tb-save" onclick="exportJSON()" style="padding:8px 20px;font-size:.68rem">⬇ Exportar atdau-diag.json</button>
-        <button class="tb-save" onclick="exportJSON()" style="padding:8px 20px;font-size:.68rem;background:rgba(92,146,245,.15);color:#5c92f5;border-color:rgba(92,146,245,.4)">📋 Exportar para PROG (mesmo JSON)</button>
+        <button class="tb-save" onclick="exportJSON()" style="padding:8px 20px;font-size:.68rem;background:rgba(92,146,245,.15);color:#5c92f5;border-color:rgba(92,146,245,.4)">📋 Exportar para o Estudo Preliminar / Implantação (mesmo JSON)</button>
       </div>
     </div>
   </div>
