@@ -5486,6 +5486,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </optgroup>
     </select>
     <button onclick="mlExport()" class="add-btn" style="background:var(--bg5);color:var(--teal);border-color:rgba(30,207,164,.3)">⬇ GeoJSON</button>
+    <button onclick="exportarPacoteSEL()" class="add-btn" style="background:rgba(34,196,116,.12);color:#1f8d49;border-color:rgba(34,196,116,.4)" title="Exporta as camadas organizadas pela metodologia de sistema de espaços livres (Tardim) + anotações de campo, para QGIS / ATDAU_PAIS">🌿 Pacote SEL</button>
     <button onclick="exportarMapaPNG(_mlMap,{titulo:(state['proj-nome']||'Mapa de Análise'),nomeArquivo:'atdau-mapa-analise',credito:'Suite ATDAU · Mapa de Análise',legendaItems:mlLegendItems,legendaTitulo:'Legenda'})" class="add-btn" style="background:var(--bg5);color:var(--teal);border-color:rgba(30,207,164,.3)">🖼️ PNG</button>
     <label for="ml-import-file" class="add-btn" style="cursor:pointer;color:var(--blue);border-color:rgba(79,155,248,.3);user-select:none" title="Importar shapefile (.zip) ou GeoJSON">📂 Importar</label>
     <input type="file" id="ml-import-file" accept=".zip,.geojson,.json" style="display:none" onchange="mlHandleImport(this)">
@@ -14331,6 +14332,34 @@ async function mlGeocode() {
 }
 
 // ── Export GeoJSON ────────────────────────────────────────────────────
+// Pacote SEL — exporta as camadas do Mapa de Análise organizadas pela metodologia
+// de sistema de espaços livres (Tardim) + as anotações de campo do Mapa Anotado.
+// Um GeoJSON único importável no QGIS (o grupo Tardim viaja como atributo sel_grupo).
+const SEL_GRUPOS = {
+  biofisico:      { label:'Suporte biofísico',               layers:['agua','topo','app','risco'] },
+  espacos_livres: { label:'Sistema de espaços livres',       layers:['livres','acess','mobil'] },
+  percepcao:      { label:'Percepção e paisagem cultural',   layers:['morfo','lynch','patrim','eixos'] },
+  estrutura:      { label:'Estrutura urbana e planejamento', layers:['viario','infra','uso','cobertura','zona','uc','equip','impacto','segur'] },
+  sintese:        { label:'Síntese SWOT',                    layers:['swot'] },
+  base:           { label:'Base / outros',                   layers:['terreno','notas'] }
+};
+function exportarPacoteSEL(){
+  const grupoDe={}; Object.entries(SEL_GRUPOS).forEach(([k,g])=>g.layers.forEach(id=>{ grupoDe[id]=k; }));
+  const feats=[];
+  ML_LAYERS.forEach(l=>{ (_mlFeatures[l.id]||[]).forEach(f=>{ if(!f.geom) return; const cor=(f.props&&f.props.color)||l.color||'#888'; feats.push({ type:'Feature', geometry:f.geom, properties:Object.assign({}, f.props||{}, { sel_grupo:grupoDe[l.id]||'base', sel_camada:l.id, sel_camada_nome:l.name, sel_cor:cor }) }); }); });
+  let nAnot=0;
+  if(typeof MapaAnotadoStore!=='undefined' && typeof MapaAnotadoStore.getAll==='function'){
+    (MapaAnotadoStore.getAll()||[]).forEach(a=>{ if(!a||!a.coords) return; const cat=(typeof MA_CATEGORIES!=='undefined'?(MA_CATEGORIES.find(c=>c.id===a.category)||{}):{}); feats.push({ type:'Feature', geometry:{type:'Point', coordinates:a.coords}, properties:{ sel_grupo:'registro_campo', sel_camada:'mapa_anotado', sel_camada_nome:'Mapa Anotado', categoria:cat.label||a.category||'', titulo:a.title||'', descricao:a.description||'', notas:a.notes||'', sel_cor:cat.color||'#7c8a99', n_fotos:(a.fotos||[]).length, n_audios:(a.audios||[]).length } }); nAnot++; });
+  }
+  if(!feats.length){ alert('Nada para exportar: desenhe camadas no Mapa de Análise ou registre anotações no Mapa Anotado.'); return; }
+  const fc={ type:'FeatureCollection',
+    metadata:{ schema:'atdau-sel-v1', projeto:state['proj-nome']||'', data:new Date().toISOString(), crs:'EPSG:4326 (WGS84)',
+      grupos:Object.fromEntries(Object.entries(SEL_GRUPOS).map(([k,g])=>[k,g.label]).concat([['registro_campo','Registros de campo (Mapa Anotado)']])),
+      metodologia:'Sistema de espaços livres (Tardim): camadas agrupadas por suporte biofísico, espaços livres, percepção/paisagem cultural, estrutura/planejamento e síntese; registros de campo do Mapa Anotado incluídos. Categorize por sel_grupo no QGIS.' },
+    features:feats };
+  baixarArquivo('atdau-pacote-sel.geojson', JSON.stringify(fc,null,2), 'application/json');
+  if(typeof mostrarStatus==='function') mostrarStatus('Pacote SEL exportado ('+feats.length+' feições'+(nAnot?' · '+nAnot+' anotações':'')+') ✓');
+}
 function mlExport() {
   const allFeatures = [];
   ML_LAYERS.forEach(l => {
