@@ -12015,12 +12015,109 @@ function gerarRelatorioPDF(){
     espaco(2);
   }
 
-  // nota de fechamento + mapas
+  // ─── REGISTRO VISUAL — mapas (imagem + legenda), fotos de campo e croquis ───
+  _registroVisual();
+
+  // nota de fechamento
   espaco(4);
   doc.setDrawColor(...CINZA); doc.setLineWidth(0.2);
   checa(20); doc.line(M, y, W-M, y); y+=5;
   doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...CINZA);
-  paragrafo('Os mapas (Mapa de Análise e Mapa-Síntese) devem ser anexados separadamente: use o botão de exportar PNG/SVG na respectiva aba. Este relatório-síntese é gerado automaticamente a partir dos dados do diagnóstico e pode ser editado posteriormente.', 8);
+  paragrafo('Relatório-síntese gerado automaticamente a partir dos dados do diagnóstico. Os mapas embutidos refletem o estado em que foram visualizados na ferramenta; abas de mapa não abertas nesta sessão não aparecem. Pode ser editado posteriormente.', 8);
+
+  // ── helpers do registro visual ──
+  function _fmtImg(src){ return /^data:image\/png/i.test(src) ? 'PNG' : 'JPEG'; }
+  // figura grande centralizada (mapa) com legenda/caption
+  function _figura(src, natW, natH, legenda){
+    const fw = W-2*M;
+    let iw = fw, ih = fw * (natH/natW);
+    const maxIH = H - 2*M - 16;
+    if(ih > maxIH){ ih = maxIH; iw = ih * (natW/natH); }
+    if(y + ih + 8 > H - M - 8) novaPagina();
+    const ix = M + (fw-iw)/2;
+    try{ doc.addImage(src, _fmtImg(src), ix, y, iw, ih); }catch(e){ console.warn('addImage mapa:', e); return; }
+    doc.setDrawColor(...CINZA); doc.setLineWidth(0.2); doc.rect(ix, y, iw, ih);
+    y += ih + 3;
+    if(legenda){ doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(...CINZA);
+      doc.splitTextToSize(legenda, fw).forEach(l=>{ checa(4); doc.text(l, M, y); y+=3.6; }); }
+    y += 3;
+  }
+  // grade de fotos (contain, preserva proporção), 3 por linha, com legenda
+  function _fotosGrid(fotos){
+    const cols=3, gap=4, fw=W-2*M, cw=(fw-gap*(cols-1))/cols, ch=cw*0.74;
+    for(let i=0;i<fotos.length;i+=cols){
+      const linha=fotos.slice(i,i+cols);
+      const temCap=linha.some(f=>f.cap);
+      checa(ch + (temCap?10:4));
+      linha.forEach((f,j)=>{
+        const x=M + j*(cw+gap);
+        let dw=cw, dh=ch;
+        try{ const p=doc.getImageProperties(f.src); const r=p.height/p.width; dw=cw; dh=cw*r; if(dh>ch){ dh=ch; dw=ch/r; } }catch(e){}
+        const ox=x+(cw-dw)/2, oy=y+(ch-dh)/2;
+        try{ doc.addImage(f.src, _fmtImg(f.src), ox, oy, dw, dh); }catch(e){ return; }
+        if(f.cap){ doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...CINZA);
+          doc.splitTextToSize(f.cap, cw).slice(0,2).forEach((l,k)=> doc.text(l, x, y+ch+3.2+k*2.8)); }
+      });
+      y += ch + (temCap?10:4);
+    }
+  }
+  function _registroVisual(){
+    let temAlgo=false;
+    // 1) MAPAS (imagem + legenda) — só os que já renderizaram nesta sessão
+    const mapas=[
+      {inst:(typeof _mlMap!=='undefined'?_mlMap:null),       cap:'Mapa de Análise — feições e camadas do diagnóstico.',                  leg:(typeof mlLegendItems==='function'?mlLegendItems:null),    legT:'Legenda'},
+      {inst:(typeof _maInst!=='undefined'?_maInst:null),     cap:'Mapa-Síntese (Mapa Anotado) — anotações georreferenciadas de campo.',  leg:(typeof maLegendItems==='function'?maLegendItems:null),    legT:'Categorias'},
+      {inst:(typeof _sidraMapaInst!=='undefined'?_sidraMapaInst:null), cap:'Mapa SIDRA/IBGE — dados censitários por setor.',               leg:(typeof sidraLegendItems==='function'?sidraLegendItems:null), legT:'Censo/IBGE'},
+    ];
+    let primeiroMapa=true;
+    mapas.forEach(m=>{
+      if(!m.inst) return;
+      let cv=null; try{ cv=_comporMapaCanvas(m.inst, {titulo:(state['proj-nome']||''), legendaItems:m.leg, legendaTitulo:m.legT, credito:'Suite ATDAU'}); }catch(e){ cv=null; }
+      if(!cv) return;
+      let src=null; try{ src=cv.toDataURL('image/jpeg',0.9); }catch(e){ return; }
+      if(primeiroMapa){ titulo('Registro visual — mapas'); primeiroMapa=false; }
+      temAlgo=true;
+      _figura(src, cv.width, cv.height, m.cap);
+    });
+    // 2) FOTOS DE CAMPO do Mapa Anotado (georreferenciadas)
+    if(typeof MapaAnotadoStore!=='undefined'){
+      const comFoto=(MapaAnotadoStore.getAll()||[]).filter(a=>(a.fotos||[]).length);
+      if(comFoto.length){
+        const fotos=[];
+        comFoto.forEach(a=>{ const cat=(typeof MA_CATEGORIES!=='undefined'?((MA_CATEGORIES.find(c=>c.id===a.category)||{}).label||''):''); (a.fotos||[]).forEach(src=> fotos.push({src, cap:(a.title||'')+(cat?(' · '+cat):'')})); });
+        titulo('Registro visual — fotos de campo (Mapa Anotado)'); temAlgo=true; _fotosGrid(fotos);
+      }
+    }
+    // 3) FOTOS POR BLOCO (instrumentos de coleta)
+    if(typeof PhotoStore!=='undefined'){
+      try{ PhotoStore.load(); }catch(e){}
+      const blocos=Object.keys(PhotoStore.data||{}).filter(b=>(PhotoStore.data[b]||[]).length);
+      if(blocos.length){
+        titulo('Registro visual — fotos por bloco'); temAlgo=true;
+        blocos.forEach(bid=>{
+          const arr=PhotoStore.data[bid]||[]; if(!arr.length) return;
+          let lbl=bid; try{ const el=document.getElementById(bid); const t=el&&el.querySelector('.block-title'); if(t) lbl=t.textContent.trim(); }catch(e){}
+          subt(lbl);
+          _fotosGrid(arr.map(p=>({src:p.dataUrl, cap:(p.title||p.caption||'')+(p.azimuth!=null&&p.azimuth!==''?(' · azim. '+p.azimuth+'°'):'')})));
+          espaco(1);
+        });
+      }
+    }
+    // 4) CROQUIS
+    if(typeof CroquisStore!=='undefined'){
+      try{ CroquisStore.load(); }catch(e){}
+      const cqs=(CroquisStore.data||[]).filter(c=>c.dataUrl);
+      if(cqs.length){
+        titulo('Registro visual — croquis'); temAlgo=true;
+        const vlabel=id=> (typeof VERBOS_OPERATIVOS!=='undefined'?((VERBOS_OPERATIVOS.find(v=>v.id===id)||{}).label||''):'');
+        _fotosGrid(cqs.map(c=>({src:c.dataUrl, cap:[vlabel(c.verbo), (c.legenda||'')].filter(Boolean).join(' — ')})));
+      }
+    }
+    if(!temAlgo){
+      titulo('Registro visual');
+      paragrafo('Nenhum mapa renderizado nem foto/croqui registrado nesta sessão. Abra as abas de mapa e adicione fotos/croquis para que apareçam aqui.');
+    }
+  }
 
   // rodapé em todas as páginas
   const tot = doc.internal.getNumberOfPages();
@@ -12514,12 +12611,16 @@ function addNorthArrow(map, containerId) {
 
 // Exporta um mapa MapLibre como PNG, compondo o canvas do mapa com a
 // seta de norte e um selo (título + escala textual + crédito).
-function exportarMapaPNG(map, opts) {
+// compõe um canvas final (mapa + seta de norte + escala + selo + legenda) e o retorna;
+// devolve null se o mapa não existe ou ainda não renderizou (canvas vazio).
+// reutilizado tanto pela exportação PNG quanto pela inclusão de mapas no Relatório PDF.
+function _comporMapaCanvas(map, opts) {
   opts = opts || {};
-  if (!map || !map.getCanvas) { alert('Mapa não disponível para exportação.'); return; }
-  try {
-    map.triggerRepaint && map.triggerRepaint();
-    const srcCanvas = map.getCanvas();
+  if (!map || !map.getCanvas) return null;
+  map.triggerRepaint && map.triggerRepaint();
+  const srcCanvas = map.getCanvas();
+  if (!srcCanvas || !srcCanvas.width || !srcCanvas.height) return null;
+  {
     const w = srcCanvas.width, h = srcCanvas.height;
     const out = document.createElement('canvas');
     out.width = w; out.height = h;
@@ -12627,7 +12728,16 @@ function exportarMapaPNG(map, opts) {
       });
     }
 
-    // 4) baixar
+    return out;
+  }
+}
+
+function exportarMapaPNG(map, opts) {
+  opts = opts || {};
+  try {
+    const out = _comporMapaCanvas(map, opts);
+    if(!out){ alert('Mapa não disponível para exportação.\n\nDica: abra a aba do mapa ao menos uma vez (para ele renderizar) antes de exportar.'); return; }
+    // baixar
     out.toBlob((blob)=>{
       if(!blob){ alert('Falha ao gerar PNG.'); return; }
       const a = document.createElement('a');
