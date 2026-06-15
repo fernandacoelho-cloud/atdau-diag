@@ -10808,6 +10808,21 @@ const RECORTE_LOGICAS = {
     ref:'—'
   }
 };
+// ── Percurso de uso por tipologia (backbone tipologia × escopo) ──
+// A tipologia SUGERE quais análises (painéis do Escopo) e módulos priorizar, e
+// aponta o campo de atuação na Resolução CAU/BR — sempre orientação, não decisão.
+// Híbrido: o usuário ajusta tudo depois no Escopo (reativação por bloco/campo).
+// paineis usam os números de ESCOPO_PANEIS = [1,2,3,4,5,9,11,12,14].
+const TIPOLOGIA_PERCURSO = {
+  arq:    { paineis:[11,1,2,3,4,5,9,12],  modulos:'Programa de necessidades + matriz de relações entre ambientes; APO/obras análogas.', cau:'CAU: Arquitetura e Urbanismo de edificações (projeto arquitetônico).' },
+  equip:  { paineis:[11,1,2,5,9,12,14],   modulos:'Abrangência/demanda do serviço; participação da comunidade atendida.', cau:'CAU: AU de edificações — equipamentos públicos.' },
+  urb:    { paineis:[1,2,4,5,9,12,14],    modulos:'Leitura morfológica (cheios/vazios, malha); SWOT territorial.', cau:'CAU: Planejamento Urbano e Desenho Urbano.' },
+  pais:   { paineis:[3,4,5,9,14],         modulos:'Verbos de ação SEL (Tardim); categorias perceptivas no Mapa Anotado; Pacote SEL p/ QGIS.', cau:'CAU: Arquitetura Paisagística (sistema de espaços livres).' },
+  linear: { paineis:[3,4,9,14],           modulos:'Leitura de bacia/corredor; SbN e resiliência (drenagem, APP, conectividade).', cau:'CAU: Paisagística + Meio Ambiente (corredor ecológico).' },
+  eixo:   { paineis:[1,4,5,9,14],         modulos:'Seções transversais; permeabilidade transversal e travessias.', cau:'CAU: Desenho Urbano / mobilidade.' },
+  rota:   { paineis:[1,4,9,12,14],        modulos:'Patrimônio imaterial e pontos de interpretação no Mapa Anotado; avaliação UNESCO/VUE; governança e participação (Mansfeld).', cau:'CAU: Patrimônio Histórico-Cultural e Artístico + Paisagem Cultural.' },
+  outro:  { paineis:[1,2,3,4,5,9,11,12,14], modulos:'Selecione manualmente os módulos conforme a natureza do objeto.', cau:'CAU: defina o campo de atuação conforme o objeto.' }
+};
 function renderRecorteOrientacao(){
   const sel=document.getElementById('proj-tipologia-recorte');
   const box=document.getElementById('recorte-orientacao');
@@ -10819,6 +10834,19 @@ function renderRecorteOrientacao(){
   let enfaseChips='';
   if(L.enfase && L.enfase.length){
     enfaseChips = L.enfase.map(e=>`<span style="display:inline-block;font-size:.56rem;padding:2px 8px;margin:2px 3px 2px 0;border-radius:11px;background:rgba(201,146,59,.16);color:#9a6b1e;border:1px solid rgba(201,146,59,.4)">${escHtml(e)}</span>`).join('');
+  }
+  // cartão de percurso (tipologia → escopo + módulos + CAU)
+  const P = (typeof TIPOLOGIA_PERCURSO!=='undefined') ? TIPOLOGIA_PERCURSO[k] : null;
+  let percursoHTML='';
+  if(P){
+    const chips=(P.paineis||[]).map(n=>`<span style="display:inline-block;font-size:.56rem;padding:2px 8px;margin:2px 3px 2px 0;border-radius:11px;background:rgba(30,207,164,.14);color:var(--teal);border:1px solid rgba(30,207,164,.35)">${escHtml((typeof _navLabel==='function')?_navLabel(n):('Painel '+n))}</span>`).join('');
+    percursoHTML=`<div style="border-top:1px solid var(--line);margin-top:8px;padding-top:7px">
+        <div style="font-size:.58rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Percurso de uso sugerido <span style="font-weight:400;color:var(--t3);text-transform:none">— você ajusta livremente no Escopo</span></div>
+        <div style="font-size:.62rem;color:var(--t2);margin-bottom:5px"><strong style="color:var(--t1)">Análises no escopo:</strong><br>${chips}</div>
+        ${P.modulos?`<div style="font-size:.62rem;color:var(--t2);margin-bottom:5px"><strong style="color:var(--t1)">Módulos sugeridos:</strong> ${escHtml(P.modulos)}</div>`:''}
+        ${P.cau?`<div style="font-size:.56rem;color:var(--t3);margin-bottom:6px">${escHtml(P.cau)} <em>Orientação — não decide a atribuição legal.</em></div>`:''}
+        <button onclick="aplicarPercursoTipologia()" class="instr-btn" style="font-size:.6rem">✓ Aplicar percurso ao Escopo</button>
+      </div>`;
   }
   box.style.display='block';
   box.innerHTML=`
@@ -10835,6 +10863,7 @@ function renderRecorteOrientacao(){
           ${k==='arq'||k==='equip'?'Lembre-se: o raio em linha reta superestima o alcance — a área caminhável real (isócrona) é menor. ':''}
           Esta orientação é uma sugestão; descreva e justifique seu recorte no campo abaixo.
         </div>
+        ${percursoHTML}
       </div>
     </div>`;
 }
@@ -11273,11 +11302,20 @@ function renderEscopo(){
   const cnt=document.getElementById('escopo-contador'); if(cnt) cnt.textContent=`${ativos} de ${total} análises no escopo`;
 }
 function escopoToggleBloco(id,on){ _escopo().blocos[id]=!!on; if(typeof autoSave==='function')autoSave(); renderEscopo(); if(typeof atualizarCompletude==='function')atualizarCompletude(); }
-function escopoAplicarPreset(p){
+function escopoAplicarPaineis(inc){
   _escopoAtribuirIds();
-  const inc=ESCOPO_PRESETS[p]||ESCOPO_PANEIS; const e=_escopo(); e.blocos={}; e.campos={};
+  inc = inc||ESCOPO_PANEIS; const e=_escopo(); e.blocos={}; e.campos={};
   ESCOPO_PANEIS.forEach(n=>document.querySelectorAll('#panel-'+n+' .block[data-escopo-id]').forEach(bl=>{ e.blocos[bl.getAttribute('data-escopo-id')]=inc.includes(n); }));
   if(typeof autoSave==='function')autoSave(); renderEscopo(); if(typeof atualizarCompletude==='function')atualizarCompletude();
+}
+function escopoAplicarPreset(p){ escopoAplicarPaineis(ESCOPO_PRESETS[p]||ESCOPO_PANEIS); }
+// aplica ao Escopo o percurso de painéis sugerido pela tipologia escolhida na Identificação
+function aplicarPercursoTipologia(){
+  const sel=document.getElementById('proj-tipologia-recorte'); const k=sel&&sel.value;
+  const P=(typeof TIPOLOGIA_PERCURSO!=='undefined')?TIPOLOGIA_PERCURSO[k]:null;
+  if(!P){ if(typeof mostrarStatus==='function') mostrarStatus('Escolha a tipologia primeiro.'); return; }
+  escopoAplicarPaineis(P.paineis);
+  if(typeof mostrarStatus==='function') mostrarStatus('Percurso da tipologia aplicado ao Escopo ✓');
 }
 // ── ajuste fino por campo (Fatia 2): bloco = controle grosso; campo sobrescreve ──
 function escopoToggleCampo(fieldId, blocoId){
