@@ -26,7 +26,8 @@ test('Cascata: Categoria filtra subtipos, reflete escopo e cascateia recorte; pe
       card: /Percurso de uso sugerido/.test(document.getElementById('recorte-orientacao').textContent || ''),
     };
   });
-  expect(pais.subs).toEqual(['Selecione…', 'Praça / parque / espaço público', 'Outro']);
+  expect(pais.subs).toContain('Praça / parque / espaço público');
+  expect(pais.subs).not.toContain('Residência unifamiliar'); // filtrado pela categoria
   expect(pais.escopo).toBe('Paisagístico');
   expect(pais.recorte).toBe('pais');
   expect(pais.card).toBe(true);

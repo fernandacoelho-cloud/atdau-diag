@@ -1417,9 +1417,10 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <select id="proj-modulo" onchange="setModule(this.value,true)">
             <option value="arquitetonico">🏗️ Projeto Arquitetônico</option>
             <option value="urbano">🌆 Projeto Urbano</option>
-            <option value="paisagistico">🌳 Projeto Paisagístico</option>
+            <option value="paisagistico">🌳 Paisagístico / Sistema de espaços livres (SEL)</option>
             <option value="retrofit">🔨 Retrofit / Requalificação Arquitetônica</option>
             <option value="patrimonio">🏛️ Patrimônio / Restauro</option>
+            <option value="itinerario">🧭 Itinerário cultural / Rota</option>
             <option value="his">🏘️ HIS — Habitação de Interesse Social</option>
             <option value="requalif_urbana">🔄 Requalificação Urbana</option>
             <option value="parcelamento">📐 Parcelamento do Solo</option>
@@ -1467,6 +1468,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
             <option>Paisagístico</option>
             <option>Arquitetônico + Paisagístico</option>
             <option>Urbano-Arquitetônico</option>
+            <option>Patrimonial / Cultural</option>
           </select>
         </div>
         <div class="form-field">
@@ -3609,7 +3611,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <!-- MÓDULO: Patrimônio / Restauro — Pesquisa Histórica -->
-  <div class="block module-block" data-modules="patrimonio">
+  <div class="block module-block" data-modules="patrimonio itinerario">
     <div class="block-header"><span class="block-icon">📚</span><span class="block-title">Pesquisa histórica e análise de integridade</span><button class="block-photos-toggle" data-block-id="b-pesquisa-historica-e-analise-de-integrid" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">Ref: Carta de Veneza (ICOMOS, 1964) · Carta de Burra (ICOMOS, 1979) · Carta de Nara (1994) · IPHAN Instrução Normativa 01/2015.</div>
@@ -16231,8 +16233,8 @@ const MODULES_DEF = {
     color:'var(--blue)'
   },
   paisagistico: {
-    label:'Projeto Paisagístico', icon:'🌳',
-    desc:'Blocos extras ativos: Inventário de vegetação e ecologia · Sistema hídrico e ciclo da água.',
+    label:'Paisagístico / Sistema de espaços livres (SEL)', icon:'🌳',
+    desc:'Blocos extras ativos: Inventário de vegetação e ecologia · Sistema hídrico e ciclo da água. Leitura por sistema de espaços livres (Tardim): verbos SEL no painel 08 e categorias perceptivas no Mapa Anotado.',
     color:'#22c474'
   },
   retrofit: {
@@ -16264,6 +16266,11 @@ const MODULES_DEF = {
     label:'Plano Urbano / Masterplan', icon:'🗺️',
     desc:'Blocos extras ativos: Morfologia e estrutura urbana · Análise socioeconômica · Sistema hídrico.',
     color:'#e0506a'
+  },
+  itinerario: {
+    label:'Itinerário cultural / Rota', icon:'🧭',
+    desc:'Bloco extra ativo: Pesquisa histórica e integridade. Recorte por percurso (rota); avaliação de potencial VUE (UNESCO/ICOMOS) na Identificação; patrimônio imaterial e pontos de interpretação no Mapa Anotado.',
+    color:'#d4a017'
   }
 };
 
@@ -16272,7 +16279,8 @@ const MODULES_DEF = {
 const MODULO_SUBTIPOS = {
   arquitetonico:['Residência unifamiliar','Residência multifamiliar','Equipamento de educação — Creche / EMEI','Equipamento de educação — Ensino Fundamental','Equipamento de educação — Ensino Médio','Equipamento de saúde — UBS','Equipamento de saúde — UPA / Hospital','Equipamento social — CRAS / CREAS','Equipamento cultural — biblioteca / museu / CEU','Equipamento esportivo — quadra / ginásio','Equipamento religioso','Comercial / serviços','Institucional / administrativo','Industrial / logístico','Uso misto (residencial + comércio)'],
   urbano:['Praça / parque / espaço público','Redesenho de via / calçadão','Uso misto (residencial + comércio)','Plano de bairro / setor'],
-  paisagistico:['Praça / parque / espaço público'],
+  paisagistico:['Praça / parque / espaço público','Parque linear','Corredor verde / ecológico','Sistema de praças e largos','Orla / fundo de vale','Arborização e infraestrutura verde'],
+  itinerario:['Rota de peregrinação','Roteiro turístico-cultural','Caminho / trilha patrimonial','Itinerário religioso','Circuito de bens culturais'],
   retrofit:['Residência unifamiliar','Residência multifamiliar','Equipamento cultural — biblioteca / museu / CEU','Comercial / serviços','Institucional / administrativo','Equipamento religioso'],
   patrimonio:['Equipamento cultural — biblioteca / museu / CEU','Equipamento religioso','Institucional / administrativo'],
   his:['HIS — unidades térreas','HIS — sobrados / multifamiliar','Residência multifamiliar','Regularização fundiária (REURB)'],
@@ -16281,7 +16289,7 @@ const MODULO_SUBTIPOS = {
   plano_urbano:['Plano de bairro / setor','Plano Diretor municipal']
 };
 // Categoria → lógica de recorte padrão (cascata p/ o bloco Recorte + cartão percurso/CAU)
-const MODULO_RECORTE = { arquitetonico:'arq', urbano:'urb', paisagistico:'pais', retrofit:'arq', patrimonio:'arq', his:'arq', requalif_urbana:'urb', parcelamento:'urb', plano_urbano:'urb' };
+const MODULO_RECORTE = { arquitetonico:'arq', urbano:'urb', paisagistico:'pais', retrofit:'arq', patrimonio:'arq', his:'arq', requalif_urbana:'urb', parcelamento:'urb', plano_urbano:'urb', itinerario:'rota' };
 function renderSubtipos(){
   const sel=document.getElementById('proj-tipo'); if(!sel) return;
   const mod=state['proj-modulo']||(document.getElementById('proj-modulo')||{}).value||'arquitetonico';
@@ -16318,7 +16326,7 @@ function setModule(moduleId, fromUser) {
     paisagistico:'Paisagístico', retrofit:'Arquitetônico',
     patrimonio:'Arquitetônico', his:'Arquitetônico',
     requalif_urbana:'Urbanístico', parcelamento:'Urbanístico',
-    plano_urbano:'Urbanístico'
+    plano_urbano:'Urbanístico', itinerario:'Patrimonial / Cultural'
   };
   const sc = document.getElementById('proj-escopo');
   if (sc && scopeMap[moduleId]) { sc.value = scopeMap[moduleId]; state['proj-escopo']=sc.value; }
