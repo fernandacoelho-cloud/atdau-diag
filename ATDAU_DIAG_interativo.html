@@ -503,6 +503,9 @@ select option{background:var(--bg3)}
   cursor: help; margin-left: 2px
 }
 .verbo-info:hover { background: rgba(255,255,255,.4) }
+/* ⓘ de "conceito" — explica funcionalidades de nome técnico (hover/clique) */
+.conceito-i { display:inline-flex; width:15px; height:15px; border-radius:50%; background:var(--bg4); color:var(--t3); border:1px solid var(--line2); font-size:.58rem; font-weight:800; align-items:center; justify-content:center; cursor:help; vertical-align:middle; margin-left:4px; flex:none }
+.conceito-i:hover { color:var(--teal); border-color:var(--teal) }
 
 /* ── Croquis conceituais ────────────────────────────────────────── */
 .croquis-grid {
@@ -5495,7 +5498,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </optgroup>
     </select>
     <button onclick="mlExport()" class="add-btn" style="background:var(--bg5);color:var(--teal);border-color:rgba(30,207,164,.3)">⬇ GeoJSON</button>
-    <button onclick="exportarPacoteSEL()" class="add-btn" style="background:rgba(34,196,116,.12);color:#1f8d49;border-color:rgba(34,196,116,.4)" title="Exporta as camadas organizadas pela metodologia de sistema de espaços livres (Tardim) + anotações de campo, para QGIS / ATDAU_PAIS">🌿 Pacote SEL</button>
+    <button onclick="exportarPacoteSEL()" class="add-btn" style="background:rgba(34,196,116,.12);color:#1f8d49;border-color:rgba(34,196,116,.4)" title="Exporta as camadas do mapa (organizadas pela metodologia de Sistema de Espaços Livres) + anotações de campo para o QGIS">🌿 Camadas p/ QGIS<span class="conceito-i" onmouseenter="conceitoHover(this,'sel')" onmouseleave="hideInfo()" onclick="event.stopPropagation();conceitoInfo(this,'sel')" title="O que é isto?">ⓘ</span></button>
     <button onclick="exportarMapaPNG(_mlMap,{titulo:(state['proj-nome']||'Mapa de Análise'),nomeArquivo:'atdau-mapa-analise',credito:'Suite ATDAU · Mapa de Análise',legendaItems:mlLegendItems,legendaTitulo:'Legenda'})" class="add-btn" style="background:var(--bg5);color:var(--teal);border-color:rgba(30,207,164,.3)">🖼️ PNG</button>
     <label for="ml-import-file" class="add-btn" style="cursor:pointer;color:var(--blue);border-color:rgba(79,155,248,.3);user-select:none" title="Importar shapefile (.zip) ou GeoJSON">📂 Importar</label>
     <input type="file" id="ml-import-file" accept=".zip,.geojson,.json" style="display:none" onchange="mlHandleImport(this)">
@@ -5729,7 +5732,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <div class="block">
-    <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Significância e potencial de VUE — paisagem cultural / itinerários culturais</span></div>
+    <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Significância e potencial de VUE — paisagem cultural / itinerários culturais<span class="conceito-i" onmouseenter="conceitoHover(this,'vue')" onmouseleave="hideInfo()" onclick="event.stopPropagation();conceitoInfo(this,'vue')" title="O que é isto?">ⓘ</span></span></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
         Para projetos de <strong>itinerários culturais / paisagem cultural</strong>. Síntese de <strong>significância</strong>, feita <strong>após o diagnóstico</strong> (Carta de Burra: entender a significância antes das diretrizes; ICOMOS Itinerários Culturais 2008: significância após o inventário de bens materiais e imateriais). Consolida os achados (paisagem, patrimônio material e imaterial do Mapa Anotado) e estima o potencial de <strong>Valor Universal Excepcional</strong> (UNESCO/ICOMOS) em 4 dimensões (Gomes &amp; Santiago, 2020) — <strong>Baixo / Médio / Alto</strong>. Orientação projetual, não candidatura formal.
@@ -6042,7 +6045,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <div class="block">
-    <div class="block-header"><span class="block-icon">🎛️</span><span class="block-title">Matriz interesse × influência (Mendelow)</span></div>
+    <div class="block-header"><span class="block-icon">🎛️</span><span class="block-title">Mapa de atores — interesse × influência <span style="font-weight:400;color:var(--t3);font-size:.82em">(Mendelow)</span><span class="conceito-i" onmouseenter="conceitoHover(this,'mendelow')" onmouseleave="hideInfo()" onclick="event.stopPropagation();conceitoInfo(this,'mendelow')" title="O que é isto?">ⓘ</span></span></div>
     <div class="block-body">
       <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Cada ator é posicionado pela combinação interesse × influência, indicando a estratégia de engajamento por quadrante. <span style="color:var(--t3)">Grade poder/interesse — Mendelow (1991); Eden &amp; Ackermann (1998).</span></div>
       <div id="gov-matriz"></div>
@@ -11026,7 +11029,7 @@ const TIPOLOGIA_PERCURSO = {
   arq:    { paineis:[11,1,2,3,4,5,9,12],  modulos:'Programa de necessidades + matriz de relações entre ambientes; APO/obras análogas.', cau:'CAU: Arquitetura e Urbanismo de edificações (projeto arquitetônico).' },
   equip:  { paineis:[11,1,2,5,9,12,14],   modulos:'Abrangência/demanda do serviço; participação da comunidade atendida.', cau:'CAU: AU de edificações — equipamentos públicos.' },
   urb:    { paineis:[1,2,4,5,9,12,14],    modulos:'Leitura morfológica (cheios/vazios, malha); SWOT territorial.', cau:'CAU: Planejamento Urbano e Desenho Urbano.' },
-  pais:   { paineis:[3,4,5,9,14],         modulos:'Verbos de ação SEL (Tardim); categorias perceptivas no Mapa Anotado; Pacote SEL p/ QGIS.', cau:'CAU: Arquitetura Paisagística (sistema de espaços livres).' },
+  pais:   { paineis:[3,4,5,9,14],         modulos:'Verbos de ação SEL (Tardim); categorias perceptivas no Mapa Anotado; exportar camadas p/ QGIS (SEL).', cau:'CAU: Arquitetura Paisagística (sistema de espaços livres).' },
   linear: { paineis:[3,4,9,14],           modulos:'Leitura de bacia/corredor; SbN e resiliência (drenagem, APP, conectividade).', cau:'CAU: Paisagística + Meio Ambiente (corredor ecológico).' },
   eixo:   { paineis:[1,4,5,9,14],         modulos:'Seções transversais; permeabilidade transversal e travessias.', cau:'CAU: Desenho Urbano / mobilidade.' },
   rota:   { paineis:[1,4,9,12,14],        modulos:'Patrimônio imaterial e pontos de interpretação no Mapa Anotado; avaliação UNESCO/VUE; governança e participação (Mansfeld).', cau:'CAU: Patrimônio Histórico-Cultural e Artístico + Paisagem Cultural.' },
@@ -14514,7 +14517,7 @@ async function mlGeocode() {
 }
 
 // ── Export GeoJSON ────────────────────────────────────────────────────
-// Pacote SEL — exporta as camadas do Mapa de Análise organizadas pela metodologia
+// Camadas p/ QGIS (Sistema de Espaços Livres) — exporta as camadas do Mapa de Análise pela metodologia
 // de sistema de espaços livres (Tardim) + as anotações de campo do Mapa Anotado.
 // Um GeoJSON único importável no QGIS (o grupo Tardim viaja como atributo sel_grupo).
 const SEL_GRUPOS = {
@@ -14540,7 +14543,7 @@ function exportarPacoteSEL(){
       metodologia:'Sistema de espaços livres (Tardim): camadas agrupadas por suporte biofísico, espaços livres, percepção/paisagem cultural, estrutura/planejamento e síntese; registros de campo do Mapa Anotado incluídos. Categorize por sel_grupo no QGIS.' },
     features:feats };
   baixarArquivo('atdau-pacote-sel.geojson', JSON.stringify(fc,null,2), 'application/json');
-  if(typeof mostrarStatus==='function') mostrarStatus('Pacote SEL exportado ('+feats.length+' feições'+(nAnot?' · '+nAnot+' anotações':'')+') ✓');
+  if(typeof mostrarStatus==='function') mostrarStatus('Camadas p/ QGIS exportadas ('+feats.length+' feições'+(nAnot?' · '+nAnot+' anotações':'')+') ✓');
 }
 // turf.js sob demanda (geometria vetorial — buffer de rota, álgebra de mapas).
 // Vem de CDN: só funciona online (como o jsPDF do relatório).
@@ -20020,6 +20023,19 @@ function hoverInfo(anchor, label, body){
 function _verbo(id){ return (typeof VERBOS_OPERATIVOS!=='undefined')?VERBOS_OPERATIVOS.find(v=>v.id===id):null; }
 function verboHover(anchor,id){ const v=_verbo(id); if(v) hoverInfo(anchor, v.label, v.expl); }
 function verboInfo(anchor,id){ const v=_verbo(id); if(v) showInfo(anchor, v.label+' — '+v.expl); }
+
+// ── "conceito": explica funcionalidades de nome técnico (o que é · p/ que serve · como · ref) ──
+const CONCEITOS = {
+  sel: { label:'Camadas para QGIS (Sistema de Espaços Livres)',
+    body:'Exporta tudo que você desenhou no Mapa de Análise (água, vegetação, vazios, praças…) num arquivo GeoJSON que abre no QGIS — software gratuito de mapas/SIG. As camadas vêm organizadas pela metodologia de Sistema de Espaços Livres (SEL): ler praças, parques, APPs e ruas como um sistema contínuo. Use para análises mais pesadas (declividade, bacias) fora da ferramenta. Ref.: Tardim.' },
+  mendelow: { label:'Mapa de atores (interesse × influência)',
+    body:'Posiciona cada parte interessada por quanto INTERESSE ela tem no projeto e quanta INFLUÊNCIA exerce. Os 4 quadrantes dizem como agir: gerir de perto (decide e se importa), manter satisfeito (decide mas não se importa), manter informado (se importa mas não decide) e monitorar. Ajuda a decidir com quem dialogar para o projeto não emperrar. Ref.: Mendelow (1991); Eden & Ackermann (1998).' },
+  vue: { label:'Valor Universal Excepcional (VUE)',
+    body:'Critério da UNESCO/ICOMOS para reconhecer um bem como Patrimônio Mundial. Aqui é uma estimativa de POTENCIAL (orientação projetual, não candidatura formal), avaliada em 4 dimensões — espacial, temporal, cultural e propósito. Faz sentido para itinerários culturais / paisagem cultural. Ref.: UNESCO/ICOMOS; Gomes & Santiago (2020).' }
+};
+function _conceito(k){ return (typeof CONCEITOS!=='undefined')?CONCEITOS[k]:null; }
+function conceitoHover(anchor,k){ const c=_conceito(k); if(c) hoverInfo(anchor, c.label, c.body); }
+function conceitoInfo(anchor,k){ const c=_conceito(k); if(c) showInfo(anchor, c.label+' — '+c.body); }
 
 function showInfo(anchor, text) {
   // Fecha qualquer popover aberto
