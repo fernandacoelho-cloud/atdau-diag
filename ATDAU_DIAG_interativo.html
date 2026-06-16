@@ -506,6 +506,15 @@ select option{background:var(--bg3)}
 /* ⓘ de "conceito" — explica funcionalidades de nome técnico (hover/clique) */
 .conceito-i { display:inline-flex; width:15px; height:15px; border-radius:50%; background:var(--bg4); color:var(--t3); border:1px solid var(--line2); font-size:.58rem; font-weight:800; align-items:center; justify-content:center; cursor:help; vertical-align:middle; margin-left:4px; flex:none }
 .conceito-i:hover { color:var(--teal); border-color:var(--teal) }
+/* Trilho de fluxo — onde a aba está no processo (vem de → aqui → alimenta) */
+.fluxo-trilho { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; font-size:.56rem; color:var(--t3) }
+.ft-seg { background:var(--bg3); border:1px solid var(--line2); border-radius:11px; padding:2px 9px }
+.ft-here { background:rgba(30,207,164,.12); border-color:rgba(30,207,164,.4); color:var(--teal); font-weight:700 }
+/* Glossário (modal) */
+.gloss-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto }
+.gloss-box { background:var(--bg1); border:1px solid var(--line2); border-radius:12px; max-width:640px; width:100%; box-shadow:0 12px 40px rgba(0,0,0,.4); overflow:hidden }
+.gloss-head { display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid var(--line) }
+.gloss-item { padding:10px 18px; border-bottom:1px solid var(--line) }
 
 /* ── Croquis conceituais ────────────────────────────────────────── */
 .croquis-grid {
@@ -1299,6 +1308,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <button class="tb-save" id="btn-save" onclick="salvar()" title="Salvar rascunho neste navegador (rápido, mas não é arquivo)">💾 Salvar</button>
   <button class="tb-save" id="btn-modo" onclick="toggleModoCampo()" title="Alternar entre Escritório (denso) e Campo (fontes maiores, alvos de toque) — útil em tablet/celular" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">🏢 Escritório</button>
   <button class="tb-save" onclick="abrirTutorial()" title="Veja como percorrer a ferramenta" style="background:transparent;border:1px solid var(--teal);color:var(--teal)">🎯 Como usar</button>
+  <button class="tb-save" onclick="abrirGlossario()" title="Termos e métodos em linguagem simples" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">📖 Glossário</button>
 </div>
 
 <!-- SECTION NAV -->
@@ -8081,6 +8091,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(typeof renderVUERadar==='function') renderVUERadar();
   if(typeof renderMatrizRelacoes==='function') renderMatrizRelacoes();
   if(typeof govRender==='function') govRender();
+  if(typeof renderFluxoTrilho==='function') renderFluxoTrilho(0);
   renderAllFindings();
   renderSwot();
   renderDiretrizes();
@@ -8714,6 +8725,7 @@ function irPara(n, el){
   if(n===14 && typeof renderDinamica==='function') renderDinamica();
   if(n===9 && typeof renderUserProfiles==='function'){ renderUserProfiles('mapa-comportamental'); renderUserProfiles('stationary-mapping'); }
   if(n===0 && typeof renderValores==='function') renderValores();
+  if(typeof renderFluxoTrilho==='function') renderFluxoTrilho(n);
   if(typeof atualizarCompletude==='function') atualizarCompletude();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -20036,6 +20048,71 @@ const CONCEITOS = {
 function _conceito(k){ return (typeof CONCEITOS!=='undefined')?CONCEITOS[k]:null; }
 function conceitoHover(anchor,k){ const c=_conceito(k); if(c) hoverInfo(anchor, c.label, c.body); }
 function conceitoInfo(anchor,k){ const c=_conceito(k); if(c) showInfo(anchor, c.label+' — '+c.body); }
+
+// ── Trilho de fluxo: onde cada aba está no processo (vem de → aqui → alimenta) ──
+const FLUXO = {
+  0:{vem:'', alimenta:'todo o diagnóstico'},
+  11:{vem:'Identificação', alimenta:'Programa e partido'},
+  1:{vem:'Identificação', alimenta:'Síntese SWOT'},
+  2:{vem:'Identificação', alimenta:'Síntese SWOT'},
+  3:{vem:'Identificação', alimenta:'Síntese SWOT'},
+  4:{vem:'Identificação', alimenta:'Síntese SWOT'},
+  5:{vem:'Identificação', alimenta:'Síntese SWOT'},
+  14:{vem:'Identificação', alimenta:'Síntese SWOT'},
+  9:{vem:'Identificação', alimenta:'Síntese SWOT'},
+  12:{vem:'Identificação', alimenta:'Programa'},
+  15:{vem:'Identificação + campo', alimenta:'Síntese e Diretrizes'},
+  6:{vem:'Diagnóstico (01–07)', alimenta:'Síntese SWOT'},
+  10:{vem:'Diagnóstico', alimenta:'Síntese SWOT'},
+  7:{vem:'todo o diagnóstico', alimenta:'Programa e Diretrizes'},
+  13:{vem:'SWOT + Identificação', alimenta:'Diretrizes e partido'},
+  8:{vem:'SWOT + Programa', alimenta:'Estudo Preliminar / Implantação (T01)'}
+};
+function renderFluxoTrilho(n){
+  const panel=document.getElementById('panel-'+n); if(!panel) return;
+  const f=FLUXO[n];
+  let el=panel.querySelector(':scope > .fluxo-trilho');
+  if(!f){ if(el) el.remove(); return; }
+  if(!el){ el=document.createElement('div'); el.className='fluxo-trilho'; const st=panel.querySelector(':scope > .sec-title'); if(st&&st.nextSibling){ panel.insertBefore(el, st.nextSibling); } else if(st){ panel.appendChild(el); } else { panel.insertBefore(el, panel.firstChild); } }
+  el.innerHTML = `${f.vem?`<span class="ft-seg">◀ vem de <strong>${escHtml(f.vem)}</strong></span>`:''}<span class="ft-seg ft-here">você está aqui</span>${f.alimenta?`<span class="ft-seg">alimenta <strong>${escHtml(f.alimenta)}</strong> ▶</span>`:''}`;
+}
+
+// ── Glossário dos termos e métodos (em linguagem de leigo) ──
+const GLOSSARIO = [
+  {termo:'SEL — Sistema de Espaços Livres', sigla:'SEL', def:'Olhar para praças, parques, APPs, ruas e quintais não como peças soltas, mas como um sistema contínuo de espaços abertos da cidade. Orienta o projeto de paisagem em escala territorial.', ref:'Tardim'},
+  {termo:'VUE — Valor Universal Excepcional', sigla:'VUE', def:'Critério da UNESCO/ICOMOS para um bem ser reconhecido como Patrimônio Mundial. Na ferramenta é uma estimativa de potencial (não candidatura), em 4 dimensões: espacial, temporal, cultural e propósito.', ref:'UNESCO/ICOMOS; Gomes & Santiago (2020)'},
+  {termo:'Mapa de atores (matriz interesse × influência)', def:'Posiciona cada parte interessada por quanto interesse tem no projeto e quanta influência exerce, indicando como engajar cada uma. Evita que um ator decisivo emperre o projeto.', ref:'Mendelow (1991); Eden & Ackermann (1998)'},
+  {termo:'Escada de Arnstein (participação)', def:'Classifica os graus de participação cidadã, da não-participação (manipulação) ao poder cidadão (controle), passando pelo tokenismo (informar, consultar). Ajuda a declarar quanto a comunidade realmente decide.', ref:'Arnstein (1969)'},
+  {termo:'Stakeholder', def:'Qualquer pessoa ou grupo que afeta ou é afetado pelo projeto — moradores, poder público, comerciantes, órgãos de patrimônio, etc.', ref:'Freeman (1984)'},
+  {termo:'PFOA / SWOT', def:'Síntese do diagnóstico em quatro categorias: Potencialidades, Fragilidades, Oportunidades e Ameaças (versão brasileira da matriz SWOT). Cada achado do diagnóstico vira um item P/F/O/A.', ref:'—'},
+  {termo:'APO — Avaliação Pós-Ocupação', sigla:'APO', def:'Métodos para avaliar como um espaço já construído funciona na prática (conforto, uso, satisfação), úteis também como referência projetual.', ref:'Rheingantz et al. (2009)'},
+  {termo:'HECTTEAS (valores de projeto)', sigla:'HECTTEAS', def:'Conjunto de dimensões de valor que orientam o programa: Humana, Cultural, Ambiental, Econômica, Tecnológica, Temporal, Estética e Segurança.', ref:'Hershberger (1999)'},
+  {termo:'SbN — Soluções baseadas na Natureza', sigla:'SbN', def:'Intervenções que usam processos naturais para resolver problemas urbanos — parques alagáveis, biovaletas, recarga do solo — em vez de só infraestrutura cinza.', ref:'—'},
+  {termo:'Critérios de Gehl', def:'12 critérios de qualidade do espaço público (proteção, conforto, prazer) para avaliar a experiência da pessoa a pé.', ref:'Gehl'},
+  {termo:'Recorte territorial', def:'A delimitação de duas escalas: a área de projeto (onde a intervenção acontece) e a área de estudo (o entorno mais amplo que dá sentido ao objeto). A lógica do recorte depende da tipologia.', ref:'—'},
+  {termo:'Pedestrian shed', def:'Área alcançável a pé em poucos minutos a partir de um ponto (ex.: 400 m ≈ 5 min). Define o raio caminhável de influência de um equipamento.', ref:'Perry (1929)'},
+  {termo:'Paisagem cultural / itinerário cultural', def:'Leitura do território (e de percursos, como rotas de peregrinação) como paisagem que carrega identidade e memória — projeto de paisagem em escala territorial.', ref:'Berti'},
+  {termo:'Buffer', def:'Faixa de distância em torno de uma feição (ex.: 1 km de cada lado de uma rota), usada para delimitar a área de influência/estudo.', ref:'—'},
+  {termo:'Álgebra de mapas', def:'Cruzar duas camadas para gerar uma nova (interseção, união, diferença). Ex.: vazios urbanos ∩ hidrografia = oportunidades de SbN.', ref:'—'},
+  {termo:'Cobertura × Uso do solo', def:'Cobertura é a superfície física (floresta, água, área urbanizada — padrão MapBiomas); uso é a função (residencial, comercial). São coisas diferentes.', ref:'MapBiomas'},
+  {termo:'Verbos operativos', def:'Vocabulário de ações de projeto (conectar, elevar, costurar, demarcar…) para descrever o partido. Cada verbo tem um conceito e um exemplo.', ref:'Operative Design; Tardim (SEL)'},
+  {termo:'Matriz de descobertas', def:'Produto-síntese gráfico que reúne os achados do levantamento de campo, conectando registros, fotos e percepções.', ref:'Rheingantz et al.'}
+];
+function abrirGlossario(){
+  let ov=document.getElementById('gloss-overlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='gloss-overlay'; ov.className='gloss-overlay'; ov.onclick=function(e){ if(e.target===ov) fecharGlossario(); }; document.body.appendChild(ov); }
+  ov.innerHTML=`<div class="gloss-box">
+    <div class="gloss-head"><span style="font-size:1.1rem">📖</span><strong style="flex:1;font-size:.78rem;color:var(--t1)">Glossário — termos e métodos</strong><input id="gloss-busca" oninput="filtrarGlossario(this.value)" placeholder="buscar…" style="font-size:.66rem;padding:5px 9px;border:1px solid var(--line2);border-radius:6px;background:var(--bg3);color:var(--t1);width:140px"><button onclick="fecharGlossario()" title="Fechar" style="background:none;border:none;color:var(--t3);font-size:1.2rem;cursor:pointer;line-height:1">×</button></div>
+    <div id="gloss-lista" style="max-height:65vh;overflow:auto"></div></div>`;
+  ov.style.display='flex'; filtrarGlossario('');
+}
+function fecharGlossario(){ const ov=document.getElementById('gloss-overlay'); if(ov) ov.style.display='none'; }
+function filtrarGlossario(q){
+  const lista=document.getElementById('gloss-lista'); if(!lista) return;
+  q=(q||'').trim().toLowerCase();
+  const itens=GLOSSARIO.filter(g=> !q || (g.termo+' '+(g.sigla||'')+' '+g.def).toLowerCase().includes(q));
+  lista.innerHTML = itens.length ? itens.map(g=>`<div class="gloss-item"><div style="font-size:.7rem;font-weight:700;color:var(--t1)">${escHtml(g.termo)}</div><div style="font-size:.63rem;color:var(--t2);line-height:1.5;margin-top:2px">${escHtml(g.def)}</div>${g.ref&&g.ref!=='—'?`<div style="font-size:.55rem;color:var(--t3);margin-top:3px">Ref.: ${escHtml(g.ref)}</div>`:''}</div>`).join('') : '<div style="padding:18px;text-align:center;color:var(--t3);font-size:.62rem">Nenhum termo encontrado.</div>';
+}
 
 function showInfo(anchor, text) {
   // Fecha qualquer popover aberto
