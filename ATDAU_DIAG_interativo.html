@@ -1719,7 +1719,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="block">
     <div class="block-header">
       <span class="block-icon">🎯</span>
-      <span class="block-title">Valores e questões orientadoras</span>
+      <span class="block-title">Valores e questões orientadoras <span style="font-weight:400;color:var(--t3);font-size:.82em">(HECTTEAS)</span><span class="conceito-i" onmouseenter="conceitoHover(this,'hectteas')" onmouseleave="hideInfo()" onclick="event.stopPropagation();conceitoInfo(this,'hectteas')" title="O que é isto?">ⓘ</span></span>
     </div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
@@ -5516,7 +5516,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <details style="margin:8px 0;border:1px solid var(--line2);border-radius:8px;padding:8px 12px;background:var(--bg3)" ontoggle="if(this.open)mlAlgebraPopulate()">
-    <summary style="cursor:pointer;font-size:.66rem;font-weight:700;color:#1f8d49">🧮 Álgebra de mapas — Soluções baseadas na Natureza (SbN) / resiliência</summary>
+    <summary style="cursor:pointer;font-size:.66rem;font-weight:700;color:#1f8d49">🧮 Álgebra de mapas — Soluções baseadas na Natureza (SbN) / resiliência<span class="conceito-i" onmouseenter="conceitoHover(this,'sbn')" onmouseleave="hideInfo()" onclick="event.stopPropagation();conceitoInfo(this,'sbn')" title="O que é isto?">ⓘ</span></summary>
     <div style="font-size:.6rem;color:var(--t2);line-height:1.5;margin:8px 0">Cruze duas camadas de <strong>polígonos</strong> para gerar uma nova. Ex.: <strong>Vazios urbanos</strong> ∩ <strong>Hidrografia/APP</strong> = <strong>oportunidades de SbN</strong> (parques alagáveis, biovaletas). Usa turf.js (precisa de internet).</div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
       <select id="mlalg-a" style="font-size:.62rem;background:var(--bg4);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 6px"></select>
@@ -5702,7 +5702,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 6: SWOT ════════════════════ -->
 <div class="panel" id="panel-7">
-  <div class="sec-title">Síntese SWOT do Diagnóstico <div class="sec-line"></div></div>
+  <div class="sec-title">Síntese SWOT do Diagnóstico <span class="conceito-i" onmouseenter="conceitoHover(this,'pfoa')" onmouseleave="hideInfo()" onclick="conceitoInfo(this,'pfoa')" title="O que é isto?">ⓘ</span><div class="sec-line"></div></div>
 
   <div class="sum-row" id="swot-counters"></div>
 
@@ -6096,7 +6096,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 9: INSTRUMENTOS DE COLETA ════════════════════ -->
 <div class="panel" id="panel-9">
-  <div class="sec-title">06 · Instrumentos de Coleta de Dados <div class="sec-line"></div>
+  <div class="sec-title">06 · Instrumentos de Coleta de Dados <span class="conceito-i" onmouseenter="conceitoHover(this,'apo')" onmouseleave="hideInfo()" onclick="conceitoInfo(this,'apo')" title="O que é Avaliação Pós-Ocupação?">ⓘ</span><div class="sec-line"></div>
     <span class="sec-ref">NBR 15575 · NBR 9050</span>
   </div>
 
@@ -9430,7 +9430,7 @@ function renderPrograma() {
   if (!cont) return;
   const lista = Array.isArray(state.programa) ? state.programa : [];
   if (lista.length === 0) {
-    cont.innerHTML = '<div style="font-size:.62rem;color:var(--t3);padding:8px 0;font-style:italic">Nenhum item ainda. Comece pela hipótese de programa, traduzindo as necessidades declaradas na Identificação em itens/ambientes. A lista será refinada pelas diretrizes e pelo dimensionamento.</div>';
+    cont.innerHTML = _emptyState('📋','A <strong>lista viva</strong> do programa de necessidades: traduza em ambientes/itens as necessidades declaradas na Identificação. Ela é refinada pelas diretrizes e pelo dimensionamento.','sala multiuso, recepção, copa','Adicione o primeiro item abaixo');
     return;
   }
   cont.innerHTML = lista.map(p => {
@@ -9453,6 +9453,15 @@ function renderPrograma() {
 }
 
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Empty state padronizado — estado vazio que ENSINA: o que é · exemplo · próximo passo.
+// `oque` aceita HTML (texto fixo, controlado); exemplo/proximo são escapados.
+function _emptyState(icone, oque, exemplo, proximo){
+  return `<div style="text-align:center;padding:16px 12px">
+    <div style="font-size:1.4rem;margin-bottom:4px;opacity:.7">${icone}</div>
+    <div style="font-size:.64rem;color:var(--t2);line-height:1.5;max-width:400px;margin:0 auto">${oque}${exemplo?` <span style="color:var(--t3)">Ex.: ${escHtml(exemplo)}.</span>`:''}</div>
+    ${proximo?`<div style="font-size:.58rem;color:var(--teal);font-weight:600;margin-top:7px">→ ${escHtml(proximo)}</div>`:''}
+  </div>`;
+}
 
 // ── Governança e participação (Mansfeld): stakeholders + matriz Mendelow ──
 const GOV_NIV={'1':'Baixo','2':'Médio','3':'Alto'};
@@ -9468,7 +9477,7 @@ function govRender(){
   const lista=document.getElementById('gov-stakeholders-lista');
   if(lista){
     const arr=_govList();
-    lista.innerHTML = arr.length ? arr.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg1);border:1px solid var(--line);border-radius:7px;margin-bottom:6px"><span style="flex:1;font-size:.66rem;color:var(--t1);font-weight:600">${escHtml(s.nome)} <span style="font-weight:400;color:var(--t3)">· ${escHtml(s.tipo)}</span></span><span style="font-size:.54rem;color:var(--t2);white-space:nowrap">interesse ${GOV_NIV[s.interesse]||s.interesse} · influência ${GOV_NIV[s.influencia]||s.influencia}</span><button onclick="govDelStakeholder('${s.id}')" title="Remover" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:.8rem">✕</button></div>`).join('') : '<div style="font-size:.62rem;color:var(--t3);font-style:italic;padding:4px 0">Nenhum ator cadastrado ainda. Comece pelos atores que decidem, financiam, usam ou resistem.</div>';
+    lista.innerHTML = arr.length ? arr.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg1);border:1px solid var(--line);border-radius:7px;margin-bottom:6px"><span style="flex:1;font-size:.66rem;color:var(--t1);font-weight:600">${escHtml(s.nome)} <span style="font-weight:400;color:var(--t3)">· ${escHtml(s.tipo)}</span></span><span style="font-size:.54rem;color:var(--t2);white-space:nowrap">interesse ${GOV_NIV[s.interesse]||s.interesse} · influência ${GOV_NIV[s.influencia]||s.influencia}</span><button onclick="govDelStakeholder('${s.id}')" title="Remover" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:.8rem">✕</button></div>`).join('') : _emptyState('👥','Mapeie quem afeta ou é afetado pelo projeto — quem <strong>decide, financia, usa ou pode resistir</strong>.','associação de moradores, prefeitura, comerciantes','Adicione o primeiro ator no campo abaixo');
   }
   const m=document.getElementById('gov-matriz');
   if(m){
@@ -20043,7 +20052,15 @@ const CONCEITOS = {
   mendelow: { label:'Mapa de atores (interesse × influência)',
     body:'Posiciona cada parte interessada por quanto INTERESSE ela tem no projeto e quanta INFLUÊNCIA exerce. Os 4 quadrantes dizem como agir: gerir de perto (decide e se importa), manter satisfeito (decide mas não se importa), manter informado (se importa mas não decide) e monitorar. Ajuda a decidir com quem dialogar para o projeto não emperrar. Ref.: Mendelow (1991); Eden & Ackermann (1998).' },
   vue: { label:'Valor Universal Excepcional (VUE)',
-    body:'Critério da UNESCO/ICOMOS para reconhecer um bem como Patrimônio Mundial. Aqui é uma estimativa de POTENCIAL (orientação projetual, não candidatura formal), avaliada em 4 dimensões — espacial, temporal, cultural e propósito. Faz sentido para itinerários culturais / paisagem cultural. Ref.: UNESCO/ICOMOS; Gomes & Santiago (2020).' }
+    body:'Critério da UNESCO/ICOMOS para reconhecer um bem como Patrimônio Mundial. Aqui é uma estimativa de POTENCIAL (orientação projetual, não candidatura formal), avaliada em 4 dimensões — espacial, temporal, cultural e propósito. Faz sentido para itinerários culturais / paisagem cultural. Ref.: UNESCO/ICOMOS; Gomes & Santiago (2020).' },
+  pfoa: { label:'Síntese PFOA (versão brasileira da SWOT)',
+    body:'Organiza os achados do diagnóstico em quatro grupos: Potencialidades, Fragilidades, Oportunidades e Ameaças. Cada constatação do levantamento vira um item P/F/O/A — e esses itens alimentam o programa e as diretrizes. Veja o glossário (📖) para mais.' },
+  apo: { label:'APO — Avaliação Pós-Ocupação',
+    body:'Conjunto de métodos para avaliar como um espaço já construído funciona na prática (uso, conforto, satisfação dos usuários). Na ferramenta servem como instrumentos de campo e referência projetual. Ref.: Rheingantz et al. (2009).' },
+  hectteas: { label:'HECTTEAS — valores que orientam o programa',
+    body:'Dimensões de valor para pensar o que o projeto deve entregar: Humana, Cultural, Ambiental, Econômica, Tecnológica, Temporal, Estética e Segurança. As perguntas de cada dimensão geram necessidades para o programa. Ref.: Hershberger (1999).' },
+  sbn: { label:'SbN — Soluções baseadas na Natureza',
+    body:'Intervenções que usam processos naturais — parques alagáveis, biovaletas, recarga do solo, corredores verdes — para resolver problemas urbanos (inundação, calor), em vez de só infraestrutura cinza. Aqui você as identifica cruzando camadas (álgebra de mapas).' }
 };
 function _conceito(k){ return (typeof CONCEITOS!=='undefined')?CONCEITOS[k]:null; }
 function conceitoHover(anchor,k){ const c=_conceito(k); if(c) hoverInfo(anchor, c.label, c.body); }
@@ -20521,7 +20538,7 @@ function maRenderList() {
   const all = MapaAnotadoStore.getAll();
   counter.textContent = `${all.length} anotação${all.length===1?'':'ões'}`;
   if (all.length === 0) {
-    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--t3);font-size:.6rem;padding:14px;font-style:italic">Nenhuma anotação ainda — selecione uma categoria, ative o modo Adicionar e clique no mapa.</div>';
+    list.innerHTML = '<div style="grid-column:1/-1">'+_emptyState('📍','Registre <strong>anotações georreferenciadas</strong> sobre o território — categorize, anexe foto e grave áudio.','bem tombado, vazio urbano, ponto de reunião','Selecione uma categoria, ative “Adicionar” e clique no mapa')+'</div>';
     return;
   }
   list.innerHTML = all.map(ann => {
