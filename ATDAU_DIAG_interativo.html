@@ -13798,6 +13798,8 @@ function mlToggleLayer(layerId, visible) {
 
 // ── Desenho ───────────────────────────────────────────────────────────
 function mlSelectDraw(layerId, geomType) {
+  // toggle: se já está desenhando exatamente esta camada/geometria, clicar de novo PARA
+  if (_mlDraw.mode==='drawing' && _mlDraw.layerId===layerId && _mlDraw.geomType===geomType) { mlCancelDraw(); return; }
   mlCancelDraw();
   // Garante que a barra contextual e a linha ativa reflitam esta camada
   // (caso a chamada venha de fora da barra, ex.: configurar equipamento)
@@ -13819,8 +13821,8 @@ function mlSelectDraw(layerId, geomType) {
 
   const hint = document.getElementById('ml-draw-hint');
   const l = ML_LAYERS.find(x=>x.id===layerId);
-  const geomLabel = geomType==='polygon'?'polígono (double-click para fechar)':geomType==='polyline'?'linha (double-click para fechar)':'ponto';
-  hint.textContent = `✦ Desenhando ${l.icon} ${l.name} — ${geomLabel}. Clique direto para cancelar.`;
+  const geomLabel = geomType==='polygon'?'polígono (duplo-clique para fechar)':geomType==='polyline'?'linha (duplo-clique para fechar)':'ponto (cada clique cria um)';
+  hint.innerHTML = `✦ Desenhando ${l.icon} ${escHtml(l.name)} — ${geomLabel}. <a onclick="mlCancelDraw()" style="color:var(--teal);cursor:pointer;text-decoration:underline;font-weight:700;margin-left:6px">✕ parar de desenhar</a> <span style="color:var(--t3)">(ou clique no mesmo botão / botão direito do mouse)</span>`;
   hint.style.display = 'block';
 }
 
@@ -16154,6 +16156,7 @@ function mlSelectTheme(themeId) {
 
 function mlThemeStartDraw(layerId, geomType) {
   if (!_mlThemeMap) { mlInitThemeMap(); setTimeout(()=>mlThemeStartDraw(layerId,geomType),600); return; }
+  if (_mlThemeDraw.mode==='drawing' && _mlThemeDraw.layerId===layerId && _mlThemeDraw.geomType===geomType) { mlThemeCancel(); return; } // toggle: parar
   mlThemeCancel();
   _mlThemeDraw = {mode:'drawing', layerId, geomType, pts:[]};
   _mlThemeMap.getCanvas().style.cursor = 'crosshair';
@@ -16322,6 +16325,7 @@ function swotInitMap() {
 }
 
 function swotDraw(cat, geomType) {
+  if (_swotDraw.mode==='drawing' && _swotDraw.cat===cat && _swotDraw.geomType===geomType) { swotCancel(); return; } // toggle: parar
   swotCancel();
   _swotDraw = {mode:'drawing', cat, geomType, pts:[]};
   if (!_swotMap) swotInitMap();
@@ -17127,6 +17131,8 @@ function _bmToggleHillshade(map, on) {
 }
 
 function _blockMapStartDraw(wrap, map, layerId, geomType, ctrl) {
+  const _cur=_blockMapDrawState.get(wrap);
+  if(_cur && _cur.mode==='drawing' && _cur.layerId===layerId && _cur.geomType===geomType){ if(typeof _blockMapCancelDraw==='function') _blockMapCancelDraw(wrap, map); return; } // toggle: parar
   _blockMapDrawState.set(wrap, { mode: 'drawing', layerId, geomType, pts: [] });
   map.getCanvas().style.cursor = 'crosshair';
   // Ativar botão visualmente (inverter cores)
@@ -20318,6 +20324,11 @@ function maInitMap() {
       maRenderList();
       maRenderCategories();
       maOpenEditModal(id);
+    } else if (_maMode === 'add' && !_maAddCategory) {
+      // está em Adicionar mas não escolheu categoria — feedback em vez de "nada acontece"
+      if (typeof mostrarStatus === 'function') mostrarStatus('Escolha uma categoria acima antes de clicar no mapa.');
+      const info = document.getElementById('ma-mode-info');
+      if (info) { info.innerHTML = '<strong style="color:#f0bf3a">⚠️ Escolha uma categoria acima</strong> e clique no mapa para adicionar.'; }
     }
   });
 }
@@ -20337,6 +20348,8 @@ function maSetMode(mode) {
       }
     } else if (mode === 'edit') info.textContent = 'Clique em uma anotação no mapa ou na lista para editá-la.';
   }
+  // cursor do mapa: cruz quando em Adicionar COM categoria; padrão (mãozinha) caso contrário
+  if (_maInst && _maInst.getCanvas) { try{ _maInst.getCanvas().style.cursor = (_maMode==='add' && _maAddCategory) ? 'crosshair' : ''; }catch(e){} }
   // Atualizar visual das categorias para destacar a selecionada no modo add
   maRenderCategories();
 }
@@ -20496,22 +20509,36 @@ function maRemoveFoto(i){ _maEditFotos.splice(i,1); _maRenderEditFotos(); }
 
 // ── áudio da anotação (base64; gravação em bitrate baixo p/ não estourar o store) ──
 let _maEditAudios = [];
-let _maRec = null, _maRecChunks = [];
+let _maRec = null, _maRecChunks = [], _maRecPending = null, _maRecStream = null, _maRecAbort = false;
+// para a gravação em curso (libera o microfone) e, se houver, roda cb DEPOIS de o
+// áudio ser finalizado. Corrige o bug do microfone que continuava ligado ao fechar.
+function maStopRecording(cb){
+  if(_maRec && _maRec.state==='recording'){ _maRecPending = cb||null; try{ _maRec.stop(); }catch(e){ _maRecPending=null; if(cb) cb(); } return true; }
+  // gravação ainda não começou mas pode estar "em voo" (getUserMedia pendente): aborta e libera o mic
+  _maRecAbort = true;
+  if(_maRecStream){ try{ _maRecStream.getTracks().forEach(t=>t.stop()); }catch(e){} _maRecStream=null; }
+  if(cb) cb();
+  return false;
+}
 function maToggleRec(btn){
   if(_maRec && _maRec.state==='recording'){ _maRec.stop(); return; }
   if(typeof MediaRecorder==='undefined' || !navigator.mediaDevices){ alert('Gravação não suportada neste navegador. Use o botão Upload.'); return; }
+  _maRecAbort=false;
   navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    if(_maRecAbort){ try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){} _maRecAbort=false; return; } // modal fechou antes da gravação começar
+    _maRecStream=stream;
     _maRecChunks=[];
     try{ _maRec=new MediaRecorder(stream,{audioBitsPerSecond:32000}); }catch(e){ _maRec=new MediaRecorder(stream); }
     _maRec.ondataavailable=e=>{ if(e.data && e.data.size) _maRecChunks.push(e.data); };
     _maRec.onstop=()=>{
       const blob=new Blob(_maRecChunks,{type:(_maRec && _maRec.mimeType)||'audio/webm'});
       const fr=new FileReader();
-      fr.onload=()=>{ _maEditAudios.push(fr.result); _maRenderEditAudios(); };
+      fr.onload=()=>{ _maEditAudios.push(fr.result); _maRenderEditAudios(); const cb=_maRecPending; _maRecPending=null; if(cb) cb(); };
+      fr.onerror=()=>{ const cb=_maRecPending; _maRecPending=null; if(cb) cb(); };
       fr.readAsDataURL(blob);
-      try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+      try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){} _maRecStream=null;
       const s=document.getElementById('ma-rec-status'); if(s) s.textContent='';
-      if(btn){ btn.textContent='🎤 Gravar'; btn.style.color=''; }
+      const rb=document.querySelector('#ma-modal button[onclick="maToggleRec(this)"]')||btn; if(rb){ rb.textContent='🎤 Gravar'; rb.style.color=''; }
       _maRec=null;
     };
     _maRec.start();
@@ -20581,6 +20608,8 @@ function maOpenEditModal(id) {
 
 function maSaveCurrent() {
   if (!_maEditingId) return;
+  // se ainda gravando, finaliza a gravação (inclui o áudio) e só então salva
+  if (_maRec && _maRec.state==='recording'){ maStopRecording(maSaveCurrent); return; }
   const patch = {
     category: document.getElementById('ma-edit-cat').value,
     title:    document.getElementById('ma-edit-title').value,
@@ -20608,6 +20637,7 @@ function maDeleteCurrent() {
 }
 
 function maCloseModal() {
+  maStopRecording();                 // libera o microfone se ainda estiver gravando
   document.getElementById('ma-modal').classList.remove('open');
   _maEditingId = null;
   if (typeof maSetMode === 'function') maSetMode('view');
