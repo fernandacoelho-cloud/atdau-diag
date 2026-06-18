@@ -62,6 +62,11 @@ test('Block-map: clicar numa feição desenhada abre o editor (cor + excluir) e 
   await page.waitForFunction(({ l, a }) => (_mlFeatures[l] || []).length > a, { l: lid, a: antes }, { timeout: 8000 });
   const fid = await page.evaluate(l => _mlFeatures[l][_mlFeatures[l].length - 1].id, lid);
 
+  // desenhar agora dispara o modal "vincular achado" (igual ao Mapa de Análise):
+  // fechar antes de clicar na feição para editá-la.
+  await page.evaluate(() => { if (typeof mlFecharVinculo === 'function') mlFecharVinculo(); });
+  await page.waitForTimeout(200);
+
   // clicar no ponto → editor abre com cor + excluir
   await page.waitForTimeout(400);
   await page.mouse.click(cx, cy);

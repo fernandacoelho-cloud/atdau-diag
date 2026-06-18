@@ -1353,23 +1353,23 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="dot"></div>👥 Governança e Participação<div class="nav-prog"><i></i></div>
   </div>
 
-  <div class="sec-nav-group">Mapas</div>
+  <div class="sec-nav-group">Análise &amp; Síntese</div>
   <div class="sec-nav-item" onclick="irPara(6,this)" id="nav-6">
     <div class="dot"></div>08 · Mapa de Análise<div class="nav-prog"><i></i></div>
   </div>
-  <div class="sec-nav-item" onclick="irPara(10,this)" id="nav-10">
-    <div class="dot"></div>09 · Mapa-Síntese<div class="nav-prog"><i></i></div>
-  </div>
-
-  <div class="sec-nav-group">Síntese &amp; Entrega</div>
   <div class="sec-nav-item" onclick="irPara(7,this)" id="nav-7">
     <div class="dot"></div>Síntese SWOT<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(13,this)" id="nav-13">
     <div class="dot"></div>Programação Arquitetônica<div class="nav-prog"><i></i></div>
   </div>
+
+  <div class="sec-nav-group">Proposição &amp; Entrega</div>
   <div class="sec-nav-item" onclick="irPara(8,this)" id="nav-8">
     <div class="dot"></div>Diretrizes<div class="nav-prog"><i></i></div>
+  </div>
+  <div class="sec-nav-item" onclick="irPara(10,this)" id="nav-10">
+    <div class="dot"></div>Mapa-Síntese<div class="nav-prog"><i></i></div>
   </div>
 </div>
 
@@ -3997,6 +3997,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="instr-btn instr-btn-primary" onclick="sidraExport()">📄 Exportar JSON</button>
         <button class="instr-btn" onclick="exportarMapaPNG(_sidraMapaInst,{titulo:(_sidraDadosAtuais&&_sidraDadosAtuais.nome?_sidraDadosAtuais.nome:'Mapa SIDRA — IBGE'),nomeArquivo:'atdau-sidra-mapa',credito:'Suite ATDAU · SIDRA/IBGE',legendaItems:sidraLegendItems,legendaTitulo:'Censo/IBGE'})">🖼️ Exportar PNG do mapa</button>
+        <button class="instr-btn" onclick="salvarVistaMapa(_sidraMapaInst,{titulo:(_sidraDadosAtuais&&_sidraDadosAtuais.nome?_sidraDadosAtuais.nome:'Mapa SIDRA — IBGE'),credito:'Suite ATDAU · SIDRA/IBGE',legendaItems:sidraLegendItems,legendaTitulo:'Censo/IBGE'},'Mapa SIDRA/IBGE')" title="Salva a vista atual no Relatório (com norte, escala e legenda)">💾 Salvar vista p/ relatório</button>
         <button class="instr-btn instr-btn-secondary" onclick="sidraReset()">🔄 Limpar</button>
       </div>
     </div>
@@ -4098,6 +4099,20 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal);margin-bottom:10px">⚡ Áreas calculadas automaticamente</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px" id="calc-results"></div>
         <div style="font-size:.6rem;color:var(--t3);margin-top:8px">* Insira os parâmetros de zoneamento abaixo para calcular</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Mapa de zoneamento</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Importe o <strong>shape oficial do zoneamento</strong> (Plano Diretor / Lei de Uso e Ocupação) ou desenhe as zonas. Cada arquivo importado vira uma <strong>camada própria</strong> — ative/desative camadas, salve a vista como imagem (com norte, escala e legenda) e leve-a ao relatório. Fontes: portal da prefeitura (busque "geoprocessamento", "dados abertos" ou "IDE municipal") e o <a href="https://visualizador.idesisema.meioambiente.mg.gov.br/" target="_blank" rel="noopener" style="color:var(--teal)">Geovisualizador IDE-Sisema (MG)</a>.</div>
+      <div class="block-map-wrap" data-theme="zona">
+        <div class="block-map"></div>
+        <div class="block-map-info">
+          <span>Mapa de zoneamento · use os botões de desenho ou <strong>⬆ Importar</strong> para carregar o shape</span>
+          <a class="block-map-link" onclick="goToFullMap('zona')">✏️ Abrir no Mapa de Análise →</a>
+        </div>
       </div>
     </div>
   </div>
@@ -5472,7 +5487,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 6: MAPA DE ANÁLISE URBANA ════════════════════ -->
 <div class="panel" id="panel-6">
-  <div class="sec-title">07 · Mapa de Análise Urbana <div class="sec-line"></div>
+  <div class="sec-title">08 · Mapa de Análise Urbana <div class="sec-line"></div>
     <span class="sec-ref">MapLibre GL JS · OpenStreetMap · OSRM · GeoJSON → QGIS</span>
   </div>
 
@@ -5511,10 +5526,17 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <button onclick="mlExport()" class="add-btn" style="background:var(--bg5);color:var(--teal);border-color:rgba(30,207,164,.3)">⬇ GeoJSON</button>
     <button onclick="exportarPacoteSEL()" class="add-btn" style="background:rgba(34,196,116,.12);color:#1f8d49;border-color:rgba(34,196,116,.4)" title="Exporta as camadas do mapa (organizadas pela metodologia de Sistema de Espaços Livres) + anotações de campo para o QGIS">🌿 Camadas p/ QGIS<span class="conceito-i" onmouseenter="conceitoHover(this,'sel')" onmouseleave="hideInfo()" onclick="event.stopPropagation();conceitoInfo(this,'sel')" title="O que é isto?">ⓘ</span></button>
     <button onclick="exportarMapaPNG(_mlMap,{titulo:(state['proj-nome']||'Mapa de Análise'),nomeArquivo:'atdau-mapa-analise',credito:'Suite ATDAU · Mapa de Análise',legendaItems:mlLegendItems,legendaTitulo:'Legenda'})" class="add-btn" style="background:var(--bg5);color:var(--teal);border-color:rgba(30,207,164,.3)">🖼️ PNG</button>
-    <label for="ml-import-file" class="add-btn" style="cursor:pointer;color:var(--blue);border-color:rgba(79,155,248,.3);user-select:none" title="Importar shapefile (.zip) ou GeoJSON">📂 Importar</label>
+    <button onclick="salvarVistaMapa(_mlMap,{titulo:(state['proj-nome']||'Mapa de Análise'),credito:'Suite ATDAU · Mapa de Análise',legendaItems:mlLegendItems,legendaTitulo:'Legenda'},'Mapa de Análise')" class="add-btn" style="background:rgba(34,196,116,.12);color:#1f8d49;border-color:rgba(34,196,116,.4)" title="Salva a vista atual (com norte, escala e legenda) no Relatório">💾 Salvar vista p/ relatório</button>
+    <label for="ml-import-file" class="add-btn" style="cursor:pointer;color:var(--blue);border-color:rgba(79,155,248,.3);user-select:none" title="Importe camadas de mapa: Shapefile (.zip — o pacote com .shp/.shx/.dbf zipado), GeoJSON (.geojson ou .json). Onde baixar: IBGE, INDE (visualizador.inde.gov.br), IDE municipal/estadual (ex.: Geovisualizador IDE-Sisema MG). Abra o shape no QGIS e exporte como GeoJSON se preferir.">📂 Importar</label>
     <input type="file" id="ml-import-file" accept=".zip,.geojson,.json" style="display:none" onchange="mlHandleImport(this)">
     <button onclick="mlClearAll()" class="add-btn" style="color:var(--red);border-color:rgba(224,80,106,.3)">🗑 Limpar tudo</button>
   </div>
+
+  <details id="mapas-salvos-box" style="margin:8px 0;border:1px solid var(--line2);border-radius:8px;padding:8px 12px;background:var(--bg3)" ontoggle="if(this.open)renderMapasSalvos()">
+    <summary style="cursor:pointer;font-size:.66rem;font-weight:700;color:#1f8d49">🗺️ Mapas salvos para o relatório (<span id="mapas-salvos-count">0</span>)</summary>
+    <div style="font-size:.6rem;color:var(--t2);line-height:1.5;margin:8px 0">Qualquer mapa tem <strong>💾 Salvar vista</strong> — as vistas salvas (com norte, escala e legenda) entram no Relatório PDF na seção "Registro visual — mapas salvos do projeto".</div>
+    <div id="mapas-salvos-lista"></div>
+  </details>
 
   <details style="margin:8px 0;border:1px solid var(--line2);border-radius:8px;padding:8px 12px;background:var(--bg3)" ontoggle="if(this.open)mlAlgebraPopulate()">
     <summary style="cursor:pointer;font-size:.66rem;font-weight:700;color:#1f8d49">🧮 Álgebra de mapas — Soluções baseadas na Natureza (SbN) / resiliência<span class="conceito-i" onmouseenter="conceitoHover(this,'sbn')" onmouseleave="hideInfo()" onclick="event.stopPropagation();conceitoInfo(this,'sbn')" title="O que é isto?">ⓘ</span></summary>
@@ -5634,7 +5656,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Geologia, geomorfologia, pedologia, hipsometria e declividade do território — condicionam fundação, infiltração, drenagem e aptidão do sítio. Consulte a fonte oficial e registre a leitura.</div>
       <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
         <a href="https://geosgb.sgb.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🪨 GeoSGB · Serviço Geológico do Brasil →</a>
-        <a href="https://ide-sisema.meioambiente.mg.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🗺️ IDE-Sisema (MG) →</a>
+        <a href="https://visualizador.idesisema.meioambiente.mg.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🗺️ Geovisualizador IDE-Sisema (MG) →</a>
       </div>
       <div class="form-field"><label>Leitura do meio físico</label><textarea id="din-meiofisico" oninput="dinSetCampo('meiofisico', this.value)" placeholder="Substrato geológico, formas de relevo, tipos de solo, classes de declividade — e implicações para o projeto (fundação, drenagem, cortes/aterros)." style="min-height:60px"></textarea></div>
     </div>
@@ -6170,6 +6192,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div class="instr-actions">
         <button class="instr-btn instr-btn-primary" onclick="maExportGeoJSON()">🗺️ Exportar GeoJSON</button>
         <button class="instr-btn" onclick="exportarMapaPNG(_maInst,{titulo:(state['proj-nome']||'Mapa Anotado'),nomeArquivo:'atdau-mapa-anotado',credito:'Suite ATDAU · Mapa Anotado',legendaItems:maLegendItems,legendaTitulo:'Categorias'})">🖼️ Exportar PNG</button>
+        <button class="instr-btn" onclick="salvarVistaMapa(_maInst,{titulo:(state['proj-nome']||'Mapa Anotado'),credito:'Suite ATDAU · Mapa Anotado',legendaItems:maLegendItems,legendaTitulo:'Categorias'},'Mapa Anotado')" title="Salva a vista atual no Relatório (com norte, escala e legenda)">💾 Salvar vista p/ relatório</button>
         <button class="instr-btn instr-btn-primary" onclick="exportInstrument('mapa-anotado')">📄 Exportar JSON</button>
         <button class="instr-btn" onclick="maClearAll()" style="color:#e0506a;border-color:rgba(224,80,106,.3)">🗑️ Limpar tudo</button>
       </div>
@@ -11911,9 +11934,9 @@ function agendarCompletude(){ clearTimeout(_compTimer); _compTimer=setTimeout(at
 const DASH_FASES = [
   { nome:'Preparação',           panels:[0,11] },
   { nome:'Diagnóstico',          panels:[1,2,3,4,5,14] },
-  { nome:'Coleta & Referências', panels:[9,12] },
-  { nome:'Mapas',                panels:[6,10] },
-  { nome:'Síntese & Entrega',    panels:[7,13,8] },
+  { nome:'Coleta & Referências', panels:[9,12,15] },
+  { nome:'Análise & Síntese',    panels:[6,7,13] },
+  { nome:'Proposição & Entrega', panels:[8,10] },
 ];
 const DASH_MAP_PANELS = new Set([6,10]);
 
@@ -12544,7 +12567,8 @@ function gerarRelatorioPDF(){
         titulo('Registro visual — fotos por bloco'); temAlgo=true;
         blocos.forEach(bid=>{
           const arr=PhotoStore.data[bid]||[]; if(!arr.length) return;
-          let lbl=bid; try{ const el=document.getElementById(bid); const t=el&&el.querySelector('.block-title'); if(t) lbl=t.textContent.trim(); }catch(e){}
+          let lbl = bid==='mapas-salvos' ? 'Mapas salvos do projeto' : bid;
+          if(bid!=='mapas-salvos'){ try{ const el=document.getElementById(bid); const t=el&&el.querySelector('.block-title'); if(t) lbl=t.textContent.trim(); }catch(e){} }
           subt(lbl);
           _fotosGrid(arr.map(p=>({src:p.dataUrl, cap:(p.title||p.caption||'')+(p.azimuth!=null&&p.azimuth!==''?(' · azim. '+p.azimuth+'°'):'')})));
           espaco(1);
@@ -13037,7 +13061,9 @@ const MapLegend = {
 // Adiciona uma seta de norte fixa (overlay) ao container de um mapa MapLibre.
 // A seta acompanha a rotação (bearing) do mapa, como numa prancha técnica.
 function addNorthArrow(map, containerId) {
-  const cont = document.getElementById(containerId);
+  // containerId aceita um id (string) OU o próprio elemento do container do mapa,
+  // para servir também a block-maps/key-map cujo container não tem id estável.
+  const cont = (typeof containerId === 'string') ? document.getElementById(containerId) : containerId;
   if (!cont || !map) return;
   if (cont.querySelector('.map-north-arrow')) return; // evita duplicar
   cont.style.position = cont.style.position || 'relative';
@@ -13202,6 +13228,75 @@ function exportarMapaPNG(map, opts) {
     alert('Não foi possível exportar o mapa: ' + e.message + '\n\nDica: a exportação precisa que o mapa esteja visível na tela.');
     console.warn('exportarMapaPNG:', e);
   }
+}
+
+// ── Salvar a VISTA de um mapa como imagem no Relatório ───────────────────
+// Compõe o canvas (mapa + norte + escala + legenda) e guarda no PhotoStore,
+// no bloco 'mapas-salvos'. _registroVisual (Relatório PDF) já varre o
+// PhotoStore por bloco, então a vista entra no relatório automaticamente.
+function salvarVistaMapa(map, opts, titulo){
+  opts = opts || {};
+  try{
+    const cv = _comporMapaCanvas(map, opts);
+    if(!cv){ alert('Mapa não disponível para salvar.\n\nDica: deixe o mapa visível/renderizado e tente de novo.'); return; }
+    let dataUrl=null; try{ dataUrl = cv.toDataURL('image/jpeg',0.9); }catch(e){ alert('Falha ao gerar a imagem do mapa.'); return; }
+    if(typeof PhotoStore==='undefined'){ alert('Armazenamento de imagens indisponível.'); return; }
+    try{ PhotoStore.load(); }catch(e){}
+    const nome = titulo || opts.titulo || 'Vista de mapa';
+    PhotoStore.add('mapas-salvos', {
+      id: 'mv_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+      dataUrl, title: nome, caption:'', coords:null,
+      datetime: new Date().toISOString().slice(0,10)
+    });
+    if(typeof mostrarStatus==='function') mostrarStatus('Vista salva para o relatório ✓ — veja em "Mapas salvos"');
+    if(typeof renderMapasSalvos==='function') renderMapasSalvos();
+  }catch(e){ alert('Não foi possível salvar a vista: '+e.message); }
+}
+
+// Botão flutuante "💾 Salvar vista" reutilizável por qualquer mapa (overlay no canto).
+function _injectSalvarVistaBtn(map, container, getOpts, titulo){
+  const cont = (typeof container==='string') ? document.getElementById(container) : container;
+  if(!cont || !map) return;
+  if(cont.querySelector('.map-savebtn')) return;
+  cont.style.position = cont.style.position || 'relative';
+  const b = document.createElement('button');
+  b.className = 'map-savebtn'; b.type='button';
+  b.title = 'Salvar a vista atual do mapa (com norte, escala e legenda) no relatório';
+  b.textContent = '💾 Salvar vista';
+  b.style.cssText = 'position:absolute;top:10px;right:48px;z-index:6;padding:5px 9px;border:1px solid var(--line2,#ccc);background:rgba(255,255,255,.95);border-radius:5px;cursor:pointer;font-size:.6rem;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.18)';
+  b.onclick = (e)=>{ e.stopPropagation(); const o = (typeof getOpts==='function'?getOpts():getOpts)||{}; salvarVistaMapa(map, o, titulo||o.titulo); };
+  cont.appendChild(b);
+}
+
+// Legenda de um block-map: só as camadas do tema que têm feições (reusa mlLegendItems).
+function _blockMapLegendItems(themeId){
+  const theme = (typeof ML_THEMES!=='undefined') ? ML_THEMES[themeId] : null;
+  const todos = (typeof mlLegendItems==='function') ? mlLegendItems() : [];
+  if(!theme) return todos;
+  const ok = new Set(theme.layers||[]);
+  // mantém itens das camadas do tema; camadas importadas (📂) sempre entram
+  return todos.filter(it => ok.has(it.id) || /^(imp-|cat-|esf-)/.test(String(it.id)) || (it.label||'').startsWith('📂'));
+}
+
+// ── Gerenciador "Mapas salvos para o relatório" (lista + remover) ────────
+function renderMapasSalvos(){
+  const host = document.getElementById('mapas-salvos-lista');
+  if(!host) return;
+  try{ PhotoStore.load(); }catch(e){}
+  const arr = (typeof PhotoStore!=='undefined' ? PhotoStore.get('mapas-salvos') : []) || [];
+  const cnt = document.getElementById('mapas-salvos-count'); if(cnt) cnt.textContent = arr.length;
+  if(!arr.length){ host.innerHTML = '<div style="font-size:.6rem;color:var(--t3);font-style:italic;padding:6px 2px">Nenhuma vista salva ainda. Em qualquer mapa, use <strong>💾 Salvar vista</strong>.</div>'; return; }
+  host.innerHTML = arr.map(p=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)">
+    <img src="${p.dataUrl}" style="width:54px;height:38px;object-fit:cover;border-radius:4px;border:1px solid var(--line2)">
+    <span style="flex:1;font-size:.62rem;color:var(--t1)">${(p.title||'Vista de mapa').replace(/</g,'&lt;')}</span>
+    <button class="add-btn" style="font-size:.58rem;color:var(--red);border-color:rgba(224,80,106,.3)" onclick="removerVistaMapa('${p.id}')">🗑 Remover</button>
+  </div>`).join('');
+}
+function removerVistaMapa(id){
+  if(typeof PhotoStore==='undefined') return;
+  PhotoStore.delete('mapas-salvos', id);
+  renderMapasSalvos();
+  if(typeof mostrarStatus==='function') mostrarStatus('Vista removida ✓');
 }
 
 function mlInit() {
@@ -13600,7 +13695,7 @@ function mlSetupLegenda() {
 }
 
 function mlRefreshLegenda(){
-  if(typeof MapLegend!=='undefined') MapLegend.refresh('analise');
+  if(typeof MapLegend!=='undefined'){ MapLegend.refresh('analise'); try{ MapLegend.refresh('tema'); }catch(e){} }
   // legenda fixa de usos acompanha as feições (some quando não há manchas)
   if(typeof mlRenderUseLegend==='function') mlRenderUseLegend();
 }
@@ -16003,6 +16098,13 @@ const ML_THEMES = {
     defaultLayer:'uso', defaultGeom:'polygon',
     hide:['eixos','app','risco','zona','equip','lynch','viario','infra','agua','topo','acess','mobil','livres','morfo','impacto','patrim','segur']
   },
+  zona: {
+    label:'⚖️ Zoneamento',
+    desc:'Importe o shape do zoneamento (Plano Diretor / Lei de Uso e Ocupação) ou desenhe as zonas. Cada arquivo importado vira uma camada própria — ative/desative camadas e salve a vista.',
+    layers:['terreno','zona','notas'],
+    defaultLayer:'zona', defaultGeom:'polygon',
+    hide:['uso','app','risco','equip','lynch','viario','infra','agua','topo','acess','mobil','livres','morfo','impacto','patrim','segur','eixos']
+  },
   morfo: {
     label:'🏛️ Morfologia Urbana',
     desc:'Tipologias edificadas, regiões morfológicas, marcos visuais, padrões de quadras e lotes.',
@@ -16111,6 +16213,9 @@ function mlInitThemeMap() {
     mlAddSourcesOnMap(_mlThemeMap);
     mlSelectTheme(_mlActiveTheme);
     if (_mlLotCoord) _mlThemeMap.setCenter(_mlLotCoord);
+    addNorthArrow(_mlThemeMap, 'ml-theme-map');
+    _injectSalvarVistaBtn(_mlThemeMap, 'ml-theme-map', ()=>({titulo:(state['proj-nome']||'Mapeamento temático'),credito:'Suite ATDAU · Mapeamento temático',legendaItems:mlLegendItems,legendaTitulo:'Legenda'}), 'Mapeamento temático do entorno');
+    if(typeof MapLegend!=='undefined'){ MapLegend.mount({mapKey:'tema', containerId:'ml-theme-map', title:'Legenda', editable:false, getItems:mlLegendItems}); setTimeout(()=>{try{MapLegend.hide('tema');}catch(e){}},120); }
   });
 
   _mlThemeMap.on('click', mlThemeOnClick);
@@ -16318,6 +16423,8 @@ function swotInitMap() {
 
     swotLoadState();
     if (_mlLotCoord) _swotMap.setCenter(_mlLotCoord);
+    addNorthArrow(_swotMap, 'swot-map-el');
+    _injectSalvarVistaBtn(_swotMap, 'swot-map-el', ()=>({titulo:(state['proj-nome']||'Síntese SWOT'),credito:'Suite ATDAU · Síntese SWOT'}), 'Síntese SWOT');
   });
 
   _swotMap.on('click', swotOnClick);
@@ -16753,6 +16860,9 @@ function initBlockMap(wrap) {
     if(['topo','risco','agua'].includes(themeId)){
       _injectBlockMapTerrainControl(wrap, map, themeId);
     }
+    // Padronização: seta de norte (escala já existe; "Camadas" faz de legenda;
+    // "💾 Salvar vista" fica na barra de desenho, via _injectBlockMapDrawTools)
+    addNorthArrow(map, mapEl);
   });
 
   // Handler de clique para desenho dentro do block-map
@@ -16864,7 +16974,8 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
     <select class="bm-layer-select" style="padding:5px 8px;border:1px solid var(--line2);background:white;border-radius:4px;font-size:.62rem;cursor:pointer;max-width:170px">${layerOpts}</select>
     <span class="bm-geom-btns" style="display:inline-flex;gap:4px"></span>
     <button class="bm-style-btn" style="padding:6px 11px;border:1.5px solid var(--gold);background:rgba(201,146,59,.08);color:#9a6b1e;border-radius:4px;cursor:pointer;font-size:.65rem;font-weight:600" title="Configurar estilo do próximo desenho">🎨 Estilo</button>
-    <button class="bm-import-btn" style="padding:5px 10px;border:1px solid var(--gold);background:rgba(201,146,59,.1);color:#9a6b1e;border-radius:4px;cursor:pointer;font-size:.6rem">⬆ Importar</button>
+    <button class="bm-import-btn" title="Importe camadas: Shapefile (.zip — pacote .shp/.shx/.dbf zipado), GeoJSON (.geojson/.json) ou KML. Cada arquivo vira uma camada própria, visível aqui e no Mapa de Análise. Onde baixar: portal da prefeitura / IDE municipal / IBGE." style="padding:5px 10px;border:1px solid var(--gold);background:rgba(201,146,59,.1);color:#9a6b1e;border-radius:4px;cursor:pointer;font-size:.6rem">⬆ Importar</button>
+    <button class="bm-save-btn" title="Salva a vista atual deste mapa (com norte, escala e legenda) no Relatório" style="padding:5px 10px;border:1px solid rgba(34,196,116,.4);background:rgba(34,196,116,.1);color:#1f8d49;border-radius:4px;cursor:pointer;font-size:.6rem">💾 Salvar vista</button>
     <button class="bm-clear-btn" style="padding:5px 10px;border:1px solid rgba(181,58,58,.4);background:rgba(181,58,58,.06);color:var(--vermelho);border-radius:4px;cursor:pointer;font-size:.6rem">🗑 Limpar</button>
     <input type="file" class="bm-import-input" accept=".zip,.geojson,.json,.kml" style="display:none">
   `;
@@ -17037,6 +17148,12 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
     const file = e.target.files[0];
     if(file) await _blockMapImportShape(file, ws.layerId, map);
     e.target.value = '';
+  };
+  const _bmSaveBtn = ctrl.querySelector('.bm-save-btn');
+  if(_bmSaveBtn) _bmSaveBtn.onclick = (e) => {
+    e.stopPropagation();
+    const lbl = (ML_THEMES[themeId] ? ML_THEMES[themeId].label : 'Mapa temático');
+    salvarVistaMapa(map, {titulo:(state['proj-nome']||lbl), credito:'Suite ATDAU · '+lbl, legendaItems:()=>_blockMapLegendItems(themeId), legendaTitulo:'Legenda'}, lbl);
   };
   ctrl.querySelector('.bm-clear-btn').onclick = (e) => {
     e.stopPropagation();
@@ -17228,6 +17345,7 @@ function _blockMapOnClick(wrap, map, themeId, e) {
       if(typeof mlRefreshLegenda === 'function') mlRefreshLegenda();
     }
     if(typeof mlSaveState === 'function') mlSaveState();
+    if(typeof mlVincularAchado==='function' && !['terreno','swot','cobertura','uc','zona'].includes(st.layerId)) mlVincularAchado({id}, st.layerId);
     _blockMapCancelDraw(wrap, map);
   } else {
     st.pts.push(coord);
@@ -17291,6 +17409,7 @@ function _blockMapOnDblClick(wrap, map, themeId, e) {
     if(typeof mlRefreshLegenda === 'function') mlRefreshLegenda();
   }
   if(typeof mlSaveState === 'function') mlSaveState();
+  if(typeof mlVincularAchado==='function' && !['terreno','swot','cobertura','uc','zona'].includes(st.layerId)) mlVincularAchado({id}, st.layerId);
   _blockMapCancelDraw(wrap, map);
 }
 
@@ -17619,6 +17738,8 @@ function renderPhotoModal() {
 }
 
 function closePhotoModal() {
+  // salva título/legenda pendentes antes de fechar (evita perda silenciosa)
+  try{ if(_curPhotoBlock!=null && PhotoStore.get(_curPhotoBlock)[_curPhotoIdx]) updateCurPhoto(); }catch(e){}
   document.getElementById('photo-modal').classList.remove('open');
   document.getElementById('pm-keymap-check').checked = false;
   document.getElementById('pm-keymap-wrap').style.display = 'none';
@@ -17748,6 +17869,7 @@ function initPhotoKeymap() {
     mlSetBasemapOnMap(_keymapInst, 'positron_nl');
     // Forçar resize após carregar para garantir tile correto
     setTimeout(() => { if (_keymapInst) _keymapInst.resize(); }, 100);
+    addNorthArrow(_keymapInst, el);
     renderKeymapMarkers();
   });
   
@@ -17759,12 +17881,16 @@ function initPhotoKeymap() {
     if (_kmMode === 'direction' && photo.coords) {
       // Calcular azimute do ponto atual da foto até o clicado
       const az = computeAzimuth(photo.coords, clicked);
-      PhotoStore.update(_curPhotoBlock, photo.id, { azimuth: az });
+      const ok = PhotoStore.update(_curPhotoBlock, photo.id, { azimuth: az });
       const inp = document.getElementById('pm-azimuth');
       if (inp) inp.value = az;
+      if (typeof mostrarStatus==='function') mostrarStatus('Direção salva ✓ — azimute '+az+'°');
     } else {
       // Modo ponto (ou ainda sem coords) — definir posição
       PhotoStore.update(_curPhotoBlock, photo.id, { coords: clicked });
+      if (typeof mostrarStatus==='function') mostrarStatus(_kmMode==='direction'
+        ? 'Posição marcada ✓ — agora clique para onde a foto aponta (calcula o azimute)'
+        : 'Posição da foto salva ✓');
     }
     renderBlockPhotos(_curPhotoBlock);
     renderKeymapMarkers();

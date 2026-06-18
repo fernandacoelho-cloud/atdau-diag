@@ -29,8 +29,8 @@ test.describe('P2 — dashboard de entrada', () => {
     }));
     expect(r.existe).toBe(true);
     expect(r.pct).toMatch(/^\d+%$/);
-    expect(r.fases).toEqual(['Preparação', 'Diagnóstico', 'Coleta & Referências', 'Mapas', 'Síntese & Entrega']);
-    expect(r.abas).toBe(15); // 14 + Dinâmica Territorial (panel-14)
+    expect(r.fases).toEqual(['Preparação', 'Diagnóstico', 'Coleta & Referências', 'Análise & Síntese', 'Proposição & Entrega']);
+    expect(r.abas).toBe(16); // 14 + Dinâmica Territorial (14) + Governança (15), agora no DASH_FASES
     // painéis de mapa não mostram %, mostram "mapa" ou contagem de feições
     expect(r.mapAbas.length).toBe(2);
     r.mapAbas.forEach(t => expect(t).not.toMatch(/%/));
