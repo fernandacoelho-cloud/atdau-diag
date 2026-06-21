@@ -124,7 +124,7 @@ test('P0: Relatório PDF inclui referências (quadro+ficha+análise+diagrama) e 
   expect(T).toContain('Itens do programa');
   expect(T).toContain('Programa dimensionado');
   expect(T).toContain('AMBIENTE_DIM_X');
-  expect(T).toContain('Área total programada');
+  expect(T).toContain('Área útil programada');
   expect(T).toContain('Relações entre ambientes');
   expect(T).toContain('Requisitos do programa');
   expect(T).toContain('REQ_FUNC fluxos e setorização');

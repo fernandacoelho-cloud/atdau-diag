@@ -5850,6 +5850,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         O programa começa como <strong>hipótese preliminar</strong> e <em>coevolui</em> com as diretrizes (aba seguinte) e com as necessidades declaradas na aba Identificação (Valores e questões). Programa e partido amadurecem juntos — a lista ganha marcas de revisão conforme você projeta. A ferramenta registra o ajuste; a decisão é sua.
       </div>
       <div id="programa-lista"></div>
+      <button class="instr-btn" onclick="gerarProgramaTemplate()" style="font-size:.62rem;margin:9px 0 2px" title="Gera uma lista base de ambientes a partir da categoria/tipologia escolhida na Identificação — você ajusta depois">✨ Gerar programa base pela tipologia</button>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;padding:10px;background:var(--bg2);border-radius:8px">
         <div style="flex:2;min-width:160px"><label style="font-size:.6rem;color:var(--t3);display:block;margin-bottom:3px">Item / ambiente</label>
           <input type="text" id="prog-item" placeholder="Ex: sala multiuso" style="width:100%;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.66rem;box-sizing:border-box"></div>
@@ -5879,7 +5880,23 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div class="info-box" style="font-size:.6rem;margin-bottom:10px">A formalização do programa atribui a cada ambiente uma área e requisitos. Puxe os itens da "lista viva" (logo acima) e detalhe área, ocupação e requisitos de desempenho.</div>
       <button class="instr-btn" onclick="progPuxarPrograma()" style="font-size:.64rem;margin-bottom:8px">↳ puxar itens do programa de necessidades</button>
       <div id="prog-ambientes"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <label style="font-size:.62rem;color:var(--t2);font-weight:600">Circulação e paredes (%)</label>
+        <input type="number" id="prog-circulacao" min="0" max="100" placeholder="ex: 25" oninput="progSetCirculacao(this.value)" style="width:74px;padding:5px 7px;border:1px solid var(--line2);border-radius:6px;font-size:.64rem;text-align:center;box-sizing:border-box">
+        <span style="font-size:.56rem;color:var(--t3)">acréscimo típico sobre a área útil (20–35%) para estimar a área construída</span>
+      </div>
       <div id="prog-total" style="margin-top:8px;font-size:.66rem;font-weight:600;color:var(--teal)"></div>
+      <div id="prog-checagem"></div>
+    </div>
+  </div>
+
+  <!-- Organograma / fluxograma -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🫧</span><span class="block-title">Organograma — setores e adjacências</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Cada bolha é um ambiente do <strong>programa dimensionado</strong>, agrupada e colorida por <strong>setor</strong> (o tamanho reflete a área). As linhas vêm da <strong>matriz de relações</strong>: <strong style="color:#1d9e75">▲ obrigatória</strong> · <strong style="color:#c9923b">○ desejável (tracejada)</strong> · <strong style="color:#b53a3a">✕ evitar (pontilhada)</strong>. Atribua o setor de cada ambiente (acima) e as relações (matriz) para compor o diagrama.</div>
+      <div id="prog-organograma"></div>
+      <button class="instr-btn" onclick="exportarOrganogramaSVG()" style="font-size:.62rem;margin-top:8px">🖼️ Exportar organograma SVG</button>
     </div>
   </div>
 
@@ -9593,6 +9610,7 @@ function matrizCiclar(a,b){
   const next=ordem[(ordem.indexOf(state.prog_relacoes[k]||'')+1)%ordem.length];
   if(next) state.prog_relacoes[k]=next; else delete state.prog_relacoes[k];
   if(typeof autoSave==='function')autoSave(); renderMatrizRelacoes();
+  if(typeof renderOrganograma==='function') renderOrganograma();   // adjacências alimentam o organograma
 }
 function renderMatrizRelacoes(){
   const host=document.getElementById('matriz-relacoes'); if(!host) return;
@@ -10935,6 +10953,14 @@ function progMatrizInput(ta) {
   state.prog_matriz[key] = ta.value;
   autoSave();
 }
+// Setores funcionais (Ching · setorização) — orientam organograma e leitura do partido
+const PROG_SETORES = [
+  {id:'publico', label:'Público', cor:'#3b82c4'},
+  {id:'privado', label:'Privado', cor:'#7e5a9b'},
+  {id:'servico', label:'Serviço', cor:'#c9923b'},
+  {id:'intimo',  label:'Íntimo',  cor:'#b5566e'},
+];
+function _progSetor(id){ return PROG_SETORES.find(s=>s.id===id); }
 function progPuxarPrograma() {
   const lista = Array.isArray(state.programa) ? state.programa : [];
   if (!lista.length) { alert('O programa de necessidades (lista viva, acima) ainda não tem itens. Adicione-os primeiro.'); return; }
@@ -10942,7 +10968,7 @@ function progPuxarPrograma() {
   // adicionar itens que ainda não estão
   lista.forEach(p=>{
     if (!state.prog_ambientes.some(a=>a.origem===p.id)) {
-      state.prog_ambientes.push({ id:Date.now()+Math.random(), origem:p.id, nome:p.item||'', area:p.area||'', ocup:'', req:'' });
+      state.prog_ambientes.push({ id:Date.now()+Math.random(), origem:p.id, nome:p.item||'', setor:'', qtd:'1', area:p.area||'', pd:'', ocup:'', req:'' });
     }
   });
   renderProgAmbientes();
@@ -10951,7 +10977,7 @@ function progPuxarPrograma() {
 }
 function addProgAmbiente() {
   if (!Array.isArray(state.prog_ambientes)) state.prog_ambientes = [];
-  state.prog_ambientes.push({ id:Date.now(), nome:'', area:'', ocup:'', req:'' });
+  state.prog_ambientes.push({ id:Date.now(), nome:'', setor:'', qtd:'1', area:'', pd:'', ocup:'', req:'' });
   renderProgAmbientes(); autoSave();
 }
 function delProgAmbiente(id) {
@@ -10960,25 +10986,39 @@ function delProgAmbiente(id) {
 }
 function progAmbInput(id, campo, val) {
   const a = (state.prog_ambientes||[]).find(x=>String(x.id)===String(id));
-  if (a) { a[campo]=val; if(campo==='area') renderProgTotal(); autoSave(); }
+  if (!a) return;
+  a[campo]=val;
+  if (campo==='setor') renderProgAmbientes();              // recolore a linha + atualiza organograma
+  else if (campo==='area' || campo==='qtd') renderProgTotal();
+  autoSave();
 }
 function renderProgAmbientes() {
   const el = document.getElementById('prog-ambientes');
   if (!el) return;
   const list = state.prog_ambientes || [];
+  const setorOpts = a => ['<option value="">—</option>'].concat(
+    PROG_SETORES.map(s=>`<option value="${s.id}" ${a.setor===s.id?'selected':''}>${s.label}</option>`)).join('');
   let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.59rem"><thead><tr style="background:rgba(127,108,246,.1)">'
     + '<th style="padding:4px;border:1px solid var(--line);text-align:left">Ambiente</th>'
-    + '<th style="padding:4px;border:1px solid var(--line);width:80px">Área (m²)</th>'
-    + '<th style="padding:4px;border:1px solid var(--line);width:80px">Capacidade</th>'
+    + '<th style="padding:4px;border:1px solid var(--line);width:94px">Setor</th>'
+    + '<th style="padding:4px;border:1px solid var(--line);width:42px">Qtd</th>'
+    + '<th style="padding:4px;border:1px solid var(--line);width:72px">Área un. (m²)</th>'
+    + '<th style="padding:4px;border:1px solid var(--line);width:60px">Pé-dir. (m)</th>'
+    + '<th style="padding:4px;border:1px solid var(--line);width:78px">Capacidade</th>'
     + '<th style="padding:4px;border:1px solid var(--line);text-align:left">Requisitos</th>'
     + '<th style="padding:4px;border:1px solid var(--line);width:30px"></th></tr></thead><tbody>';
   if (!list.length) {
-    html += '<tr><td colspan="5" style="padding:6px;border:1px solid var(--line);color:var(--t3);font-style:italic;font-size:.57rem">Nenhum ambiente. Puxe do programa de necessidades ou adicione manualmente.</td></tr>';
+    html += '<tr><td colspan="8" style="padding:6px;border:1px solid var(--line);color:var(--t3);font-style:italic;font-size:.57rem">Nenhum ambiente. Puxe do programa de necessidades ou adicione manualmente.</td></tr>';
   } else {
     list.forEach(a=>{
+      const st = _progSetor(a.setor);
+      const borda = st ? `border-left:4px solid ${st.cor}` : '';
       html += `<tr>
-        <td style="padding:2px;border:1px solid var(--line)"><input value="${escHtml(a.nome)}" oninput="progAmbInput('${a.id}','nome',this.value)" style="width:100%;border:none;background:transparent;font-size:.58rem;color:var(--t1)"></td>
+        <td style="padding:2px;border:1px solid var(--line);${borda}"><input value="${escHtml(a.nome)}" oninput="progAmbInput('${a.id}','nome',this.value)" style="width:100%;border:none;background:transparent;font-size:.58rem;color:var(--t1)"></td>
+        <td style="padding:2px;border:1px solid var(--line)"><select onchange="progAmbInput('${a.id}','setor',this.value)" style="width:100%;border:none;background:transparent;font-size:.57rem;color:${st?st.cor:'var(--t1)'};font-weight:${st?'600':'400'}">${setorOpts(a)}</select></td>
+        <td style="padding:2px;border:1px solid var(--line)"><input type="number" min="1" value="${escHtml(a.qtd!=null?a.qtd:'')}" oninput="progAmbInput('${a.id}','qtd',this.value)" style="width:100%;border:none;background:transparent;font-size:.58rem;color:var(--t1);text-align:center" placeholder="1"></td>
         <td style="padding:2px;border:1px solid var(--line)"><input type="number" value="${escHtml(a.area)}" oninput="progAmbInput('${a.id}','area',this.value)" style="width:100%;border:none;background:transparent;font-size:.58rem;color:var(--t1);text-align:center"></td>
+        <td style="padding:2px;border:1px solid var(--line)"><input type="number" step="0.1" value="${escHtml(a.pd!=null?a.pd:'')}" oninput="progAmbInput('${a.id}','pd',this.value)" style="width:100%;border:none;background:transparent;font-size:.58rem;color:var(--t1);text-align:center" placeholder="m"></td>
         <td style="padding:2px;border:1px solid var(--line)"><input value="${escHtml(a.ocup)}" oninput="progAmbInput('${a.id}','ocup',this.value)" style="width:100%;border:none;background:transparent;font-size:.58rem;color:var(--t1);text-align:center" placeholder="ex: 30 pes."></td>
         <td style="padding:2px;border:1px solid var(--line)"><input value="${escHtml(a.req)}" oninput="progAmbInput('${a.id}','req',this.value)" style="width:100%;border:none;background:transparent;font-size:.58rem;color:var(--t1)" placeholder="ventilação, luz natural…"></td>
         <td style="padding:2px;border:1px solid var(--line);text-align:center"><button onclick="delProgAmbiente('${a.id}')" style="background:none;border:none;cursor:pointer;color:var(--t3)">✕</button></td>
@@ -10988,12 +11028,270 @@ function renderProgAmbientes() {
   html += '</tbody></table></div><button class="instr-btn" onclick="addProgAmbiente()" style="font-size:.62rem;margin-top:6px">+ Ambiente</button>';
   el.innerHTML = html;
   renderProgTotal();
+  if (typeof renderOrganograma==='function') renderOrganograma();
+}
+// % de circulação/paredes sobre a área útil (estado via campo prog-circulacao)
+function progSetCirculacao(v){ state['prog-circulacao']=v; renderProgTotal(); autoSave(); }
+function _progCirculacaoPct(){
+  const d=document.getElementById('prog-circulacao');
+  const v=(d && d.value!=='') ? d.value : state['prog-circulacao'];
+  return parseFloat(v)||0;
+}
+// Áreas calculadas: útil = Σ(área un. × qtd); construída = útil × (1 + circulação%).
+function _progAreas(){
+  const list=state.prog_ambientes||[];
+  const util=list.reduce((s,a)=>s+(parseFloat(a.area)||0)*(parseFloat(a.qtd)||1),0);
+  const pct=_progCirculacaoPct();
+  const circ=util*pct/100;
+  return { util, pct, circ, construida: util+circ };
 }
 function renderProgTotal() {
   const el = document.getElementById('prog-total');
-  if (!el) return;
-  const soma = (state.prog_ambientes||[]).reduce((s,a)=>s+(parseFloat(a.area)||0),0);
-  el.textContent = soma>0 ? `Área total programada: ${soma.toLocaleString('pt-BR')} m²` : '';
+  if (el) {
+    const {util,pct,circ,construida}=_progAreas();
+    if(util<=0){ el.innerHTML=''; }
+    else {
+      const fmt=n=>n.toLocaleString('pt-BR',{maximumFractionDigits:1});
+      el.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--line2);border-radius:7px;padding:9px 11px;line-height:1.7">
+          <div>Área útil programada: <strong>${fmt(util)} m²</strong></div>
+          <div style="color:var(--t2)">+ Circulação e paredes (${pct||0}%): ${fmt(circ)} m²</div>
+          <div style="color:#6a5cf0;font-weight:700;border-top:1px dotted var(--line2);margin-top:3px;padding-top:3px">= Área construída estimada: ${fmt(construida)} m²</div>
+        </div>`;
+    }
+  }
+  renderProgChecagem();
+}
+// ── Checagem do programa contra o potencial construtivo do lote (CA/TO) ──
+// lê área do terreno + CA + TO da Legislação (fallback proj-area), DOM ou state.
+function _legNum(id){ const d=document.getElementById(id); const v=(d && d.value!=='')?d.value:state[id]; return parseFloat(v)||0; }
+function _progPotencial(){
+  const terreno = _legNum('l-area-terreno') || _legNum('proj-area');
+  const ca = _legNum('l-ca');
+  const to = _legNum('l-to');
+  return { terreno, ca, to, maxCA: terreno*ca, maxTO: terreno*to/100 };
+}
+function renderProgChecagem(){
+  const el = document.getElementById('prog-checagem');
+  if(!el) return;
+  const { construida } = _progAreas();
+  const { terreno, ca, to, maxCA, maxTO } = _progPotencial();
+  if(construida<=0){ el.innerHTML=''; return; }
+  const fmt = n => n.toLocaleString('pt-BR',{maximumFractionDigits:1});
+  if(terreno<=0 || (ca<=0 && to<=0)){
+    el.innerHTML = `<div style="margin-top:10px;font-size:.6rem;color:var(--t3);font-style:italic;border:1px dashed var(--line2);border-radius:6px;padding:7px 10px">Informe a área do terreno e o CA/TO na aba <strong>Legislação urbanística</strong> para checar o programa contra o potencial construtivo do lote.</div>`;
+    return;
+  }
+  let html = '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">';
+  if(ca>0){
+    const folga = maxCA - construida;
+    const ok = folga>=0;
+    const cor = ok ? '#1d9e75' : '#b53a3a';
+    const bg  = ok ? 'rgba(29,158,117,.1)' : 'rgba(181,58,58,.1)';
+    html += `<div style="border:1px solid ${cor};background:${bg};border-radius:7px;padding:8px 11px;font-size:.62rem;line-height:1.5">
+        <strong style="color:${cor}">${ok?'✓ Cabe no potencial do terreno':'⚠ Excede o potencial do terreno'}</strong><br>
+        Área construída estimada <strong>${fmt(construida)} m²</strong> × potencial pelo CA (${fmt(terreno)} m² × CA ${ca} = <strong>${fmt(maxCA)} m²</strong>) → ${ok?('folga de '+fmt(folga)+' m²'):('falta '+fmt(-folga)+' m² de potencial — reduza o programa ou reveja o índice')}.
+      </div>`;
+  }
+  if(to>0){
+    html += `<div style="border:1px solid var(--line2);border-radius:7px;padding:8px 11px;font-size:.6rem;color:var(--t2);line-height:1.5">
+        Projeção máxima no térreo pela TO ${to}%: <strong>${fmt(maxTO)} m²</strong> — referência para a área de implantação (a checagem da projeção depende do nº de pavimentos do partido).
+      </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+// ── Organograma / fluxograma: bolhas por setor (área = tamanho) + adjacências da matriz ──
+function _organogramaSVGString(){
+  const ambientes = (state.prog_ambientes||[]).filter(a=>a && (a.nome||a.area));
+  if(!ambientes.length) return '';
+  const grupos = [];
+  PROG_SETORES.forEach(s=>{ const items=ambientes.filter(a=>a.setor===s.id); if(items.length) grupos.push({setor:s, items}); });
+  const semSetor = ambientes.filter(a=>!_progSetor(a.setor));
+  if(semSetor.length) grupos.push({setor:{id:'',label:'Sem setor',cor:'#9a9a96'}, items:semSetor});
+
+  const colW=200, padX=24, padTop=20, headerH=26, gapY=12, labelH=15;
+  const maxA = Math.max(1, ...ambientes.map(a=>parseFloat(a.area)||0));
+  const rOf = a => 15 + 23*Math.sqrt((parseFloat(a.area)||0)/maxA);   // 15..38 px conforme a área
+  const pos = {};
+  let H = 0;
+  grupos.forEach((g,ci)=>{
+    const cx = padX + colW/2 + ci*colW;
+    let y = padTop + headerH + 10;
+    g.items.forEach(a=>{
+      const r = rOf(a);
+      y += r;
+      pos[a.id] = { x:cx, y, r, cor:g.setor.cor, nome:(a.nome||'(ambiente)') };
+      y += r + labelH + gapY;
+    });
+    H = Math.max(H, y);
+  });
+  H = Math.round(H + 6);
+  const W = Math.max(padX*2 + grupos.length*colW, 540);   // largura mínima p/ caber a legenda
+
+  // adjacências: a matriz é da lista viva (state.programa); mapeia programaId → ambiente via origem
+  const origemMap = {};
+  ambientes.forEach(a=>{ if(a.origem!=null) origemMap[String(a.origem)] = a; });
+  const rel = state.prog_relacoes||{};
+  let linhas='';
+  Object.keys(rel).forEach(k=>{
+    const [ia,ib] = k.split('|');
+    const A = origemMap[ia] || ambientes.find(a=>String(a.id)===String(ia));
+    const B = origemMap[ib] || ambientes.find(a=>String(a.id)===String(ib));
+    if(!A||!B) return;
+    const pa=pos[A.id], pb=pos[B.id]; if(!pa||!pb) return;
+    const tipo=rel[k];
+    let stroke=_MAT_COR[tipo]||'#888', dash='', w=2.5;
+    if(tipo==='desej'){ dash='stroke-dasharray="6 4"'; w=2; }
+    else if(tipo==='evitar'){ dash='stroke-dasharray="2 4"'; w=2; }
+    linhas += `<line class="org-rel" x1="${pa.x.toFixed(1)}" y1="${pa.y.toFixed(1)}" x2="${pb.x.toFixed(1)}" y2="${pb.y.toFixed(1)}" stroke="${stroke}" stroke-width="${w}" ${dash} opacity="0.75"/>`;
+  });
+
+  let headers='', bolhas='';
+  grupos.forEach((g,ci)=>{
+    const cx = padX + colW/2 + ci*colW;
+    headers += `<rect x="${padX+ci*colW+8}" y="${padTop-2}" width="${colW-16}" height="22" rx="6" fill="${g.setor.cor}" opacity="0.14"/>`;
+    headers += `<text x="${cx}" y="${padTop+13}" text-anchor="middle" font-family="Arial,sans-serif" font-size="12.5" font-weight="700" fill="${g.setor.cor}">${escHtml(g.setor.label)}</text>`;
+  });
+  ambientes.forEach(a=>{
+    const p=pos[a.id]; if(!p) return;
+    bolhas += `<circle class="org-bubble" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}" fill="${p.cor}" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>`;
+    const nome = p.nome.length>18 ? p.nome.slice(0,17)+'…' : p.nome;
+    bolhas += `<text x="${p.x.toFixed(1)}" y="${(p.y+p.r+11).toFixed(1)}" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#2a2a28">${escHtml(nome)}</text>`;
+  });
+
+  // ── legenda: cores dos setores presentes + tipos de linha (relações) ──
+  const legY0 = H, legRow1 = legY0 + 16, legRow2 = legY0 + 36, legendH = 46;
+  let legenda = `<line x1="${padX}" y1="${legY0}" x2="${(W-padX)}" y2="${legY0}" stroke="#e2e0da" stroke-width="1"/>`;
+  legenda += `<text x="${padX}" y="${legRow1}" font-family="Arial,sans-serif" font-size="9.5" font-weight="700" fill="#6e6c68">Setores</text>`;
+  let sx = padX + 58;
+  grupos.forEach(g=>{
+    legenda += `<circle cx="${sx}" cy="${legRow1-3}" r="6" fill="${g.setor.cor}" fill-opacity="0.85" stroke="#ffffff" stroke-width="1.5"/>`;
+    legenda += `<text x="${sx+11}" y="${legRow1}" font-family="Arial,sans-serif" font-size="9.5" fill="#2a2a28">${escHtml(g.setor.label)}</text>`;
+    sx += 22 + g.setor.label.length*5.7 + 16;
+  });
+  legenda += `<text x="${padX}" y="${legRow2}" font-family="Arial,sans-serif" font-size="9.5" font-weight="700" fill="#6e6c68">Relações</text>`;
+  let lx = padX + 58;
+  [ {cor:_MAT_COR.obrig, dash:'',                         label:'▲ obrigatória'},
+    {cor:_MAT_COR.desej, dash:'stroke-dasharray="6 4"',   label:'○ desejável'},
+    {cor:_MAT_COR.evitar,dash:'stroke-dasharray="2 4"',   label:'✕ evitar'} ].forEach(t=>{
+    legenda += `<line x1="${lx}" y1="${legRow2-3}" x2="${lx+24}" y2="${legRow2-3}" stroke="${t.cor}" stroke-width="2.5" ${t.dash}/>`;
+    legenda += `<text x="${lx+30}" y="${legRow2}" font-family="Arial,sans-serif" font-size="9.5" fill="#2a2a28">${escHtml(t.label)}</text>`;
+    lx += 30 + t.label.length*5.9 + 20;
+  });
+  const totalH = H + legendH;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${totalH}" viewBox="0 0 ${W} ${totalH}" style="max-width:100%;height:auto;background:#ffffff;border:1px solid #e2e0da;border-radius:6px">${headers}${linhas}${bolhas}<g class="org-legend">${legenda}</g></svg>`;
+}
+function renderOrganograma(){
+  const el=document.getElementById('prog-organograma');
+  if(!el) return;
+  const svg=_organogramaSVGString();
+  el.innerHTML = svg || '<div style="font-size:.6rem;color:var(--t3);font-style:italic;padding:8px 0">Adicione ambientes ao programa dimensionado e atribua setores para gerar o organograma.</div>';
+}
+function exportarOrganogramaSVG(){
+  const svg=_organogramaSVGString();
+  if(!svg){ alert('Defina ambientes e setores no programa dimensionado primeiro.'); return; }
+  const blob=new Blob([svg],{type:'image/svg+xml'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='atdau-organograma.svg';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); },100);
+  if(typeof mostrarStatus==='function') mostrarStatus('Organograma exportado em SVG ✓');
+}
+// ── Templates de programa por tipologia (lista base que o estudante refina) ──
+// Cada item: {nome, setor, area(m² ref.)}. Áreas são referências iniciais, não normas.
+const PROG_TEMPLATES = {
+  residencia_uni: [
+    {nome:'Estar', setor:'publico', area:20}, {nome:'Jantar', setor:'publico', area:12},
+    {nome:'Cozinha', setor:'servico', area:10}, {nome:'Área de serviço', setor:'servico', area:6},
+    {nome:'Lavabo', setor:'servico', area:3}, {nome:'Suíte', setor:'intimo', area:16},
+    {nome:'Dormitório 1', setor:'intimo', area:12}, {nome:'Dormitório 2', setor:'intimo', area:12},
+    {nome:'Banheiro social', setor:'intimo', area:4}, {nome:'Garagem', setor:'servico', area:25},
+    {nome:'Circulação / hall', setor:'publico', area:6},
+  ],
+  residencia_multi: [
+    {nome:'Hall de entrada / portaria', setor:'publico', area:18}, {nome:'Apartamento-tipo', setor:'intimo', area:50},
+    {nome:'Circulação vertical (escada/elevador)', setor:'servico', area:14}, {nome:'Salão de festas', setor:'publico', area:40},
+    {nome:'Área de lazer / playground', setor:'publico', area:60}, {nome:'Depósito de lixo', setor:'servico', area:8},
+    {nome:'Guarita', setor:'servico', area:6}, {nome:'Estacionamento', setor:'servico', area:25},
+  ],
+  escola: [
+    {nome:'Recepção / secretaria', setor:'publico', area:20}, {nome:'Direção / coordenação', setor:'privado', area:15},
+    {nome:'Sala de aula', setor:'privado', area:50}, {nome:'Sala de professores', setor:'privado', area:25},
+    {nome:'Biblioteca', setor:'publico', area:60}, {nome:'Refeitório / cantina', setor:'publico', area:80},
+    {nome:'Cozinha', setor:'servico', area:25}, {nome:'Quadra coberta', setor:'publico', area:420},
+    {nome:'Pátio coberto', setor:'publico', area:150}, {nome:'Sanitários', setor:'servico', area:30},
+    {nome:'Almoxarifado', setor:'servico', area:12},
+  ],
+  saude_ubs: [
+    {nome:'Recepção / espera', setor:'publico', area:40}, {nome:'Acolhimento', setor:'publico', area:12},
+    {nome:'Consultório', setor:'privado', area:12}, {nome:'Sala de curativos', setor:'privado', area:12},
+    {nome:'Sala de vacinas', setor:'privado', area:12}, {nome:'Sala de coleta', setor:'privado', area:9},
+    {nome:'Farmácia', setor:'servico', area:15}, {nome:'Expurgo / esterilização', setor:'servico', area:10},
+    {nome:'Administração', setor:'privado', area:15}, {nome:'Sanitários', setor:'servico', area:20},
+    {nome:'DML / depósito', setor:'servico', area:6},
+  ],
+  cultural: [
+    {nome:'Foyer / recepção', setor:'publico', area:40}, {nome:'Exposição / acervo', setor:'publico', area:200},
+    {nome:'Auditório', setor:'publico', area:120}, {nome:'Salas multiuso / oficinas', setor:'publico', area:60},
+    {nome:'Café / convivência', setor:'publico', area:40}, {nome:'Administração', setor:'privado', area:30},
+    {nome:'Reserva técnica / depósito', setor:'servico', area:40}, {nome:'Sanitários', setor:'servico', area:30},
+  ],
+  comercial: [
+    {nome:'Loja / salão de vendas', setor:'publico', area:80}, {nome:'Estoque / depósito', setor:'servico', area:30},
+    {nome:'Administração', setor:'privado', area:15}, {nome:'Copa / vestiário funcionários', setor:'servico', area:12},
+    {nome:'Carga e descarga', setor:'servico', area:25}, {nome:'Sanitários', setor:'servico', area:20},
+  ],
+  praca_parque: [
+    {nome:'Estar / convivência', setor:'publico', area:200}, {nome:'Playground', setor:'publico', area:120},
+    {nome:'Quadra / espaço esportivo', setor:'publico', area:420}, {nome:'Áreas verdes / vegetação', setor:'publico', area:300},
+    {nome:'Caminhos / circulação', setor:'publico', area:150}, {nome:'Quiosque / apoio', setor:'servico', area:20},
+    {nome:'Sanitários públicos', setor:'servico', area:25}, {nome:'Estacionamento', setor:'servico', area:100},
+  ],
+  generico_arq: [
+    {nome:'Recepção / acesso', setor:'publico', area:20}, {nome:'Ambiente principal', setor:'publico', area:60},
+    {nome:'Administração', setor:'privado', area:15}, {nome:'Apoio / serviços', setor:'servico', area:20},
+    {nome:'Sanitários', setor:'servico', area:20}, {nome:'Circulação', setor:'publico', area:15},
+  ],
+};
+const PROG_TEMPLATE_CATEGORIA = { arquitetonico:'generico_arq', urbano:'praca_parque', paisagistico:'praca_parque', retrofit:'generico_arq', patrimonio:'cultural', his:'residencia_multi', requalif_urbana:'praca_parque', parcelamento:'generico_arq', plano_urbano:'praca_parque' };
+// resolve o template a partir do subtipo (proj-tipo) por palavra-chave; senão pela categoria (proj-modulo)
+function _progResolveTemplate(){
+  const sub=(state['proj-tipo']||(document.getElementById('proj-tipo')||{}).value||'').toString().trim();
+  const subL=sub.toLowerCase();
+  const KW=[
+    ['saude_ubs',['ubs','upa','saúde','hospital','consultór']],
+    ['escola',['educa','creche','emei','fundamental','médio','ensino','escola']],
+    ['cultural',['cultural','biblioteca','museu','ceu']],
+    ['praca_parque',['praça','parque','linear','corredor verde','espaço público','orla','largo']],
+    ['comercial',['comerc','loja','varejo']],
+    ['residencia_multi',['multifamiliar','his','cohab','sobrado']],
+    ['residencia_uni',['unifamiliar','residência']],
+  ];
+  for(const [tid,arr] of KW){ if(subL && arr.some(w=>subL.includes(w))) return {id:tid, origem:sub}; }
+  const cat=(state['proj-modulo']||(document.getElementById('proj-modulo')||{}).value||'').toString().trim();
+  if(cat && PROG_TEMPLATE_CATEGORIA[cat]){ const lbl=(typeof MODULES_DEF!=='undefined'&&MODULES_DEF[cat])?MODULES_DEF[cat].label:cat; return {id:PROG_TEMPLATE_CATEGORIA[cat], origem:lbl}; }
+  return null;
+}
+function gerarProgramaTemplate(){
+  const res=_progResolveTemplate();
+  if(!res){ alert('Defina a categoria/tipologia do projeto na aba Identificação para gerar um programa base.'); return; }
+  const tpl=PROG_TEMPLATES[res.id]; if(!tpl) return;
+  if(!Array.isArray(state.programa)) state.programa=[];
+  if(!Array.isArray(state.prog_ambientes)) state.prog_ambientes=[];
+  const existentes=new Set(state.programa.map(p=>(p.item||p.nome||'').toLowerCase().trim()));
+  let n=0;
+  tpl.forEach((t,i)=>{
+    if(existentes.has(t.nome.toLowerCase())) return;
+    const pid=Date.now()+i;
+    state.programa.push({id:pid, item:t.nome, area:String(t.area||''), obs:''});
+    state.prog_ambientes.push({id:pid+0.5, origem:pid, nome:t.nome, setor:t.setor||'', qtd:'1', area:String(t.area||''), pd:'', ocup:'', req:''});
+    existentes.add(t.nome.toLowerCase());
+    n++;
+  });
+  if(typeof renderPrograma==='function') renderPrograma();
+  if(typeof renderMatrizRelacoes==='function') renderMatrizRelacoes();
+  renderProgAmbientes();
+  autoSave();
+  mostrarStatus(n? ('Programa base gerado ✓ — '+n+' ambientes ('+res.origem+')') : 'Os ambientes do template já constavam no programa.');
 }
 function renderProgramacao() {
   renderPrograma();
@@ -11513,7 +11811,7 @@ const EXTRA_PERSIST_IDS = [
   'vc-cen-otim','vc-cen-real','vc-cen-pess','vc-priv-riscos',
   'vc-pub-custo','vc-pub-benef','vc-pub-programa','vc-pub-etp','vc-pub-efetividade',
   'vc-conclusao',
-  'prog-req-func','prog-req-desemp','prog-req-econ','prog-enunciado',
+  'prog-req-func','prog-req-desemp','prog-req-econ','prog-enunciado','prog-circulacao',
   // Avaliação VUE (UNESCO/ICOMOS) · Identificação — itinerários culturais
   'vue-espacial-nivel','vue-espacial-justif','vue-temporal-nivel','vue-temporal-justif',
   'vue-cultural-nivel','vue-cultural-justif','vue-proposito-nivel','vue-proposito-justif',
@@ -12358,16 +12656,22 @@ async function gerarRelatorioPDF(){
   // montar o documento — entram no Registro Visual como imagem.
   let _diagPNGs = [];
   try{ _diagPNGs = await _coletarDiagramasReferencias(); }catch(e){ _diagPNGs = []; }
+  // pré-rasteriza o organograma do programa (bolhas por setor + adjacências)
+  let _orgPNG = null;
+  try{
+    const _svgOrg = (typeof _organogramaSVGString==='function') ? _organogramaSVGString() : '';
+    if(_svgOrg){ const m=_svgOrg.match(/width="(\d+)" height="(\d+)"/); const w=m?+m[1]:800, h=m?+m[2]:400; _orgPNG = await _svgParaPNG(_svgOrg, w, h); }
+  }catch(e){ _orgPNG = null; }
 
   const doc = new JsPDF({ unit:'mm', format:'a4' });
   const W = 210, H = 297, M = 18;          // largura, altura, margem
   let y = M;
   const TERRA = [201,95,63], CINZA=[110,108,104], ESC=[42,42,40];
 
-  function novaPagina(){ doc.addPage(); y = M; rodape(); }
+  function novaPagina(){ doc.addPage(); y = M; }  // rodapé é carimbado uma única vez no loop final (evita duplicação)
   function checa(alt){ if(y+alt > H-M-8){ novaPagina(); } }
-  function rodape(){
-    const p = doc.internal.getNumberOfPages();
+  function rodape(p){
+    // p = número da página atual (passado pelo loop final); getNumberOfPages() devolveria só o total
     doc.setFontSize(7.5); doc.setTextColor(...CINZA);
     doc.text('Suite ATDAU · Pré-Projeto (01-01)', M, H-10);
     doc.text('pág. '+p, W-M, H-10, {align:'right'});
@@ -12627,19 +12931,36 @@ async function gerarRelatorioPDF(){
         subt('Itens do programa');
         lista.forEach(p=>{ const t=(p.item||p.nome||'').toString().trim(); if(!t) return; const a=p.area?(' — '+p.area+' m²'):''; const o=p.obs?(' ('+p.obs+')'):''; item(t+a+o); });
       }
-      // programa dimensionado (ambiente / área / capacidade / requisitos) + soma
+      // programa dimensionado (setor / qtd / área un. / pé-direito / capacidade / requisitos)
       if(ambientes.length){
         subt('Programa dimensionado');
         ambientes.forEach(a=>{
           const nm=(a.nome||'(ambiente sem nome)').toString().trim();
+          const st=(typeof _progSetor==='function')?_progSetor(a.setor):null;
           const det=[];
+          const q=parseFloat(a.qtd)||1; if(q>1) det.push(q+'×');
           if(a.area!=null && String(a.area).trim()!=='') det.push((parseFloat(a.area)||a.area)+' m²');
+          if(a.pd!=null && String(a.pd).trim()!=='') det.push('pé-dir. '+a.pd+' m');
           if(a.ocup) det.push('cap. '+a.ocup);
           if(a.req)  det.push(a.req);
-          item(nm+(det.length?(' — '+det.join(' · ')):''));
+          item((st?('['+st.label+'] '):'')+nm+(det.length?(' — '+det.join(' · ')):''));
         });
-        const soma=ambientes.reduce((s,a)=>s+(parseFloat(a.area)||0),0);
-        if(soma>0) paragrafo('Área total programada: '+soma.toLocaleString('pt-BR')+' m².');
+        // áreas calculadas (útil → circulação → construída)
+        const ar=(typeof _progAreas==='function')?_progAreas():null;
+        if(ar && ar.util>0){
+          paragrafo('Área útil programada: '+ar.util.toLocaleString('pt-BR')+' m²'
+            + (ar.pct?(' · + circulação/paredes '+ar.pct+'% = área construída estimada '+ar.construida.toLocaleString('pt-BR',{maximumFractionDigits:1})+' m²'):''));
+        }
+        // checagem do programa contra o potencial construtivo do lote (CA/TO)
+        if(ar && ar.construida>0 && typeof _progPotencial==='function'){
+          const pot=_progPotencial(); const f=n=>n.toLocaleString('pt-BR',{maximumFractionDigits:1});
+          if(pot.terreno>0 && pot.ca>0){
+            const folga=pot.maxCA-ar.construida, ok=folga>=0;
+            subt('Checagem vs. potencial do terreno');
+            paragrafo('Pelo CA: área construída '+f(ar.construida)+' m² × máximo '+f(pot.maxCA)+' m² ('+f(pot.terreno)+' m² × CA '+pot.ca+') — '+(ok?('cabe, folga de '+f(folga)+' m²'):('EXCEDE em '+f(-folga)+' m²'))+'.');
+            if(pot.to>0) paragrafo('Projeção máxima no térreo (TO '+pot.to+'%): '+f(pot.maxTO)+' m² (referência para a implantação).');
+          }
+        }
       }
       // matriz de relações entre ambientes (obrigatórias / a evitar)
       const _nome=id=>{ const x=(state.programa||[]).find(q=>String(q.id)===String(id)); return x?(x.item||x.nome||''):''; };
@@ -12800,6 +13121,11 @@ async function gerarRelatorioPDF(){
       titulo('Registro visual — análise gráfica das referências'); temAlgo=true;
       _diagPNGs.forEach(d=> _figura(d.src, d.w, d.h, d.cap));
     }
+    // 6) ORGANOGRAMA DO PROGRAMA — bolhas por setor + adjacências
+    if(_orgPNG){
+      titulo('Registro visual — organograma do programa'); temAlgo=true;
+      _figura(_orgPNG.src, _orgPNG.w, _orgPNG.h, 'Organograma — ambientes do programa agrupados por setor (tamanho = área); linhas = relações da matriz (▲ obrigatória · ○ desejável · ✕ evitar).');
+    }
     if(!temAlgo){
       titulo('Registro visual');
       paragrafo('Nenhum mapa renderizado nem foto/croqui registrado nesta sessão. Abra as abas de mapa e adicione fotos/croquis para que apareçam aqui.');
@@ -12808,7 +13134,7 @@ async function gerarRelatorioPDF(){
 
   // rodapé em todas as páginas
   const tot = doc.internal.getNumberOfPages();
-  for(let i=1;i<=tot;i++){ doc.setPage(i); rodape(); }
+  for(let i=1;i<=tot;i++){ doc.setPage(i); rodape(i); }   // carimba o rodapé uma vez por página, com o número correto
 
   const fname = 'ATDAU-diagnostico-'+(nome.replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase().slice(0,40)||'relatorio')+'.pdf';
   doc.save(fname);
@@ -12858,6 +13184,7 @@ function calcLeg(){
       <div style="font-size:.63rem;color:var(--t1);margin:3px 0">${i.lbl}</div>
       <div style="font-size:.58rem;color:var(--t3)">${i.note}</div>
     </div>`).join('');
+  if(typeof renderProgChecagem==='function') renderProgChecagem();   // atualiza a checagem do programa vs. CA/TO
   autoSave();
 }
 
