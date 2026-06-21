@@ -13632,6 +13632,54 @@ const MAP_LINE_DASHES = {
   dashdot: { label:'Traço-ponto', arr:[4,1.6,1,1.6] }
 };
 
+// ── Hachuras de área (Bertin) — padrões grayscale-safe p/ distinguir polígonos na impressão ──
+const MAP_FILL_PATTERNS = {
+  none:    { label:'Sólido' },
+  diag:    { label:'Diagonal /' },
+  diagrev: { label:'Diagonal \\' },
+  cross:   { label:'Xadrez' },
+  horiz:   { label:'Horizontal' },
+  vert:    { label:'Vertical' },
+  dots:    { label:'Pontos' },
+};
+let _hachSwId = 0;
+// marcação <pattern> (sem <defs>) p/ hachura SVG; '' quando sólido
+function _hachuraSVGDef(patternId, color, pid){
+  if(!patternId || patternId==='none') return '';
+  const sc=`stroke="${color}" stroke-width="1.1"`;
+  let g='';
+  if(patternId==='diag')         g=`<path d="M0,6 L6,0" ${sc}/><path d="M-1.5,1.5 L1.5,-1.5" ${sc}/><path d="M4.5,7.5 L7.5,4.5" ${sc}/>`;
+  else if(patternId==='diagrev') g=`<path d="M0,0 L6,6" ${sc}/><path d="M-1.5,4.5 L1.5,7.5" ${sc}/><path d="M4.5,-1.5 L7.5,1.5" ${sc}/>`;
+  else if(patternId==='cross')   g=`<path d="M0,6 L6,0" ${sc}/><path d="M0,0 L6,6" ${sc}/>`;
+  else if(patternId==='horiz')   g=`<path d="M0,3 L6,3" ${sc}/>`;
+  else if(patternId==='vert')    g=`<path d="M3,0 L3,6" ${sc}/>`;
+  else if(patternId==='dots')    g=`<circle cx="3" cy="3" r="1.1" fill="${color}"/>`;
+  else return '';
+  return `<pattern id="${pid}" patternUnits="userSpaceOnUse" width="6" height="6">${g}</pattern>`;
+}
+// tile <canvas> 6×6 p/ ctx.createPattern (legenda do relatório) — fundo transparente, traços na cor
+function _hachuraCanvasTile(patternId, color){
+  if(!patternId || patternId==='none') return null;
+  const s=6, c=document.createElement('canvas'); c.width=s; c.height=s; const x=c.getContext('2d');
+  x.strokeStyle=color; x.lineWidth=1.1; x.fillStyle=color; x.lineCap='round';
+  if(patternId==='diag'){ x.beginPath(); x.moveTo(0,6); x.lineTo(6,0); x.moveTo(-1.5,1.5); x.lineTo(1.5,-1.5); x.moveTo(4.5,7.5); x.lineTo(7.5,4.5); x.stroke(); }
+  else if(patternId==='diagrev'){ x.beginPath(); x.moveTo(0,0); x.lineTo(6,6); x.moveTo(-1.5,4.5); x.lineTo(1.5,7.5); x.moveTo(4.5,-1.5); x.lineTo(7.5,1.5); x.stroke(); }
+  else if(patternId==='cross'){ x.beginPath(); x.moveTo(0,6); x.lineTo(6,0); x.moveTo(0,0); x.lineTo(6,6); x.stroke(); }
+  else if(patternId==='horiz'){ x.beginPath(); x.moveTo(0,3); x.lineTo(6,3); x.stroke(); }
+  else if(patternId==='vert'){ x.beginPath(); x.moveTo(3,0); x.lineTo(3,6); x.stroke(); }
+  else if(patternId==='dots'){ x.beginPath(); x.arc(3,3,1.1,0,2*Math.PI); x.fill(); }
+  else return null;
+  return c;
+}
+// ImageData (com fundo de fillColor translúcido + traços) p/ MapLibre addImage(fill-pattern)
+function _hachuraMapImage(patternId, lineColor, fillColor, opacity){
+  const tile=_hachuraCanvasTile(patternId, lineColor); if(!tile) return null;
+  const s=tile.width, c=document.createElement('canvas'); c.width=s; c.height=s; const x=c.getContext('2d');
+  if(fillColor){ x.globalAlpha=Math.max(0,Math.min(1,(opacity!=null?opacity:0.18))); x.fillStyle=fillColor; x.fillRect(0,0,s,s); x.globalAlpha=1; }
+  x.drawImage(tile,0,0);
+  try{ return x.getImageData(0,0,s,s); }catch(e){ return null; }
+}
+
 const MapLegend = {
   _instances: {},
 
@@ -13649,8 +13697,15 @@ const MapLegend = {
     if (geom === 'polyline' || geom === 'line') {
       return `<svg width="22" height="14" viewBox="0 0 22 14"><line x1="2" y1="7" x2="20" y2="7" stroke="${line}" stroke-width="${Math.min(w,3.5)}" ${dashAttr} stroke-linecap="round"/></svg>`;
     }
-    // polygon
-    return `<svg width="22" height="14" viewBox="0 0 22 14"><rect x="2" y="2.5" width="18" height="9" rx="1.5" fill="${fill}" fill-opacity="${op}" stroke="${line}" stroke-width="${Math.min(w,2.2)}" ${dashAttr}/></svg>`;
+    // polygon (com hachura de Bertin, se houver)
+    const pid = 'swhach'+(++_hachSwId);
+    const def = _hachuraSVGDef(st.fillPattern, line, pid);
+    const rectAttrs = `x="2" y="2.5" width="18" height="9" rx="1.5"`;
+    return `<svg width="22" height="14" viewBox="0 0 22 14">`
+      + (def?`<defs>${def}</defs>`:'')
+      + `<rect ${rectAttrs} fill="${fill}" fill-opacity="${op}"/>`
+      + (def?`<rect ${rectAttrs} fill="url(#${pid})"/>`:'')
+      + `<rect ${rectAttrs} fill="none" stroke="${line}" stroke-width="${Math.min(w,2.2)}" ${dashAttr}/></svg>`;
   },
 
   mount(cfg) {
@@ -13780,6 +13835,8 @@ const MapLegend = {
     if (geom==='polygon') {
       html += `<div class="ml-style-row"><label>Preenchimento</label><input type="color" data-k="fillColor" value="${st.fillColor||st.color||'#1ecfa4'}"></div>`;
       html += `<div class="ml-style-row"><label>Opacidade</label><input type="range" data-k="fillOpacity" min="0" max="100" value="${Math.round((st.fillOpacity!=null?st.fillOpacity:0.35)*100)}"></div>`;
+      const patOpts = Object.entries(MAP_FILL_PATTERNS).map(([k,v])=>`<option value="${k}" ${(st.fillPattern||'none')===k?'selected':''}>${v.label}</option>`).join('');
+      html += `<div class="ml-style-row"><label>Hachura</label><select data-k="fillPattern">${patOpts}</select></div>`;
     }
     if (geom==='polyline'||geom==='line'||geom==='polygon') {
       html += `<div class="ml-style-row"><label>Espessura</label><input type="range" data-k="lineWidth" min="1" max="8" step="0.5" value="${st.lineWidth||2}"></div>`;
@@ -13955,6 +14012,9 @@ function _comporMapaCanvas(map, opts) {
         } else {
           ctx.fillStyle = st.fillColor||'#888';
           ctx.globalAlpha = (st.fillOpacity!=null?st.fillOpacity:0.4); ctx.fillRect(cx0, cy0-5*dpr, swW, 10*dpr); ctx.globalAlpha=1;
+          // hachura de Bertin (grayscale-safe) por cima do preenchimento
+          const _tile=_hachuraCanvasTile(st.fillPattern, st.lineColor||'#555');
+          if(_tile){ try{ const _p=ctx.createPattern(_tile,'repeat'); ctx.save(); ctx.fillStyle=_p; ctx.fillRect(cx0, cy0-5*dpr, swW, 10*dpr); ctx.restore(); }catch(e){} }
           ctx.strokeStyle = st.lineColor||'#888'; ctx.lineWidth=Math.min(st.lineWidth||1.5,2)*dpr; ctx.strokeRect(cx0, cy0-5*dpr, swW, 10*dpr);
         }
         ctx.fillStyle='#33322f'; ctx.font = `400 ${9.5*dpr}px Arial, sans-serif`; ctx.textAlign='left';
@@ -14325,6 +14385,16 @@ function mlAplicarEstilo(layerId, st) {
     if (_mlMap.getLayer(`fill-${layerId}`)) {
       _mlMap.setPaintProperty(`fill-${layerId}`,'fill-color', fillC);
       _mlMap.setPaintProperty(`fill-${layerId}`,'fill-opacity', st.fillOpacity);
+      // hachura de Bertin (fill-pattern grayscale-safe) — só p/ camadas de cor única
+      try{
+        const pid='hachpat-'+layerId;
+        if(st.fillPattern && st.fillPattern!=='none' && !corPorFeicao){
+          const img=_hachuraMapImage(st.fillPattern, st.lineColor||st.fillColor||'#555', st.fillColor, st.fillOpacity);
+          if(img){ if(_mlMap.hasImage(pid)) _mlMap.removeImage(pid); _mlMap.addImage(pid, img); _mlMap.setPaintProperty(`fill-${layerId}`,'fill-pattern', pid); }
+        } else if(_mlMap.getPaintProperty(`fill-${layerId}`,'fill-pattern')){
+          _mlMap.setPaintProperty(`fill-${layerId}`,'fill-pattern', undefined);
+        }
+      }catch(e){ /* hachura é opcional; mantém o preenchimento sólido */ }
     }
     if (_mlMap.getLayer(`line-${layerId}`)) {
       _mlMap.setPaintProperty(`line-${layerId}`,'line-color', lineC);
