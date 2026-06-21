@@ -7697,9 +7697,54 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div class="form-field"><label>Nº de pavimentos</label><input type="number" id="an-pav" placeholder="ex: 3"></div>
       </div>
       <div class="form-field" style="margin-top:8px"><label>Programa / usos principais</label><textarea id="an-programa" placeholder="Que ambientes e funções a obra reúne? Ex: biblioteca, teatro, oficinas, praça coberta."></textarea></div>
-      <div class="form-field"><label>Partido (síntese em 1–2 frases)</label><textarea id="an-partido" placeholder="O que esta obra resolve que interessa ao seu projeto? Implantação, relação com o entorno, circulação, estrutura, conforto, materialidade."></textarea></div>
-      <div class="form-field"><label>O que aproveitar / o que evitar</label><textarea id="an-licao" placeholder="Lição projetual: que estratégia você levaria para o seu projeto? O que NÃO funcionou e deve ser evitado?"></textarea></div>
+      <div class="form-grid" style="margin-top:8px">
+        <div class="form-field"><label>Tipologia de partido</label>
+          <select id="an-partido-tipo">
+            <option value="">— selecione —</option>
+            <option>Barra / lâmina</option>
+            <option>Pátio / claustro</option>
+            <option>Torre / vertical</option>
+            <option>Tapete / horizontal extensivo</option>
+            <option>Pavilhão isolado</option>
+            <option>Volumes articulados</option>
+            <option>Embasamento + torre</option>
+            <option>Topografia / semienterrado</option>
+            <option>Espinha / circulação central</option>
+            <option>Reticulado / grelha</option>
+            <option>Orgânico / fluido</option>
+            <option>Megaestrutura</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-field"><label>Partido (síntese em 1–2 frases)</label><input type="text" id="an-partido" placeholder="ideia generativa que organiza a obra"></div>
+      </div>
+      <div class="form-grid" style="margin-top:8px">
+        <div class="form-field"><label>✓ O que aproveitar</label><textarea id="an-aproveitar" placeholder="Que estratégia você levaria para o seu projeto?"></textarea></div>
+        <div class="form-field"><label>✗ O que evitar</label><textarea id="an-evitar" placeholder="O que NÃO funcionou e deve ser evitado?"></textarea></div>
+      </div>
+      <div class="form-grid-3" style="margin-top:8px">
+        <div class="form-field"><label>DOI / ISBN</label><input type="text" id="an-doi" placeholder="ex: 10.xxxx/yyyy"></div>
+        <div class="form-field"><label>URL</label><input type="text" id="an-url" placeholder="https://…"></div>
+        <div class="form-field"><label>Acesso em</label><input type="date" id="an-acesso"></div>
+      </div>
       <button class="instr-btn instr-btn-primary" onclick="addAnaloga()" style="margin-top:10px">+ Adicionar à comparação</button>
+    </div>
+  </div>
+
+  <!-- Acervos curados para buscar referências -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🔎</span><span class="block-title">Onde buscar referências (acervos)</span></div>
+    <div class="block-body">
+      <div style="font-size:.64rem;color:var(--t2);line-height:1.8">
+        <a href="https://www.archdaily.com.br" target="_blank" style="color:var(--teal)">ArchDaily Brasil</a> ·
+        <a href="https://vitruvius.com.br" target="_blank" style="color:var(--teal)">Vitruvius</a> ·
+        <a href="https://divisare.com" target="_blank" style="color:var(--teal)">Divisare</a> ·
+        <a href="https://www.dezeen.com" target="_blank" style="color:var(--teal)">Dezeen</a> ·
+        <a href="https://www.archdaily.com" target="_blank" style="color:var(--teal)">ArchDaily (intl.)</a> ·
+        <a href="https://bdtd.ibict.br" target="_blank" style="color:var(--teal)">BDTD (teses/dissertações)</a> ·
+        prêmios IAB / bienais
+        <div style="margin-top:7px;color:var(--t3)">Ao cadastrar, registre a <strong>fonte</strong> e a <strong>citação</strong> (DOI/URL/data de acesso) — referência sem citação não é defensável em banca ou cliente.</div>
+      </div>
     </div>
   </div>
 
@@ -7723,6 +7768,20 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header"><span class="block-icon">📊</span><span class="block-title">3 · Quadro comparativo das análogas</span></div>
     <div class="block-body">
       <div id="an-tabela"></div>
+      <button class="instr-btn instr-btn-primary" onclick="exportInstrument('obras-analogas')" style="font-size:.62rem;margin-top:10px">📄 Exportar obras análogas (JSON)</button>
+    </div>
+  </div>
+
+  <!-- Bloco 4 · Matriz de critérios (obras × seu projeto) -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🧮</span><span class="block-title">4 · Matriz de critérios (obras × seu projeto)</span></div>
+    <div class="block-body">
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Defina os <strong>critérios</strong> que importam ao seu projeto e pontue de 1 a 5 como cada obra responde a eles — e qual a <strong>meta para o seu projeto</strong> (coluna ★). É o que transforma referências em decisões defensáveis.</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input type="text" id="ref-crit-input" placeholder="novo critério (ex.: relação com o entorno)" onkeydown="if(event.key==='Enter')addRefCriterio()" style="flex:1;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:.64rem;box-sizing:border-box">
+        <button class="instr-btn instr-btn-primary" onclick="addRefCriterio()" style="font-size:.62rem">+ critério</button>
+      </div>
+      <div id="ref-matriz-criterios"></div>
     </div>
   </div>
 
@@ -8115,6 +8174,8 @@ let state = {
   viab_pesos:{},
   viab_terrenos:[],
   analogas:[],
+  ref_criterios:[],
+  ref_matriz:{},
   prog_matriz:{},
   prog_ambientes:[],
   user_profiles:{},
@@ -10091,9 +10152,11 @@ function addAnaloga() {
   state.analogas.push({
     id: novoId, nome, autor:get('an-autor'), local:get('an-local'), fonte:get('an-fonte'),
     area:get('an-area'), terreno:get('an-terreno'), pav:get('an-pav'),
-    programa:get('an-programa'), partido:get('an-partido'), licao:get('an-licao')
+    programa:get('an-programa'), partido:get('an-partido'),
+    partidoTipo:get('an-partido-tipo'), aproveitar:get('an-aproveitar'), evitar:get('an-evitar'),
+    doi:get('an-doi'), url:get('an-url'), acesso:get('an-acesso')
   });
-  ['an-nome','an-autor','an-local','an-fonte','an-area','an-terreno','an-pav','an-programa','an-partido','an-licao'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  ['an-nome','an-autor','an-local','an-fonte','an-area','an-terreno','an-pav','an-programa','an-partido','an-partido-tipo','an-aproveitar','an-evitar','an-doi','an-url','an-acesso'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
   renderAnalogas();
   // auto-selecionar a obra recém-criada na Análise gráfica (descoberta do editor)
   const selA = document.getElementById('an-analise-sel');
@@ -10107,40 +10170,114 @@ function delAnaloga(id) {
   renderAnalogas();
   autoSave();
 }
+// Promove a lição de uma obra análoga a uma diretriz projetual (Painel 08), conectando
+// o estudo de referências às diretrizes (antes desacoplados).
+function promoverLicaoComoDiretriz(obraId, catId){
+  const obra = (state.analogas||[]).find(a=>String(a.id)===String(obraId));
+  if(!obra) return;
+  const partes=[];
+  if(obra.aproveitar) partes.push('Aproveitar: '+obra.aproveitar);
+  if(obra.evitar) partes.push('Evitar: '+obra.evitar);
+  let base = (partes.join(' · ') || obra.licao || obra.partido || '').toString().trim();
+  if(!base){ alert('Esta obra não tem lição/partido preenchido para promover a diretriz.'); return; }
+  if(!(typeof DIR_CATS!=='undefined' && DIR_CATS.some(c=>c.id===catId))) catId='implantacao';
+  const text = base + ' [ref.: ' + (obra.nome||'obra análoga') + ']';
+  if(!state.dir_cats) state.dir_cats={};
+  if(!state.dir_cats[catId]) state.dir_cats[catId]=[];
+  if(state.dir_cats[catId].some(d=>d && d.text===text)){ mostrarStatus('Essa diretriz já existe nesta categoria.'); return; }
+  state.dir_cats[catId].push({ text, pri:'D', origem:'ref:'+obraId });
+  autoSave();
+  if(typeof renderDiretrizes==='function') renderDiretrizes();
+  if(typeof renderDirManCat==='function') renderDirManCat(catId);
+  const lbl=(DIR_CATS.find(c=>c.id===catId)||{}).label||catId;
+  mostrarStatus('Lição promovida a diretriz ✓ — '+lbl);
+}
 function renderAnalogas() {
   const el = document.getElementById('an-tabela');
   if (typeof atualizarSelAnaliseAnaloga==='function') atualizarSelAnaliseAnaloga();
   if (!el) return;
   const list = state.analogas || [];
   if (!list.length) { el.innerHTML = '<div style="font-size:.6rem;color:var(--t3);font-style:italic;padding:6px 0">Nenhuma obra cadastrada. Adicione referências para comparar.</div>'; return; }
+  const catOpts = DIR_CATS.map(c=>`<option value="${c.id}">${escHtml(c.label)}</option>`).join('');
   let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.58rem"><thead><tr style="background:rgba(30,207,164,.1)">'
     + '<th style="padding:5px;border:1px solid var(--line);text-align:left">Obra</th>'
     + '<th style="padding:5px;border:1px solid var(--line)">Área (m²)</th>'
     + '<th style="padding:5px;border:1px solid var(--line)">Terreno (m²)</th>'
     + '<th style="padding:5px;border:1px solid var(--line)">TO aprox.</th>'
     + '<th style="padding:5px;border:1px solid var(--line)">Pav.</th>'
-    + '<th style="padding:5px;border:1px solid var(--line);text-align:left">Lição projetual</th>'
+    + '<th style="padding:5px;border:1px solid var(--line);text-align:left">Lição (aproveitar / evitar)</th>'
+    + '<th style="padding:5px;border:1px solid var(--line);text-align:left">Promover lição → diretriz</th>'
     + '<th style="padding:5px;border:1px solid var(--line)"></th></tr></thead><tbody>';
   list.forEach(a=>{
     const area=parseFloat(a.area)||0, terr=parseFloat(a.terreno)||0, pav=parseFloat(a.pav)||0;
     const proj = (area>0 && pav>0) ? area/pav : 0;
     const to = (proj>0 && terr>0) ? Math.round(proj/terr*100)+'%' : '—';
+    const licaoTxt = a.licao || [a.aproveitar?('✓ '+a.aproveitar):'', a.evitar?('✗ '+a.evitar):''].filter(Boolean).join('  ') || '—';
+    const podePromover = !!(a.licao || a.aproveitar || a.evitar || a.partido);
     html += `<tr>
-      <td style="padding:5px;border:1px solid var(--line)"><strong>${escHtml(a.nome)}</strong>${a.autor?'<br><span style="color:var(--t3)">'+escHtml(a.autor)+'</span>':''}${a.local?'<br><span style="color:var(--t3);font-size:.54rem">'+escHtml(a.local)+'</span>':''}</td>
+      <td style="padding:5px;border:1px solid var(--line)"><strong>${escHtml(a.nome)}</strong>${a.autor?'<br><span style="color:var(--t3)">'+escHtml(a.autor)+'</span>':''}${a.local?'<br><span style="color:var(--t3);font-size:.54rem">'+escHtml(a.local)+'</span>':''}${a.partidoTipo?'<br><span style="color:var(--teal);font-size:.52rem">▦ '+escHtml(a.partidoTipo)+'</span>':''}</td>
       <td style="padding:5px;border:1px solid var(--line);text-align:center">${area?area.toLocaleString('pt-BR'):'—'}</td>
       <td style="padding:5px;border:1px solid var(--line);text-align:center">${terr?terr.toLocaleString('pt-BR'):'—'}</td>
       <td style="padding:5px;border:1px solid var(--line);text-align:center">${to}</td>
       <td style="padding:5px;border:1px solid var(--line);text-align:center">${pav||'—'}</td>
-      <td style="padding:5px;border:1px solid var(--line);font-size:.55rem">${escHtml(a.licao||'—')}</td>
+      <td style="padding:5px;border:1px solid var(--line);font-size:.55rem">${escHtml(licaoTxt)}</td>
+      <td style="padding:4px;border:1px solid var(--line);text-align:center">${podePromover?`<select id="prom-cat-${a.id}" style="font-size:.52rem;max-width:104px;border:1px solid var(--line2);border-radius:4px;padding:1px">${catOpts}</select><button onclick="promoverLicaoComoDiretriz('${a.id}', document.getElementById('prom-cat-${a.id}').value)" title="Cria uma diretriz no Painel 08 a partir desta lição" style="display:block;width:100%;margin-top:3px;font-size:.52rem;cursor:pointer;border:1px solid var(--teal);background:transparent;color:var(--teal);border-radius:4px;padding:2px">→ diretriz</button>`:'<span style="font-size:.5rem;color:var(--t3);font-style:italic">preencha a lição</span>'}</td>
       <td style="padding:5px;border:1px solid var(--line);text-align:center"><button onclick="delAnaloga('${a.id}')" style="background:none;border:none;cursor:pointer;color:var(--t3)">✕</button></td>
     </tr>`;
   });
   html += '</tbody></table></div>';
   el.innerHTML = html;
+  if(typeof renderMatrizCriterios==='function') renderMatrizCriterios();   // colunas dependem das obras
 }
 function renderAnalogasPanel(){
   renderAnalogas();
   if(typeof renderAnaliseAnaloga==='function'){ atualizarSelAnaliseAnaloga(); renderAnaliseAnaloga(); }
+  if(typeof renderMatrizCriterios==='function') renderMatrizCriterios();
+}
+
+// ── Matriz de critérios: critério × obras × seu projeto (pontuação 1–5) ──
+function _refMatKey(cid,col){ return cid+'|'+col; }
+function refMatrizGet(cid,col){ const m=state.ref_matriz; return m?(parseInt(m[_refMatKey(cid,col)]||0,10)||0):0; }
+function refMatrizCiclar(cid,col){
+  if(!state.ref_matriz||typeof state.ref_matriz!=='object') state.ref_matriz={};
+  const k=_refMatKey(cid,col); const next=((parseInt(state.ref_matriz[k]||0,10)||0)+1)%6;   // 0→1→…→5→0
+  if(next) state.ref_matriz[k]=next; else delete state.ref_matriz[k];
+  autoSave(); renderMatrizCriterios();
+}
+function addRefCriterio(){
+  const inp=document.getElementById('ref-crit-input'); const t=(inp&&inp.value||'').trim();
+  if(!t) return;
+  if(!Array.isArray(state.ref_criterios)) state.ref_criterios=[];
+  state.ref_criterios.push({id:Date.now(), text:t});
+  if(inp) inp.value='';
+  autoSave(); renderMatrizCriterios();
+}
+function delRefCriterio(id){
+  state.ref_criterios=(state.ref_criterios||[]).filter(c=>String(c.id)!==String(id));
+  if(state.ref_matriz){ Object.keys(state.ref_matriz).forEach(k=>{ if(k.split('|')[0]===String(id)) delete state.ref_matriz[k]; }); }
+  autoSave(); renderMatrizCriterios();
+}
+const _REF_SCORE_COR=['','#d96b6b','#dd9a55','#d9c24f','#9ec46a','#4caf7d'];   // 1..5
+function renderMatrizCriterios(){
+  const host=document.getElementById('ref-matriz-criterios'); if(!host) return;
+  const crits=Array.isArray(state.ref_criterios)?state.ref_criterios:[];
+  const obras=Array.isArray(state.analogas)?state.analogas:[];
+  if(!crits.length){ host.innerHTML='<div style="font-size:.6rem;color:var(--t3);font-style:italic;padding:6px 0">Adicione critérios para comparar as obras e o seu projeto. Ex.: implantação, relação com o entorno, conforto, custo, partido.</div>'; return; }
+  const cols=[...obras.map(o=>({key:String(o.id), label:(o.nome||'(obra)')})), {key:'projeto', label:'★ Seu projeto'}];
+  let h='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:.58rem;width:100%"><thead><tr style="background:rgba(30,207,164,.1)">';
+  h+='<th style="padding:5px;border:1px solid var(--line);text-align:left;min-width:120px">Critério</th>';
+  cols.forEach(c=>{ h+=`<th style="padding:5px;border:1px solid var(--line);max-width:90px;font-size:.55rem">${escHtml(c.label)}</th>`; });
+  h+='<th style="border:1px solid var(--line);width:24px"></th></tr></thead><tbody>';
+  crits.forEach(cr=>{
+    h+=`<tr><td style="padding:5px;border:1px solid var(--line)">${escHtml(cr.text)}</td>`;
+    cols.forEach(c=>{
+      const v=refMatrizGet(cr.id,c.key);
+      h+=`<td onclick="refMatrizCiclar('${cr.id}','${c.key}')" title="clique para pontuar 1–5" style="border:1px solid var(--line);text-align:center;cursor:pointer;font-weight:700;color:${v?'#fff':'var(--t3)'};background:${v?_REF_SCORE_COR[v]:'transparent'}">${v||'·'}</td>`;
+    });
+    h+=`<td style="border:1px solid var(--line);text-align:center"><button onclick="delRefCriterio('${cr.id}')" style="background:none;border:none;cursor:pointer;color:var(--t3)">✕</button></td></tr>`;
+  });
+  h+='</tbody></table></div><div style="font-size:.55rem;color:var(--t3);margin-top:6px">Clique nas células para pontuar de 1 (fraco) a 5 (forte). A coluna ★ <strong>Seu projeto</strong> registra a meta/aspiração.</div>';
+  host.innerHTML=h;
 }
 
 // ══════════════════════════════════════════════════
@@ -12766,8 +12903,12 @@ async function gerarRelatorioPDF(){
       subt(a.nome+(a.autor?(' — '+a.autor):''));
       if(a.fonte)    paragrafo('Fonte: '+a.fonte);
       if(a.programa) paragrafo('Programa: '+a.programa);
+      if(a.partidoTipo) paragrafo('Tipologia de partido: '+a.partidoTipo);
       if(a.partido)  paragrafo('Partido: '+a.partido);
+      if(a.aproveitar) paragrafo('Aproveitar: '+a.aproveitar);
+      if(a.evitar)   paragrafo('Evitar: '+a.evitar);
       if(a.licao)    paragrafo('Lição projetual: '+a.licao);
+      { const cit=[a.doi&&('DOI/ISBN '+a.doi), a.url, a.acesso&&('acesso em '+a.acesso)].filter(Boolean).join(' · '); if(cit) paragrafo('Citação: '+cit); }
       const an=a.analise||{};
       const linhas=[];
       ANALISE_CATEGORIAS.forEach(cat=>{
@@ -12783,6 +12924,16 @@ async function gerarRelatorioPDF(){
       }
       espaco(1);
     });
+    // 3) matriz de critérios (critério × obras × seu projeto)
+    const crits = Array.isArray(state.ref_criterios) ? state.ref_criterios : [];
+    if(crits.length){
+      subt('Matriz de critérios (obras × seu projeto)');
+      const cols = [...obras.map(o=>({key:String(o.id), label:(o.nome||'obra')})), {key:'projeto', label:'Seu projeto'}];
+      crits.forEach(cr=>{
+        const notas = cols.map(c=>{ const v=(typeof refMatrizGet==='function')?refMatrizGet(cr.id,c.key):0; return v?(c.label+' '+v):null; }).filter(Boolean);
+        item(cr.text + (notas.length?(' — '+notas.join(', ')):' — (sem pontuação)'));
+      });
+    }
     espaco(2);
     return true;
   }
@@ -21566,7 +21717,27 @@ function resetStationary() {
   autoSave();
 }
 
+// Export estruturado das Obras Análogas (não é prefix-based: vive em state.analogas + matriz de critérios)
+function _exportObrasAnalogas(){
+  const data = {
+    instrumento: 'obras-analogas',
+    data: new Date().toISOString(),
+    projeto: state['proj-nome'] || '',
+    obras: Array.isArray(state.analogas) ? state.analogas : [],
+    criterios: Array.isArray(state.ref_criterios) ? state.ref_criterios : [],
+    matriz_criterios: state.ref_matriz || {}
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'atdau-obras-analogas-' + Date.now() + '.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  if(typeof mostrarStatus==='function') mostrarStatus('Obras análogas exportadas (JSON) ✓');
+  return data;
+}
 function exportInstrument(name) {
+  if(name === 'obras-analogas') return _exportObrasAnalogas();
   // Coletar todos os campos com prefixo correspondente
   const prefixes = {
     'checklist-visita': ['iv-'],
