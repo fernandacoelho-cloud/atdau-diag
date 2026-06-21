@@ -74,17 +74,14 @@ test('Autoria/alpha + direitos + Gehl/Micropolis + mini tutorial', async ({ page
     abrirTutorial();
     const corpo = (document.getElementById('tut-body') || {}).textContent || '';
     const modal = (document.getElementById('tut-modal') || {}).textContent || '';
-    const temBotaoSobre = !!document.querySelector('#tut-modal button[onclick="abrirSobre()"]');
     fecharTutorial();
     return {
       miniTutorial: /Início rápido/.test(corpo) && /5 passos/.test(corpo),
       copyrightNoModal: /Fernanda/.test(modal) && /v1\.0-alpha/.test(modal),
-      temBotaoSobre,
       abrirSobreFn: typeof abrirSobre === 'function',
     };
   });
   expect(tut.miniTutorial).toBe(true);
   expect(tut.copyrightNoModal).toBe(true);
-  expect(tut.temBotaoSobre).toBe(true);
   expect(tut.abrirSobreFn).toBe(true);
 });

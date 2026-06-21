@@ -1309,9 +1309,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <input type="file" id="proj-file-input" accept=".json,.atdau.json" style="display:none" onchange="abrirProjeto(this)">
   <button class="tb-save" id="btn-save" onclick="salvar()" title="Salvar rascunho neste navegador (rápido, mas não é arquivo)">💾 Salvar</button>
   <button class="tb-save" id="btn-modo" onclick="toggleModoCampo()" title="Alternar entre Escritório (denso) e Campo (fontes maiores, alvos de toque) — útil em tablet/celular" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">🏢 Escritório</button>
-  <button class="tb-save" onclick="abrirSobre()" title="Autoria, versão e direitos autorais" style="background:transparent;border:1px solid rgba(181,80,58,.55);color:#b5503a">✪ Sobre · autoria</button>
   <button class="tb-save" onclick="abrirTutorial()" title="Veja como percorrer a ferramenta" style="background:transparent;border:1px solid var(--teal);color:var(--teal)">🎯 Como usar</button>
   <button class="tb-save" onclick="abrirGlossario()" title="Termos e métodos em linguagem simples" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">📖 Glossário</button>
+  <button class="tb-save" onclick="abrirSobre()" title="Autoria, versão e direitos sobre esta ferramenta" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">ⓘ Sobre / autoria</button>
 </div>
 
 <!-- SECTION NAV -->
@@ -8581,7 +8581,6 @@ function abrirTutorial(){
       <div style="padding:10px 18px;border-top:1px solid var(--line);background:var(--bg2);font-size:.56rem;color:var(--t3);font-style:italic;display:flex;align-items:center;gap:10px">
         <span>A ferramenta organiza o método; o conteúdo e o juízo são seus.</span>
         <span style="flex:1"></span>
-        <button onclick="abrirSobre()" style="background:transparent;border:1px solid var(--line2);border-radius:5px;padding:4px 10px;cursor:pointer;font-size:.56rem;color:var(--t2);font-style:normal">ⓘ Sobre / autoria</button>
         <span>© 2025–2026 Fernanda F. de M. Coelho · IFMG · v1.0-alpha</span>
       </div>
     </div>`;
@@ -8589,8 +8588,8 @@ function abrirTutorial(){
   renderTutorial();
 }
 function fecharTutorial(){ const m=document.getElementById('tut-modal'); if(m) m.style.display='none'; }
-// Modal dedicado "Sobre · autoria" (acessível pelo botão da topbar, pelo selo
-// de versão e pelo rodapé do tutorial).
+// Modal dedicado "Sobre · autoria" (acessível pelo botão dedicado da topbar
+// e pelo selo de versão).
 const _ROTULO_SOBRE='font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);padding-top:2px';
 function abrirSobre(){
   if(typeof fecharTutorial==='function') fecharTutorial();
