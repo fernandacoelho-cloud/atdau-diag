@@ -1300,6 +1300,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <div class="topbar">
   <div class="tb-logo">ATDAU</div>
   <div class="tb-title">Pré-Projeto · 01-01</div>
+  <span class="tb-alpha" title="Ferramenta em desenvolvimento ativo — versão alpha. Funcionalidades, dados e interface podem mudar. Clique para ver autoria e direitos." onclick="abrirSobre()" style="cursor:pointer;flex-shrink:0;font-size:.55rem;font-weight:800;letter-spacing:.04em;color:#9a6b1e;background:rgba(201,146,59,.16);border:1px solid rgba(201,146,59,.5);border-radius:20px;padding:2px 9px;white-space:nowrap">v1.0-alpha · em desenvolvimento</span>
   <div class="tb-meta" id="tb-meta">Projeto não salvo</div>
   <button class="tb-export" onclick="exportJSON()">⬇ Export JSON</button>
   <button class="tb-export" onclick="gerarRelatorioPDF()" title="Gerar relatório-síntese em PDF">📄 Relatório PDF</button>
@@ -1308,6 +1309,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <input type="file" id="proj-file-input" accept=".json,.atdau.json" style="display:none" onchange="abrirProjeto(this)">
   <button class="tb-save" id="btn-save" onclick="salvar()" title="Salvar rascunho neste navegador (rápido, mas não é arquivo)">💾 Salvar</button>
   <button class="tb-save" id="btn-modo" onclick="toggleModoCampo()" title="Alternar entre Escritório (denso) e Campo (fontes maiores, alvos de toque) — útil em tablet/celular" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">🏢 Escritório</button>
+  <button class="tb-save" onclick="abrirSobre()" title="Autoria, versão e direitos autorais" style="background:transparent;border:1px solid rgba(181,80,58,.55);color:#b5503a">✪ Sobre · autoria</button>
   <button class="tb-save" onclick="abrirTutorial()" title="Veja como percorrer a ferramenta" style="background:transparent;border:1px solid var(--teal);color:var(--teal)">🎯 Como usar</button>
   <button class="tb-save" onclick="abrirGlossario()" title="Termos e métodos em linguagem simples" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">📖 Glossário</button>
 </div>
@@ -6053,6 +6055,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </div>
     </div>
   </div>
+
 </div>
 
 <!-- ════════════════════ PANEL 15: GOVERNANÇA E PARTICIPAÇÃO ════════════════════ -->
@@ -6261,7 +6264,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div class="instr-icon">🧭</div>
         <div class="instr-meta">
           <div class="instr-title">Referências do Bairro · Identidade e Memória Coletiva</div>
-          <div class="instr-ref">Rheingantz et al. (2009) — Observando a qualidade do lugar, PROARQ/UFRJ.</div>
+          <div class="instr-ref">Rheingantz et al. (2009) — Observando a qualidade do lugar, PROARQ/UFRJ; Gehl, J. (2013) — <em>Cidades para pessoas</em> (Perspectiva); Coletivo Micrópolis (EA-UFMG, 2014).</div>
         </div>
       </div>
       <div class="scale-tags">
@@ -6506,7 +6509,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div class="instr-icon">🌟</div>
         <div class="instr-meta">
           <div class="instr-title">12 critérios de qualidade do lugar</div>
-          
+          <div class="instr-ref">Gehl, J. (2013) — <em>Cidades para pessoas</em> (Perspectiva); Gehl, J. &amp; Svarre, B. (2013) — <em>How to study public life</em>.</div>
         </div>
       <div class="scale-tags">
         <div class="scale-tags-line">
@@ -8578,13 +8581,65 @@ function abrirTutorial(){
       <div style="padding:10px 18px;border-top:1px solid var(--line);background:var(--bg2);font-size:.56rem;color:var(--t3);font-style:italic;display:flex;align-items:center;gap:10px">
         <span>A ferramenta organiza o método; o conteúdo e o juízo são seus.</span>
         <span style="flex:1"></span>
-        <span>Suite ATDAU · Fernanda Coelho · IFMG</span>
+        <button onclick="abrirSobre()" style="background:transparent;border:1px solid var(--line2);border-radius:5px;padding:4px 10px;cursor:pointer;font-size:.56rem;color:var(--t2);font-style:normal">ⓘ Sobre / autoria</button>
+        <span>© 2025–2026 Fernanda F. de M. Coelho · IFMG · v1.0-alpha</span>
       </div>
     </div>`;
   document.body.appendChild(m);
   renderTutorial();
 }
 function fecharTutorial(){ const m=document.getElementById('tut-modal'); if(m) m.style.display='none'; }
+// Modal dedicado "Sobre · autoria" (acessível pelo botão da topbar, pelo selo
+// de versão e pelo rodapé do tutorial).
+const _ROTULO_SOBRE='font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);padding-top:2px';
+function abrirSobre(){
+  if(typeof fecharTutorial==='function') fecharTutorial();
+  let m = document.getElementById('sobre-modal');
+  if(m){ m.style.display='flex'; return; }
+  m = document.createElement('div');
+  m.id='sobre-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(20,20,20,.72);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px';
+  m.onclick=(e)=>{ if(e.target===m) fecharSobre(); };
+  m.innerHTML = `
+    <div style="background:#fff;border-radius:10px;width:min(720px,96vw);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.4)">
+      <div style="display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line);background:var(--bg2)">
+        <span style="font-size:1.1rem">ℹ️</span>
+        <div style="flex:1">
+          <div style="font-size:.82rem;font-weight:700;color:var(--t1)">Sobre esta ferramenta · autoria, versão e direitos</div>
+          <div style="font-size:.6rem;color:var(--t3);font-style:italic">Pré-Projeto · Diagnóstico Urbano — Suite ATDAU</div>
+        </div>
+        <button onclick="fecharSobre()" style="font-size:.7rem;padding:6px 14px;background:transparent;border:1px solid var(--line2);border-radius:5px;cursor:pointer">Fechar</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:18px 22px;background:#fafaf7">
+        <div style="display:grid;grid-template-columns:128px 1fr;gap:11px 16px;font-size:.66rem;line-height:1.65;color:var(--t2)">
+
+          <div style="${_ROTULO_SOBRE}">Versão</div>
+          <div><strong style="font-family:var(--mono);color:#9a6b1e">v1.0-alpha</strong> · em desenvolvimento ativo<br><span style="font-size:.62rem;color:var(--t3)">Esta é uma versão alpha da ferramenta. Funcionalidades podem mudar, conter limitações conhecidas ou comportamentos em ajuste. Use com atenção em contextos pedagógicos e reporte inconsistências encontradas.</span></div>
+
+          <div style="${_ROTULO_SOBRE}">Autoria</div>
+          <div><strong style="color:var(--t1)">Fernanda Fonseca de Melo Coelho</strong><br><span style="font-size:.62rem;color:var(--t3)">Professora · Arquitetura e Urbanismo<br>IFMG Campus Santa Luzia</span></div>
+
+          <div style="${_ROTULO_SOBRE}">Natureza</div>
+          <div>Ferramenta didática para o <strong>diagnóstico urbano e a estruturação do pré-projeto</strong> (leitura do território, instrumentos de campo, síntese SWOT, diretrizes e partido) em projetos de Arquitetura e Urbanismo, em desenvolvimento ativo (versão alpha). Desenvolvida no contexto do curso de graduação em Arquitetura e Urbanismo do <strong>IFMG Campus Santa Luzia</strong>, com foco em apoio aos estudantes em disciplinas de projeto e pesquisa.</div>
+
+          <div style="${_ROTULO_SOBRE}">Direitos autorais</div>
+          <div>
+            <div style="border:1px solid rgba(181,80,58,.45);background:rgba(181,80,58,.06);border-radius:8px;padding:12px 14px">
+              <div style="font-weight:800;color:#b5503a;font-size:.62rem;letter-spacing:.03em;margin-bottom:5px">© DIREITOS AUTORAIS RESERVADOS</div>
+              <div style="font-family:var(--mono);font-size:.58rem;color:var(--t2);margin-bottom:9px">© 2025–2026 Fernanda Fonseca de Melo Coelho · IFMG Campus Santa Luzia</div>
+              <p style="margin:0 0 7px">Esta é obra intelectual protegida pela <strong>Lei de Direitos Autorais (Lei nº 9.610/1998)</strong> da legislação brasileira. Todos os direitos patrimoniais e morais sobre o código-fonte, a interface, a documentação, os algoritmos e o conteúdo didático estão reservados à autora.</p>
+              <p style="margin:0 0 7px">É <strong>vedada</strong> a reprodução, distribuição, modificação, descompilação, engenharia reversa, sublicenciamento ou criação de obras derivadas — totais ou parciais — sem autorização prévia e expressa da autora, por escrito.</p>
+              <p style="margin:0;font-size:.62rem;color:var(--t3)">O uso pedagógico está autorizado tacitamente no contexto do curso de Arquitetura e Urbanismo do IFMG Campus Santa Luzia, desde que mantida a integridade da autoria e a respectiva indicação de direitos autorais.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+}
+function fecharSobre(){ const m=document.getElementById('sobre-modal'); if(m) m.style.display='none'; }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const m=document.getElementById('sobre-modal'); if(m && m.style.display!=='none') fecharSobre(); } });
 function setTutPercurso(p){ TUT_ATUAL = p; renderTutorial(); }
 function tutIrPara(n){
   fecharTutorial();
@@ -8610,7 +8665,18 @@ function renderTutorial(){
 
   const p = TUT_PERCURSOS[TUT_ATUAL];
   // descrição + fluxo vertical: cada nó é clicável → abre a aba correspondente
-  let html = `<div style="background:rgba(31,111,92,.08);border:1px solid var(--teal);border-radius:6px;padding:9px 12px;margin-bottom:14px;font-size:.62rem;line-height:1.5;color:var(--t1)"><strong>🎯 Comece definindo o Escopo.</strong> No painel de <strong>Identificação</strong>, no bloco <em>Escopo do diagnóstico</em>, marque quais análises você fará (parta de um dos níveis e ajuste — por bloco ou por campo). O progresso passa a ser relativo ao <em>seu</em> escopo; o que ficar de fora não conta e aparece esmaecido nas abas, com um botão para incluir quando quiser.</div>`;
+  let html = `<div style="background:#fff;border:1px solid var(--line2);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+    <div style="font-size:.7rem;font-weight:800;color:var(--t1);margin-bottom:8px">⚡ Início rápido — 5 passos</div>
+    <ol style="margin:0;padding-left:18px;font-size:.62rem;line-height:1.6;color:var(--t2)">
+      <li><strong>Identifique</strong> o projeto e <strong>defina o Escopo</strong> (aba Identificação).</li>
+      <li><strong>Diagnostique</strong> o território (Contexto, Legislação, Ambientais, Paisagem, Ocupação) — desenhe nos mini-mapas e registre <strong>achados</strong>.</li>
+      <li><strong>Colete em campo</strong> (Instrumentos: Gehl, Lynch, Rheingantz…) e reúna <strong>referências</strong>.</li>
+      <li><strong>Analise e sintetize</strong>: junte as camadas no <strong>Mapa de Análise</strong> e classifique os achados na <strong>Síntese SWOT</strong>.</li>
+      <li><strong>Proponha</strong>: escreva as <strong>Diretrizes</strong>, espacialize no <strong>Mapa-Síntese</strong> e gere o <strong>Relatório PDF</strong>.</li>
+    </ol>
+    <div style="font-size:.55rem;color:var(--t3);font-style:italic;margin-top:7px">Abaixo, três percursos detalhados por nível de aprofundamento e escala.</div>
+  </div>` +
+  `<div style="background:rgba(31,111,92,.08);border:1px solid var(--teal);border-radius:6px;padding:9px 12px;margin-bottom:14px;font-size:.62rem;line-height:1.5;color:var(--t1)"><strong>🎯 Comece definindo o Escopo.</strong> No painel de <strong>Identificação</strong>, no bloco <em>Escopo do diagnóstico</em>, marque quais análises você fará (parta de um dos níveis e ajuste — por bloco ou por campo). O progresso passa a ser relativo ao <em>seu</em> escopo; o que ficar de fora não conta e aparece esmaecido nas abas, com um botão para incluir quando quiser.</div>`;
   html += `<div style="background:${p.cor}12;border-left:3px solid ${p.cor};padding:10px 13px;border-radius:5px;margin-bottom:18px">
     <div style="font-size:.66rem;line-height:1.55;color:var(--t1)">${escHtml(p.desc)}</div>
   </div>`;
