@@ -1304,6 +1304,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="tb-meta" id="tb-meta">Projeto não salvo</div>
   <button class="tb-export" onclick="exportJSON()">⬇ Export JSON</button>
   <button class="tb-export" onclick="gerarRelatorioPDF()" title="Gerar relatório-síntese em PDF">📄 Relatório PDF</button>
+  <button class="tb-export" onclick="gerarRelatorioDOC()" title="Gerar relatório editável (.doc) — abre no Word, LibreOffice ou Google Docs">📝 Relatório .doc</button>
+  <button class="tb-export" onclick="exportarFigurasPrancha()" title="Baixar as figuras-síntese (organograma, diagramas de referência, mapas salvos) como arquivos para montar a prancha">🖼️ Figuras p/ prancha</button>
   <button class="tb-export" onclick="abrirProjetoClick()" title="Abrir um projeto salvo em arquivo (.atdau.json)">📂 Abrir projeto</button>
   <button class="tb-export" onclick="salvarProjeto()" title="Salvar todo o projeto em um arquivo para reabrir depois, em qualquer computador">📁 Salvar projeto</button>
   <input type="file" id="proj-file-input" accept=".json,.atdau.json" style="display:none" onchange="abrirProjeto(this)">
@@ -12783,74 +12785,31 @@ function abrirProjeto(input){
 // ══════════════════════════════════════════════════
 // RELATÓRIO PDF — sumário executivo do diagnóstico
 // ══════════════════════════════════════════════════
-async function gerarRelatorioPDF(){
-  coletarDados();
-  const jsPDFns = window.jspdf || window.jsPDF;
-  const JsPDF = jsPDFns ? (jsPDFns.jsPDF || jsPDFns) : null;
-  if(!JsPDF){ alert('Biblioteca de PDF não carregou. Verifique a conexão (precisa de internet na primeira vez).'); return; }
+// Pré-rasteriza os visuais async (diagramas das referências + organograma) usados em PDF e DOC.
+async function _relatorioVisuaisAsync(){
+  let diagPNGs=[]; try{ diagPNGs=await _coletarDiagramasReferencias(); }catch(e){ diagPNGs=[]; }
+  let orgPNG=null;
+  try{ const s=(typeof _organogramaSVGString==='function')?_organogramaSVGString():''; if(s){ const m=s.match(/width="(\d+)" height="(\d+)"/); orgPNG=await _svgParaPNG(s, m?+m[1]:800, m?+m[2]:400); } }catch(e){ orgPNG=null; }
+  return { diagPNGs, orgPNG };
+}
 
-  // pré-rasteriza os diagramas de análise gráfica das referências (async) antes de
-  // montar o documento — entram no Registro Visual como imagem.
-  let _diagPNGs = [];
-  try{ _diagPNGs = await _coletarDiagramasReferencias(); }catch(e){ _diagPNGs = []; }
-  // pré-rasteriza o organograma do programa (bolhas por setor + adjacências)
-  let _orgPNG = null;
-  try{
-    const _svgOrg = (typeof _organogramaSVGString==='function') ? _organogramaSVGString() : '';
-    if(_svgOrg){ const m=_svgOrg.match(/width="(\d+)" height="(\d+)"/); const w=m?+m[1]:800, h=m?+m[2]:400; _orgPNG = await _svgParaPNG(_svgOrg, w, h); }
-  }catch(e){ _orgPNG = null; }
+// ──────────────────────────────────────────────────────────────────────────
+// CONTEÚDO DO RELATÓRIO (fonte única) — emitido por um "R" (emitter) que cada
+// formato implementa: R.capa, R.titulo, R.subt, R.p, R.item, R.space, R.fig,
+// R.figGrid, R.nota. Usado pelo PDF (jsPDF) e pelo DOC (HTML/Word).
+// ──────────────────────────────────────────────────────────────────────────
+function _emitirRelatorio(R, opts){
+  opts = opts || {};
+  const _diagPNGs = opts.diagPNGs || [];
+  const _orgPNG = opts.orgPNG || null;
+  const titulo=t=>R.titulo(t), subt=t=>R.subt(t), paragrafo=(t,s)=>R.p(t,s), item=(t,c)=>R.item(t,c), espaco=n=>R.space(n);
 
-  const doc = new JsPDF({ unit:'mm', format:'a4' });
-  const W = 210, H = 297, M = 18;          // largura, altura, margem
-  let y = M;
-  const TERRA = [201,95,63], CINZA=[110,108,104], ESC=[42,42,40];
-
-  function novaPagina(){ doc.addPage(); y = M; }  // rodapé é carimbado uma única vez no loop final (evita duplicação)
-  function checa(alt){ if(y+alt > H-M-8){ novaPagina(); } }
-  function rodape(p){
-    // p = número da página atual (passado pelo loop final); getNumberOfPages() devolveria só o total
-    doc.setFontSize(7.5); doc.setTextColor(...CINZA);
-    doc.text('Suite ATDAU · Pré-Projeto (01-01)', M, H-10);
-    doc.text('pág. '+p, W-M, H-10, {align:'right'});
-  }
-  function titulo(txt){
-    checa(14);
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...TERRA);
-    doc.text(txt, M, y); y+=2;
-    doc.setDrawColor(...TERRA); doc.setLineWidth(0.4); doc.line(M, y, W-M, y);
-    y+=6;
-  }
-  function subt(txt){
-    checa(9);
-    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...ESC);
-    doc.text(txt, M, y); y+=5;
-  }
-  function paragrafo(txt, size){
-    if(!txt) return;
-    doc.setFont('helvetica','normal'); doc.setFontSize(size||9); doc.setTextColor(...ESC);
-    const linhas = doc.splitTextToSize(String(txt), W-2*M);
-    linhas.forEach(l=>{ checa(5); doc.text(l, M, y); y+=4.6; });
-  }
-  function item(txt, cor){
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...ESC);
-    const linhas = doc.splitTextToSize(String(txt), W-2*M-6);
-    linhas.forEach((l,i)=>{
-      checa(5);
-      if(i===0){ doc.setFillColor(...(cor||TERRA)); doc.circle(M+1.4, y-1.3, 1.1, 'F'); }
-      doc.text(l, M+6, y); y+=4.6;
-    });
-    y+=1.2;
-  }
-  function espaco(n){ y += (n||4); }
-  // rótulo de um campo (label do .form-field, ou label anterior, ou o id)
   function _labelDe(el){
     const ff=el.closest('.form-field'); if(ff){ const l=ff.querySelector('label'); if(l) return l.textContent.trim(); }
     let p=el.previousElementSibling; while(p){ if(p.tagName==='LABEL') return p.textContent.trim(); p=p.previousElementSibling; }
     return (el.id||'').replace(/[-_]/g,' ');
   }
   function _valRating(g){ const a=g.querySelector('.r-btn.active'); return a? (a.dataset.val||a.textContent.trim()) : ''; }
-  // dump genérico de TODOS os campos preenchidos de um painel, bloco a bloco —
-  // garante que o relatório incorpore os dados inseridos na ferramenta.
   function dumpPainel(n, tit){
     const panel=document.getElementById('panel-'+n); if(!panel) return false;
     const secoes=[];
@@ -12875,15 +12834,10 @@ async function gerarRelatorioPDF(){
     espaco(2);
     return true;
   }
-
-  // ─── REFERÊNCIAS PROJETUAIS (obras análogas) — quadro comparativo + fichas +
-  //     análise gráfica decomposta (Clark & Pause). Os diagramas/marcas sobre imagem
-  //     entram no Registro Visual (rasterizados). Lê de state.analogas. ───
   function _secReferencias(){
     const obras = Array.isArray(state.analogas) ? state.analogas.filter(a=>a && a.nome) : [];
     if(!obras.length) return false;
     titulo('Referências projetuais (obras análogas)');
-    // 1) quadro comparativo (mesma TO aprox. da tabela da ferramenta)
     subt('Quadro comparativo');
     obras.forEach(a=>{
       const area=parseFloat(a.area)||0, terr=parseFloat(a.terreno)||0, pav=parseFloat(a.pav)||0;
@@ -12898,7 +12852,6 @@ async function gerarRelatorioPDF(){
       item(cab+(dados.length?(' — '+dados.join(', ')):''));
     });
     espaco(1);
-    // 2) ficha + lição + análise gráfica decomposta (texto observado) por obra
     obras.forEach(a=>{
       subt(a.nome+(a.autor?(' — '+a.autor):''));
       if(a.fonte)    paragrafo('Fonte: '+a.fonte);
@@ -12918,13 +12871,9 @@ async function gerarRelatorioPDF(){
           if(d) linhas.push(cat.label+' › '+s.label+': '+d);
         });
       });
-      if(linhas.length){
-        subt('Análise gráfica decomposta (Clark & Pause)');
-        linhas.forEach(l=>item(l));
-      }
+      if(linhas.length){ subt('Análise gráfica decomposta (Clark & Pause)'); linhas.forEach(l=>item(l)); }
       espaco(1);
     });
-    // 3) matriz de critérios (critério × obras × seu projeto)
     const crits = Array.isArray(state.ref_criterios) ? state.ref_criterios : [];
     if(crits.length){
       subt('Matriz de critérios (obras × seu projeto)');
@@ -12937,30 +12886,80 @@ async function gerarRelatorioPDF(){
     espaco(2);
     return true;
   }
+  function _registroVisual(){
+    let temAlgo=false;
+    const mapas=[
+      {inst:(typeof _mlMap!=='undefined'?_mlMap:null),       cap:'Mapa de Análise — feições e camadas do diagnóstico.',                  leg:(typeof mlLegendItems==='function'?mlLegendItems:null),    legT:'Legenda'},
+      {inst:(typeof _maInst!=='undefined'?_maInst:null),     cap:'Mapa-Síntese (Mapa Anotado) — anotações georreferenciadas de campo.',  leg:(typeof maLegendItems==='function'?maLegendItems:null),    legT:'Categorias'},
+      {inst:(typeof _sidraMapaInst!=='undefined'?_sidraMapaInst:null), cap:'Mapa SIDRA/IBGE — dados censitários por setor.',               leg:(typeof sidraLegendItems==='function'?sidraLegendItems:null), legT:'Censo/IBGE'},
+    ];
+    let primeiroMapa=true;
+    mapas.forEach(m=>{
+      if(!m.inst) return;
+      let cv=null; try{ cv=_comporMapaCanvas(m.inst, {titulo:(state['proj-nome']||''), legendaItems:m.leg, legendaTitulo:m.legT, credito:'Suite ATDAU'}); }catch(e){ cv=null; }
+      if(!cv) return;
+      let src=null; try{ src=cv.toDataURL('image/jpeg',0.9); }catch(e){ return; }
+      if(primeiroMapa){ titulo('Registro visual — mapas'); primeiroMapa=false; }
+      temAlgo=true;
+      R.fig(src, cv.width, cv.height, m.cap);
+    });
+    if(typeof MapaAnotadoStore!=='undefined'){
+      const comFoto=(MapaAnotadoStore.getAll()||[]).filter(a=>(a.fotos||[]).length);
+      if(comFoto.length){
+        const fotos=[];
+        comFoto.forEach(a=>{ const cat=(typeof MA_CATEGORIES!=='undefined'?((MA_CATEGORIES.find(c=>c.id===a.category)||{}).label||''):''); (a.fotos||[]).forEach(src=> fotos.push({src, cap:(a.title||'')+(cat?(' · '+cat):'')})); });
+        titulo('Registro visual — fotos de campo (Mapa Anotado)'); temAlgo=true; R.figGrid(fotos);
+      }
+    }
+    if(typeof PhotoStore!=='undefined'){
+      try{ PhotoStore.load(); }catch(e){}
+      const blocos=Object.keys(PhotoStore.data||{}).filter(b=>(PhotoStore.data[b]||[]).length);
+      if(blocos.length){
+        titulo('Registro visual — fotos por bloco'); temAlgo=true;
+        blocos.forEach(bid=>{
+          const arr=PhotoStore.data[bid]||[]; if(!arr.length) return;
+          let lbl = bid==='mapas-salvos' ? 'Mapas salvos do projeto' : bid;
+          if(bid!=='mapas-salvos'){ try{ const el=document.getElementById(bid); const t=el&&el.querySelector('.block-title'); if(t) lbl=t.textContent.trim(); }catch(e){} }
+          subt(lbl);
+          R.figGrid(arr.map(p=>({src:p.dataUrl, cap:(p.title||p.caption||'')+(p.azimuth!=null&&p.azimuth!==''?(' · azim. '+p.azimuth+'°'):'')})));
+          espaco(1);
+        });
+      }
+    }
+    if(typeof CroquisStore!=='undefined'){
+      try{ CroquisStore.load(); }catch(e){}
+      const cqs=(CroquisStore.data||[]).filter(c=>c.dataUrl);
+      if(cqs.length){
+        titulo('Registro visual — croquis'); temAlgo=true;
+        const vlabel=id=> (typeof VERBOS_OPERATIVOS!=='undefined'?((VERBOS_OPERATIVOS.find(v=>v.id===id)||{}).label||''):'');
+        R.figGrid(cqs.map(c=>({src:c.dataUrl, cap:[vlabel(c.verbo), (c.legenda||'')].filter(Boolean).join(' — ')})));
+      }
+    }
+    if(_diagPNGs && _diagPNGs.length){
+      titulo('Registro visual — análise gráfica das referências'); temAlgo=true;
+      _diagPNGs.forEach(d=> R.fig(d.src, d.w, d.h, d.cap));
+    }
+    if(_orgPNG){
+      titulo('Registro visual — organograma do programa'); temAlgo=true;
+      R.fig(_orgPNG.src, _orgPNG.w, _orgPNG.h, 'Organograma — ambientes do programa agrupados por setor (tamanho = área); linhas = relações da matriz (▲ obrigatória · ○ desejável · ✕ evitar).');
+    }
+    if(!temAlgo){
+      titulo('Registro visual');
+      paragrafo('Nenhum mapa renderizado nem foto/croqui registrado nesta sessão. Abra as abas de mapa e adicione fotos/croquis para que apareçam aqui.');
+    }
+  }
 
-  // ─── CAPA / CABEÇALHO ───
-  doc.setFillColor(...TERRA); doc.rect(0, 0, W, 3, 'F');
-  y = M+4;
-  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...ESC);
-  doc.text('Relatório de Pré-Projeto', M, y); y+=8;
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...CINZA);
-  doc.text('Suite ATDAU · Pré-Projeto (ferramenta 01-01)', M, y); y+=10;
-
-  const nome = state['proj-nome']||'(projeto sem nome)';
-  const ender = state['proj-end']||'';
-  const data = state['proj-data']||new Date().toLocaleDateString('pt-BR');
-  const escopo = state['proj-escopo']||'';
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...TERRA);
-  checa(8); doc.text(nome, M, y); y+=6;
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...ESC);
-  if(ender){ paragrafo('Endereço: '+ender); }
-  if(escopo){ paragrafo('Escopo: '+escopo); }
-  if(state['proj-tipo']) paragrafo('Tipologia: '+state['proj-tipo']);
-  if(state['proj-area']) paragrafo('Área do terreno: '+state['proj-area']);
-  if(state['proj-ac']) paragrafo('Área construída pretendida: '+state['proj-ac']);
-  if(state['proj-usuario']) paragrafo('Usuários: '+state['proj-usuario']);
-  paragrafo('Data do relatório: '+data);
-  espaco(4);
+  // ─── CAPA ───
+  R.capa({
+    nome: state['proj-nome']||'(projeto sem nome)',
+    ender: state['proj-end']||'',
+    escopo: state['proj-escopo']||'',
+    tipo: state['proj-tipo']||'',
+    area: state['proj-area']||'',
+    ac: state['proj-ac']||'',
+    usuario: state['proj-usuario']||'',
+    data: state['proj-data']||new Date().toLocaleDateString('pt-BR')
+  });
 
   // ─── RECORTE TERRITORIAL ───
   const tipoRec = state['proj-tipologia-recorte']||'';
@@ -12982,7 +12981,7 @@ async function gerarRelatorioPDF(){
   dumpPainel(4,  'Paisagem e morfologia urbana');
   dumpPainel(5,  'Ocupação urbana e usos do solo');
   dumpPainel(9,  'Instrumentos de coleta — registros de campo');
-  _secReferencias();   // referências projetuais: quadro comparativo + fichas + análise gráfica
+  _secReferencias();
 
   // ─── GOVERNANÇA E PARTICIPAÇÃO (Mansfeld) ───
   {
@@ -13054,7 +13053,7 @@ async function gerarRelatorioPDF(){
   if(state.swot_narrativa){ subt('Leitura interpretativa do diagnóstico'); paragrafo(state.swot_narrativa); espaco(1); }
   espaco(2);
 
-  // ─── SIGNIFICÂNCIA E POTENCIAL DE VUE (paisagem cultural / itinerários) — síntese pós-diagnóstico ───
+  // ─── SIGNIFICÂNCIA E POTENCIAL DE VUE ───
   {
     const NIV={'1':'Baixo','2':'Médio','3':'Alto'};
     const dimsV=[['Espacial','vue-espacial'],['Temporal','vue-temporal'],['Cultural','vue-cultural'],['Propósito','vue-proposito']];
@@ -13077,12 +13076,10 @@ async function gerarRelatorioPDF(){
     const ench=state['prog-enunciado']||'';
     if(lista.length || ambientes.length || Object.keys(_rel).length || reqF || reqD || reqE || ench){
       titulo('Programa de necessidades');
-      // itens do programa (lista viva)
       if(lista.length){
         subt('Itens do programa');
         lista.forEach(p=>{ const t=(p.item||p.nome||'').toString().trim(); if(!t) return; const a=p.area?(' — '+p.area+' m²'):''; const o=p.obs?(' ('+p.obs+')'):''; item(t+a+o); });
       }
-      // programa dimensionado (setor / qtd / área un. / pé-direito / capacidade / requisitos)
       if(ambientes.length){
         subt('Programa dimensionado');
         ambientes.forEach(a=>{
@@ -13096,13 +13093,11 @@ async function gerarRelatorioPDF(){
           if(a.req)  det.push(a.req);
           item((st?('['+st.label+'] '):'')+nm+(det.length?(' — '+det.join(' · ')):''));
         });
-        // áreas calculadas (útil → circulação → construída)
         const ar=(typeof _progAreas==='function')?_progAreas():null;
         if(ar && ar.util>0){
           paragrafo('Área útil programada: '+ar.util.toLocaleString('pt-BR')+' m²'
             + (ar.pct?(' · + circulação/paredes '+ar.pct+'% = área construída estimada '+ar.construida.toLocaleString('pt-BR',{maximumFractionDigits:1})+' m²'):''));
         }
-        // checagem do programa contra o potencial construtivo do lote (CA/TO)
         if(ar && ar.construida>0 && typeof _progPotencial==='function'){
           const pot=_progPotencial(); const f=n=>n.toLocaleString('pt-BR',{maximumFractionDigits:1});
           if(pot.terreno>0 && pot.ca>0){
@@ -13113,12 +13108,10 @@ async function gerarRelatorioPDF(){
           }
         }
       }
-      // matriz de relações entre ambientes (obrigatórias / a evitar)
       const _nome=id=>{ const x=(state.programa||[]).find(q=>String(q.id)===String(id)); return x?(x.item||x.nome||''):''; };
       const _LBLREL={obrig:'obrigatória',desej:'desejável',evitar:'evitar'};
       const relList=Object.keys(_rel).map(k=>{ const [a,b]=k.split('|'); const na=_nome(a), nb=_nome(b); if(!na||!nb) return null; return _MAT_SYM[_rel[k]]+' '+na+' × '+nb+' ('+(_LBLREL[_rel[k]]||_rel[k])+')'; }).filter(Boolean);
       if(relList.length){ subt('Relações entre ambientes'); relList.forEach(r=>item(r)); }
-      // requisitos do programa (funcionais / desempenho / economia e tempo)
       if(reqF || reqD || reqE){
         subt('Requisitos do programa');
         if(reqF) paragrafo('Funcionais: '+reqF);
@@ -13132,55 +13125,80 @@ async function gerarRelatorioPDF(){
 
   // ─── DIRETRIZES PRIORITÁRIAS ───
   titulo('Diretrizes prioritárias');
-  // diretrizes manuais marcadas + auto (das fragilidades/oportunidades)
   let diretrizes = [];
-  if(state.dir_cats){
-    Object.values(state.dir_cats).forEach(arr=>{
-      (arr||[]).forEach(d=>{ if(d && d.text) diretrizes.push(d.text); });
-    });
-  }
-  // fallback: derivar das fragilidades e oportunidades
-  if(diretrizes.length===0){
-    diretrizes = [...PFOA.F.list.slice(0,4), ...PFOA.O.list.slice(0,3)];
-  }
-  if(diretrizes.length===0){
-    paragrafo('Defina diretrizes no Painel 8 para compor esta seção.');
-  } else {
-    diretrizes.forEach(d=> item(d));
-  }
+  if(state.dir_cats){ Object.values(state.dir_cats).forEach(arr=>{ (arr||[]).forEach(d=>{ if(d && d.text) diretrizes.push(d.text); }); }); }
+  if(diretrizes.length===0){ diretrizes = [...PFOA.F.list.slice(0,4), ...PFOA.O.list.slice(0,3)]; }
+  if(diretrizes.length===0){ paragrafo('Defina diretrizes no Painel 8 para compor esta seção.'); }
+  else { diretrizes.forEach(d=> item(d)); }
   espaco(2);
 
-  // ─── 4. NOTAS SOBRE AS OPERAÇÕES PROJETUAIS (escritas pelo estudante) ───
+  // ─── NOTAS SOBRE AS OPERAÇÕES PROJETUAIS ───
   const notasVerbos = state['verbos-notas']||'';
-  if(notasVerbos){
-    titulo('Notas sobre as operações projetuais');
-    paragrafo(notasVerbos);
-    espaco(2);
-  }
+  if(notasVerbos){ titulo('Notas sobre as operações projetuais'); paragrafo(notasVerbos); espaco(2); }
 
-  // ─── 5. VERBOS OPERATIVOS ───
+  // ─── VERBOS OPERATIVOS ───
   const verbosSel = (state['verbos-selecionados']||[])
     .map(id=> (typeof VERBOS_OPERATIVOS!=='undefined') ? (VERBOS_OPERATIVOS.find(v=>v.id===id)||{}).label : id)
     .filter(Boolean);
-  if(verbosSel.length){
-    titulo('Operações projetuais (verbos)');
-    paragrafo(verbosSel.join(' · '));
-    espaco(2);
-  }
+  if(verbosSel.length){ titulo('Operações projetuais (verbos)'); paragrafo(verbosSel.join(' · ')); espaco(2); }
 
-  // ─── REGISTRO VISUAL — mapas (imagem + legenda), fotos de campo e croquis ───
+  // ─── REGISTRO VISUAL ───
   _registroVisual();
 
   // nota de fechamento
-  espaco(4);
-  doc.setDrawColor(...CINZA); doc.setLineWidth(0.2);
-  checa(20); doc.line(M, y, W-M, y); y+=5;
-  doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...CINZA);
-  paragrafo('Relatório-síntese gerado automaticamente a partir dos dados do diagnóstico. Os mapas embutidos refletem o estado em que foram visualizados na ferramenta; abas de mapa não abertas nesta sessão não aparecem. Pode ser editado posteriormente.', 8);
+  R.nota('Relatório-síntese gerado automaticamente a partir dos dados do diagnóstico. Os mapas embutidos refletem o estado em que foram visualizados na ferramenta; abas de mapa não abertas nesta sessão não aparecem. Pode ser editado posteriormente.');
+}
 
-  // ── helpers do registro visual ──
+async function gerarRelatorioPDF(){
+  coletarDados();
+  const jsPDFns = window.jspdf || window.jsPDF;
+  const JsPDF = jsPDFns ? (jsPDFns.jsPDF || jsPDFns) : null;
+  if(!JsPDF){ alert('Biblioteca de PDF não carregou. Verifique a conexão (precisa de internet na primeira vez).'); return; }
+
+  const { diagPNGs, orgPNG } = await _relatorioVisuaisAsync();
+
+  const doc = new JsPDF({ unit:'mm', format:'a4' });
+  const W = 210, H = 297, M = 18;
+  let y = M;
+  const TERRA = [201,95,63], CINZA=[110,108,104], ESC=[42,42,40];
+
+  function novaPagina(){ doc.addPage(); y = M; }
+  function checa(alt){ if(y+alt > H-M-8){ novaPagina(); } }
+  function rodape(p){
+    doc.setFontSize(7.5); doc.setTextColor(...CINZA);
+    doc.text('Suite ATDAU · Pré-Projeto (01-01)', M, H-10);
+    doc.text('pág. '+p, W-M, H-10, {align:'right'});
+  }
+  function titulo(txt){
+    checa(14);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...TERRA);
+    doc.text(txt, M, y); y+=2;
+    doc.setDrawColor(...TERRA); doc.setLineWidth(0.4); doc.line(M, y, W-M, y);
+    y+=6;
+  }
+  function subt(txt){
+    checa(9);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...ESC);
+    doc.text(txt, M, y); y+=5;
+  }
+  function paragrafo(txt, size){
+    if(!txt) return;
+    doc.setFont('helvetica','normal'); doc.setFontSize(size||9); doc.setTextColor(...ESC);
+    const linhas = doc.splitTextToSize(String(txt), W-2*M);
+    linhas.forEach(l=>{ checa(5); doc.text(l, M, y); y+=4.6; });
+  }
+  function item(txt, cor){
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...ESC);
+    const linhas = doc.splitTextToSize(String(txt), W-2*M-6);
+    linhas.forEach((l,i)=>{
+      checa(5);
+      if(i===0){ doc.setFillColor(...(cor||TERRA)); doc.circle(M+1.4, y-1.3, 1.1, 'F'); }
+      doc.text(l, M+6, y); y+=4.6;
+    });
+    y+=1.2;
+  }
+  function espaco(n){ y += (n||4); }
   function _fmtImg(src){ return /^data:image\/png/i.test(src) ? 'PNG' : 'JPEG'; }
-  // figura grande centralizada (mapa) com legenda/caption
   function _figura(src, natW, natH, legenda){
     const fw = W-2*M;
     let iw = fw, ih = fw * (natH/natW);
@@ -13195,7 +13213,6 @@ async function gerarRelatorioPDF(){
       doc.splitTextToSize(legenda, fw).forEach(l=>{ checa(4); doc.text(l, M, y); y+=3.6; }); }
     y += 3;
   }
-  // grade de fotos (contain, preserva proporção), 3 por linha, com legenda
   function _fotosGrid(fotos){
     const cols=3, gap=4, fw=W-2*M, cw=(fw-gap*(cols-1))/cols, ch=cw*0.74;
     for(let i=0;i<fotos.length;i+=cols){
@@ -13214,82 +13231,130 @@ async function gerarRelatorioPDF(){
       y += ch + (temCap?10:4);
     }
   }
-  function _registroVisual(){
-    let temAlgo=false;
-    // 1) MAPAS (imagem + legenda) — só os que já renderizaram nesta sessão
-    const mapas=[
-      {inst:(typeof _mlMap!=='undefined'?_mlMap:null),       cap:'Mapa de Análise — feições e camadas do diagnóstico.',                  leg:(typeof mlLegendItems==='function'?mlLegendItems:null),    legT:'Legenda'},
-      {inst:(typeof _maInst!=='undefined'?_maInst:null),     cap:'Mapa-Síntese (Mapa Anotado) — anotações georreferenciadas de campo.',  leg:(typeof maLegendItems==='function'?maLegendItems:null),    legT:'Categorias'},
-      {inst:(typeof _sidraMapaInst!=='undefined'?_sidraMapaInst:null), cap:'Mapa SIDRA/IBGE — dados censitários por setor.',               leg:(typeof sidraLegendItems==='function'?sidraLegendItems:null), legT:'Censo/IBGE'},
-    ];
-    let primeiroMapa=true;
-    mapas.forEach(m=>{
-      if(!m.inst) return;
-      let cv=null; try{ cv=_comporMapaCanvas(m.inst, {titulo:(state['proj-nome']||''), legendaItems:m.leg, legendaTitulo:m.legT, credito:'Suite ATDAU'}); }catch(e){ cv=null; }
-      if(!cv) return;
-      let src=null; try{ src=cv.toDataURL('image/jpeg',0.9); }catch(e){ return; }
-      if(primeiroMapa){ titulo('Registro visual — mapas'); primeiroMapa=false; }
-      temAlgo=true;
-      _figura(src, cv.width, cv.height, m.cap);
-    });
-    // 2) FOTOS DE CAMPO do Mapa Anotado (georreferenciadas)
-    if(typeof MapaAnotadoStore!=='undefined'){
-      const comFoto=(MapaAnotadoStore.getAll()||[]).filter(a=>(a.fotos||[]).length);
-      if(comFoto.length){
-        const fotos=[];
-        comFoto.forEach(a=>{ const cat=(typeof MA_CATEGORIES!=='undefined'?((MA_CATEGORIES.find(c=>c.id===a.category)||{}).label||''):''); (a.fotos||[]).forEach(src=> fotos.push({src, cap:(a.title||'')+(cat?(' · '+cat):'')})); });
-        titulo('Registro visual — fotos de campo (Mapa Anotado)'); temAlgo=true; _fotosGrid(fotos);
-      }
+  const R = {
+    capa(meta){
+      doc.setFillColor(...TERRA); doc.rect(0, 0, W, 3, 'F');
+      y = M+4;
+      doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...ESC);
+      doc.text('Relatório de Pré-Projeto', M, y); y+=8;
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...CINZA);
+      doc.text('Suite ATDAU · Pré-Projeto (ferramenta 01-01)', M, y); y+=10;
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...TERRA);
+      checa(8); doc.text(meta.nome, M, y); y+=6;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...ESC);
+      if(meta.ender) paragrafo('Endereço: '+meta.ender);
+      if(meta.escopo) paragrafo('Escopo: '+meta.escopo);
+      if(meta.tipo) paragrafo('Tipologia: '+meta.tipo);
+      if(meta.area) paragrafo('Área do terreno: '+meta.area);
+      if(meta.ac) paragrafo('Área construída pretendida: '+meta.ac);
+      if(meta.usuario) paragrafo('Usuários: '+meta.usuario);
+      paragrafo('Data do relatório: '+meta.data);
+      espaco(4);
+    },
+    titulo, subt, p:paragrafo, item, space:espaco, fig:_figura, figGrid:_fotosGrid,
+    nota(txt){
+      espaco(4);
+      doc.setDrawColor(...CINZA); doc.setLineWidth(0.2);
+      checa(20); doc.line(M, y, W-M, y); y+=5;
+      doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...CINZA);
+      paragrafo(txt, 8);
     }
-    // 3) FOTOS POR BLOCO (instrumentos de coleta)
-    if(typeof PhotoStore!=='undefined'){
-      try{ PhotoStore.load(); }catch(e){}
-      const blocos=Object.keys(PhotoStore.data||{}).filter(b=>(PhotoStore.data[b]||[]).length);
-      if(blocos.length){
-        titulo('Registro visual — fotos por bloco'); temAlgo=true;
-        blocos.forEach(bid=>{
-          const arr=PhotoStore.data[bid]||[]; if(!arr.length) return;
-          let lbl = bid==='mapas-salvos' ? 'Mapas salvos do projeto' : bid;
-          if(bid!=='mapas-salvos'){ try{ const el=document.getElementById(bid); const t=el&&el.querySelector('.block-title'); if(t) lbl=t.textContent.trim(); }catch(e){} }
-          subt(lbl);
-          _fotosGrid(arr.map(p=>({src:p.dataUrl, cap:(p.title||p.caption||'')+(p.azimuth!=null&&p.azimuth!==''?(' · azim. '+p.azimuth+'°'):'')})));
-          espaco(1);
-        });
-      }
-    }
-    // 4) CROQUIS
-    if(typeof CroquisStore!=='undefined'){
-      try{ CroquisStore.load(); }catch(e){}
-      const cqs=(CroquisStore.data||[]).filter(c=>c.dataUrl);
-      if(cqs.length){
-        titulo('Registro visual — croquis'); temAlgo=true;
-        const vlabel=id=> (typeof VERBOS_OPERATIVOS!=='undefined'?((VERBOS_OPERATIVOS.find(v=>v.id===id)||{}).label||''):'');
-        _fotosGrid(cqs.map(c=>({src:c.dataUrl, cap:[vlabel(c.verbo), (c.legenda||'')].filter(Boolean).join(' — ')})));
-      }
-    }
-    // 5) ANÁLISE GRÁFICA DAS REFERÊNCIAS — diagramas/marcas sobre imagem (rasterizados)
-    if(_diagPNGs && _diagPNGs.length){
-      titulo('Registro visual — análise gráfica das referências'); temAlgo=true;
-      _diagPNGs.forEach(d=> _figura(d.src, d.w, d.h, d.cap));
-    }
-    // 6) ORGANOGRAMA DO PROGRAMA — bolhas por setor + adjacências
-    if(_orgPNG){
-      titulo('Registro visual — organograma do programa'); temAlgo=true;
-      _figura(_orgPNG.src, _orgPNG.w, _orgPNG.h, 'Organograma — ambientes do programa agrupados por setor (tamanho = área); linhas = relações da matriz (▲ obrigatória · ○ desejável · ✕ evitar).');
-    }
-    if(!temAlgo){
-      titulo('Registro visual');
-      paragrafo('Nenhum mapa renderizado nem foto/croqui registrado nesta sessão. Abra as abas de mapa e adicione fotos/croquis para que apareçam aqui.');
-    }
-  }
+  };
 
-  // rodapé em todas as páginas
+  _emitirRelatorio(R, { diagPNGs, orgPNG });
+
   const tot = doc.internal.getNumberOfPages();
-  for(let i=1;i<=tot;i++){ doc.setPage(i); rodape(i); }   // carimba o rodapé uma vez por página, com o número correto
+  for(let i=1;i<=tot;i++){ doc.setPage(i); rodape(i); }
 
+  const nome = state['proj-nome']||'(projeto sem nome)';
   const fname = 'ATDAU-diagnostico-'+(nome.replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase().slice(0,40)||'relatorio')+'.pdf';
   doc.save(fname);
   mostrarStatus('Relatório PDF gerado ✓');
+}
+
+// Relatório .DOC editável (HTML que o Word/LibreOffice/Google Docs abrem) — mesmo conteúdo do PDF,
+// com sumário (lista de seções) e figuras embutidas. Não depende do jsPDF (funciona offline).
+async function gerarRelatorioDOC(){
+  coletarDados();
+  const { diagPNGs, orgPNG } = await _relatorioVisuaisAsync();
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let coverHtml = '';
+  const toc = [];
+  const body = [];
+  let sid = 0;
+  const R = {
+    capa(meta){
+      let h = `<div class=capa><h1>Relatório de Pré-Projeto</h1><p class=sub>Suite ATDAU · Pré-Projeto (ferramenta 01-01)</p><p class=projnome>${esc(meta.nome)}</p>`;
+      const linhas=[];
+      if(meta.ender) linhas.push('Endereço: '+meta.ender);
+      if(meta.escopo) linhas.push('Escopo: '+meta.escopo);
+      if(meta.tipo) linhas.push('Tipologia: '+meta.tipo);
+      if(meta.area) linhas.push('Área do terreno: '+meta.area);
+      if(meta.ac) linhas.push('Área construída pretendida: '+meta.ac);
+      if(meta.usuario) linhas.push('Usuários: '+meta.usuario);
+      linhas.push('Data do relatório: '+meta.data);
+      h += linhas.map(l=>`<p>${esc(l)}</p>`).join('') + '</div>';
+      coverHtml = h;
+    },
+    titulo(txt){ sid++; toc.push({id:'sec'+sid, txt:String(txt)}); body.push(`<h2 id="sec${sid}">${esc(txt)}</h2>`); },
+    subt(txt){ body.push(`<h3>${esc(txt)}</h3>`); },
+    p(txt){ if(txt!=null && String(txt).trim()!=='') body.push(`<p>${esc(txt)}</p>`); },
+    item(txt){ body.push(`<p class=li>• ${esc(txt)}</p>`); },
+    space(){ /* o espaçamento vem do CSS */ },
+    fig(src,w,h,cap){ body.push(`<div class=fig><img src="${src}" alt="figura"/>${cap?`<div class=cap>${esc(cap)}</div>`:''}</div>`); },
+    figGrid(fotos){ if(!fotos||!fotos.length) return; body.push('<div class=grid>'+fotos.map(f=>`<div class=cell><img src="${f.src}" alt="foto"/>${f.cap?`<div class=cap>${esc(f.cap)}</div>`:''}</div>`).join('')+'</div>'); },
+    nota(txt){ body.push(`<hr/><p class=nota><em>${esc(txt)}</em></p>`); }
+  };
+  _emitirRelatorio(R, { diagPNGs, orgPNG });
+
+  const sumario = '<h2>Sumário</h2><ol class=toc>' + toc.map(t=>`<li>${esc(t.txt)}</li>`).join('') + '</ol>';
+  const style = 'body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#2a2a28;line-height:1.4}'
+    + 'h1{font-size:22pt;margin:0 0 4pt;color:#2a2a28} .sub{color:#6e6c68;margin:0 0 10pt} .projnome{font-size:13pt;font-weight:bold;color:#C95F3F;margin:0 0 8pt}'
+    + 'h2{font-size:15pt;color:#C95F3F;border-bottom:1px solid #C95F3F;padding-bottom:2pt;margin:18pt 0 6pt} h3{font-size:11pt;margin:10pt 0 3pt}'
+    + 'p{margin:2pt 0} p.li{margin:1pt 0 1pt 14pt} .cap{font-size:8pt;color:#6e6c68;font-style:italic;margin-top:2pt} .nota{color:#6e6c68;font-size:8pt}'
+    + '.fig img{max-width:100%} .fig{margin:8pt 0} .grid .cell{display:inline-block;width:31%;vertical-align:top;margin:0 1% 8pt} .grid img{max-width:100%} ol.toc li{margin:2pt 0} .capa{margin-bottom:14pt}';
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
+    + '<head><meta charset="utf-8"><title>Relatório de Pré-Projeto</title><style>'+style+'</style></head><body>'
+    + coverHtml + sumario + body.join('') + '</body></html>';
+
+  const nome = state['proj-nome']||'relatorio';
+  const fname = 'ATDAU-relatorio-'+(nome.replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase().slice(0,40)||'relatorio')+'.doc';
+  try{
+    const blob = new Blob(['﻿'+html], {type:'application/msword'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },100);
+    mostrarStatus('Relatório .doc (editável) gerado ✓');
+  }catch(e){ console.warn('DOC', e); }
+  return html;
+}
+
+// converte data-URL em Blob (p/ download de figuras)
+function _dataURLtoBlob(dataURL){
+  try{
+    const [head,b64]=String(dataURL).split(',');
+    const mime=(head.match(/data:([^;]+)/)||[])[1]||'image/png';
+    const bin=atob(b64); const arr=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    return new Blob([arr],{type:mime});
+  }catch(e){ return null; }
+}
+// Figuras prontas para prancha: baixa as figuras-síntese como arquivos individuais
+// (organograma em SVG vetorial + diagramas das referências + vistas de mapa salvas).
+async function exportarFigurasPrancha(){
+  const figs=[];
+  if(typeof _organogramaSVGString==='function'){ const s=_organogramaSVGString(); if(s) figs.push({name:'organograma.svg', blob:new Blob([s],{type:'image/svg+xml'})}); }
+  try{ const ds=await _coletarDiagramasReferencias(); ds.forEach((d,i)=>{ const b=_dataURLtoBlob(d.src); if(b) figs.push({name:'referencia-'+(i+1)+'.png', blob:b}); }); }catch(e){}
+  try{ if(typeof PhotoStore!=='undefined'){ PhotoStore.load(); (PhotoStore.data['mapas-salvos']||[]).forEach((p,i)=>{ const b=_dataURLtoBlob(p.dataUrl); if(b) figs.push({name:'mapa-'+(i+1)+'.png', blob:b}); }); } }catch(e){}
+  if(!figs.length){ alert('Nenhuma figura disponível ainda. Gere o organograma (programa dimensionado), salve vistas de mapa ou faça análises gráficas das referências.'); return figs; }
+  // download sequencial (stagger evita bloqueio de múltiplos downloads)
+  figs.forEach((f,i)=>{ setTimeout(()=>{
+    const url=URL.createObjectURL(f.blob); const a=document.createElement('a'); a.href=url; a.download='atdau-'+f.name;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },200);
+  }, i*250); });
+  mostrarStatus(figs.length+' figura(s) exportada(s) para prancha ✓');
+  return figs;
 }
 
 // ══════════════════════════════════════════════════
