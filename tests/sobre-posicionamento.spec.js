@@ -1,6 +1,6 @@
 // tests/sobre-posicionamento.spec.js
-// Frente "Sobre": (1) texto de POSICIONAMENTO — a ferramenta atua a montante do CAD/BIM/SIG,
-// não concorre com geradores de massa (Forma/TestFit/Snaptrude/Modelur); (2) FUNDAMENTOS
+// Frente "Sobre": (1) texto de POSICIONAMENTO — a ferramenta é usada no pré-projeto, antes da
+// modelagem (CAD/BIM/SIG); não desenha massa (Forma/TestFit/Snaptrude/Modelur); (2) FUNDAMENTOS
 // METODOLÓGICOS com referência verificável por termo (Tardin, Bertin, Lynch, Gehl, Clark&Pause,
 // Rheingantz/APO, Problem Seeking/Peña, NBR 13531/13532). Tudo offline, no modal abrirSobre().
 import { test, expect } from '@playwright/test';
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIAG_URL = 'file://' + path.resolve(__dirname, '..', 'ATDAU_DIAG_interativo.html').replace(/\\/g, '/');
 
-test('Sobre: posicionamento (a montante) + fundamentos com referência verificável', async ({ page }) => {
+test('Sobre: posicionamento (pré-projeto, antes da modelagem) + fundamentos com referência verificável', async ({ page }) => {
   await page.goto(DIAG_URL);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(900);
@@ -23,12 +23,15 @@ test('Sobre: posicionamento (a montante) + fundamentos com referência verificá
 
   const txt = await modal.textContent();
 
-  // (1) Posicionamento — categoria própria, a montante, sem concorrer com geradores de massa
+  // (1) Posicionamento — pré-projeto, antes da modelagem; não desenha massa
   expect(txt).toContain('Posicionamento');
-  expect(txt).toMatch(/a montante/i);
+  expect(txt).toMatch(/pré-projeto/i);
+  expect(txt).toMatch(/antes da modelagem/i);
   expect(txt).toContain('CAD');
   expect(txt).toContain('BIM');
   expect(txt).toMatch(/Snaptrude|Modelur|TestFit|Forma/);
+  // linguagem direta — sem o jargão de hidrologia
+  expect(txt).not.toMatch(/montante|jusante/i);
 
   // (2) Fundamentos metodológicos — referência verificável por termo realmente usado na ferramenta
   expect(txt).toContain('Fundamentos metodológicos');
