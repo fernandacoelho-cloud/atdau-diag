@@ -26,6 +26,7 @@ test('Etapa1: feição classificável como peça do SEL (popup) e persiste em pr
 
   // injeta uma feição de espaço livre e abre o popup de edição
   await page.evaluate(() => {
+    state['proj-modulo'] = 'paisagistico';   // tipologia de SEL → peça do SEL visível
     const c = _mlMap.getCenter(); const d = 0.001;
     _mlFeatures['livres'] = [{ id: 777, geom: { type: 'Polygon', coordinates: [[[c.lng - d, c.lat - d], [c.lng + d, c.lat - d], [c.lng + d, c.lat + d], [c.lng - d, c.lat + d], [c.lng - d, c.lat - d]]] }, props: {} }];
     mlRefreshSource('livres');

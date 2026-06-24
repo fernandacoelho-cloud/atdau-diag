@@ -18,6 +18,7 @@ test('Partido no relatório: peças + verbos + verbo motor aparecem (.doc)', asy
 
   const html = await page.evaluate(async () => {
     document.getElementById('proj-nome').value = 'Partido Teste';
+    state['proj-modulo'] = 'paisagistico';   // projeto de SEL → título "sistema de espaços livres"
     _mlFeatures['livres'] = [
       { id: 1, geom: { type: 'Point', coordinates: [0, 0] }, props: { peca: 'conector', rotulo: 'Av. Verde', verbos: ['sel-conectar', 'sel-articular'], verboMotor: 'sel-conectar' } },
       { id: 2, geom: { type: 'Point', coordinates: [0, 0] }, props: { peca: 'corpodagua', rotulo: 'Lagoa', verbos: ['sel-demarcar'] } },
