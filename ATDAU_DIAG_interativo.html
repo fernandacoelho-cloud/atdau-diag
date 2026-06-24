@@ -13158,6 +13158,25 @@ function _emitirRelatorio(R, opts){
     .filter(Boolean);
   if(verbosSel.length){ titulo('Operações projetuais (verbos)'); paragrafo(verbosSel.join(' · ')); espaco(2); }
 
+  // ─── PARTIDO — peças do SEL + ações/verbos (lê as feições classificadas no mapa) ───
+  if(typeof _mlFeatures!=='undefined'){
+    const _vbLbl = id => { const v=(typeof VERBOS_OPERATIVOS!=='undefined')?VERBOS_OPERATIVOS.find(x=>x.id===id):null; return v?v.label:id; };
+    const _pcLbl = id => { const p=(typeof _selPeca==='function')?_selPeca(id):null; return p?p.label:id; };
+    const pf=[];
+    Object.keys(_mlFeatures).forEach(lid=>{ (_mlFeatures[lid]||[]).forEach(f=>{ if(f && f.props && f.props.peca) pf.push(f.props); }); });
+    if(pf.length){
+      titulo('Partido — sistema de espaços livres (peças e ações)');
+      const motores=[...new Set(pf.map(p=>p.verboMotor).filter(Boolean))];
+      if(motores.length) paragrafo('Verbo motor: '+motores.map(_vbLbl).join(', '));
+      pf.forEach(p=>{
+        const vt=(Array.isArray(p.verbos)?p.verbos:[]).map(_vbLbl).join(', ');
+        const rot=(p.rotulo||p.label||'').toString().trim();
+        item(_pcLbl(p.peca)+(rot?(' "'+rot+'"'):'')+(vt?(' — '+vt):'')+(p.verboMotor?(' · motor: '+_vbLbl(p.verboMotor)):''));
+      });
+      espaco(2);
+    }
+  }
+
   // ─── REGISTRO VISUAL ───
   _registroVisual();
 
