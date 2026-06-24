@@ -15056,6 +15056,29 @@ function mlHandleFeatureClick(e) {
   mlOpenFeaturePopup(lid, fid, props, e.lngLat, layerDef);
 }
 
+// Verbos operativos (Tardin) aplicáveis a uma PEÇA do SEL — chips múltiplos (many-to-many)
+// + verbo motor. Renderiza no popup só quando há peça selecionada (progressive disclosure).
+function _popupRenderVerbos(popupEl, props){
+  const box = popupEl.querySelector('#popup-verbos-box'); if(!box) return;
+  const sel = popupEl.querySelector('#popup-peca');
+  const peca = sel ? sel.value : '';
+  if(!peca){ box.innerHTML=''; return; }
+  const ativos = new Set(Array.isArray(props.verbos) ? props.verbos : []);
+  const verbosSel = (typeof VERBOS_OPERATIVOS!=='undefined') ? VERBOS_OPERATIVOS.filter(v=>v.grupo==='sel') : [];
+  box.innerHTML =
+    `<label style="display:block;font-size:.55rem;color:var(--t3);margin-top:6px;font-weight:600">AÇÕES / VERBOS (Tardin) — clique p/ aplicar</label>
+     <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">
+       ${verbosSel.map(v=>`<button type="button" class="popup-verb-chip${ativos.has(v.id)?' active':''}" data-verb="${v.id}" title="${escHtml(v.expl||'')}" style="padding:3px 7px;font-size:.56rem;border:1px solid var(--teal);border-radius:11px;cursor:pointer;background:${ativos.has(v.id)?'var(--teal)':'white'};color:${ativos.has(v.id)?'white':'var(--teal)'}">${escHtml(v.label)}</button>`).join('')}
+     </div>
+     <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:6px;font-weight:600">VERBO MOTOR (espinha do partido)</label>
+     <select id="popup-verbo-motor" style="width:100%;padding:4px 5px;font-size:.6rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+       <option value="">— nenhum —</option>
+       ${verbosSel.map(v=>`<option value="${v.id}" ${props.verboMotor===v.id?'selected':''}>${escHtml(v.label)}</option>`).join('')}
+     </select>`;
+  box.querySelectorAll('.popup-verb-chip').forEach(ch=>{
+    ch.onclick = ()=>{ const on=ch.classList.toggle('active'); ch.style.background=on?'var(--teal)':'white'; ch.style.color=on?'white':'var(--teal)'; };
+  });
+}
 function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
   // map: o mapa onde abrir o popup. Default = Mapa de Análise; nos block-maps
   // do Diagnóstico recebe o mapa do bloco para editar a feição ali mesmo.
@@ -15145,6 +15168,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
         <option value="">— não classificar —</option>
         ${SEL_PECAS.map(p=>`<option value="${p.id}" ${peca===p.id?'selected':''}>${escHtml(p.label)}</option>`).join('')}
       </select>
+      <div id="popup-verbos-box" style="margin-top:6px"></div>
 
       ${isPoint ? `
         <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:8px;font-weight:600">PICTOGRAMA</label>
@@ -15209,6 +15233,11 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
     if (!popupEl) return;
     let picSel = pictograma;
 
+    // Verbos operativos por peça (SEL): render inicial + ao trocar a peça
+    _popupRenderVerbos(popupEl, props);
+    const _pecaSel = popupEl.querySelector('#popup-peca');
+    if (_pecaSel) _pecaSel.onchange = () => _popupRenderVerbos(popupEl, props);
+
     popupEl.querySelectorAll('.ml-picto-btn').forEach(b => {
       b.onclick = () => {
         picSel = b.dataset.pic;
@@ -15271,6 +15300,9 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
       const novoTipo = (popupEl.querySelector('#popup-tipo')?.value || '').trim();
       const novoEstado = popupEl.querySelector('#popup-estado')?.value || '';
       const novaPeca = popupEl.querySelector('#popup-peca')?.value || '';
+      const _verbChips = popupEl.querySelectorAll('#popup-verbos-box .popup-verb-chip.active');
+      const novosVerbos = novaPeca ? [..._verbChips].map(c=>c.dataset.verb) : [];
+      const novoMotor = novaPeca ? (popupEl.querySelector('#popup-verbo-motor')?.value || '') : '';
       const novaCor = popupEl.querySelector('#popup-cor')?.value || '';
       const novaObs = popupEl.querySelector('#popup-obs').value.trim();
       const raioEl = popupEl.querySelector('#popup-raio');
@@ -15285,6 +15317,8 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
         tipo: novoTipo || undefined,
         estado: novoEstado || undefined,
         peca: novaPeca || undefined,
+        verbos: novosVerbos.length ? novosVerbos : undefined,
+        verboMotor: (novoMotor && novosVerbos.includes(novoMotor)) ? novoMotor : undefined,
         pictograma: picSel || undefined,
         corOverride: (novaCor && novaCor.toLowerCase() !== (layerDef.color || '').toLowerCase()) ? novaCor : undefined,
         obs: novaObs || undefined,
