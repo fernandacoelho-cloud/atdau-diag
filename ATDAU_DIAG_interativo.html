@@ -2198,8 +2198,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
         Morfologia regional que condiciona o microclima, a drenagem urbana, os eixos visuais e as relações de vizinhança.
-        O detalhamento da <strong>escala do lote</strong> está em
-        <strong>03 · Condicionantes Ambientais → Topografia do lote</strong>.
+        <br><strong>Divisão de escalas:</strong> aqui fica <strong>toda a topografia do entorno</strong> — a leitura qualitativa (morfologia, microclima, alagamento) e os <strong>dados quantitativos</strong> (cota, variação altimétrica, escoamento). A <strong>escala do lote</strong> (para a implantação) está em <strong>03 · Condicionantes Ambientais → Topografia do lote</strong>.
       </div>
       <div class="form-grid">
         <div class="form-field">
@@ -2265,6 +2264,49 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div class="form-field span2">
           <label>Como a topografia do entorno condiciona ventos, sol e visibilidade</label>
           <textarea id="c-topo-obs" placeholder="ex: Morro a sul bloqueia ventos frios de inverno (favorável ZB5). Vale canaliza ventilação N-S no verão. Crista ao norte cria sombra na fachada principal a partir das 14h. Bacia visual aberta a leste — vistas para o horizonte."></textarea>
+        </div>
+      </div>
+
+      <!-- Dados quantitativos do entorno (consolidados aqui na onda F3) -->
+      <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.08em">Dados quantitativos do entorno</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Cota altimétrica aproximada do lote (m)</label>
+          <input type="number" id="a-topo-cota-lote" placeholder="ex: 790" step="0.5">
+          <small style="color:var(--t3)">Verificar: Google Earth / SRTM / TOPODATA / levantamento</small>
+        </div>
+        <div class="form-field">
+          <label>Variação altimétrica do entorno próximo (m)</label>
+          <input type="number" id="a-topo-delta-ent" placeholder="ex: 45 (diferença entre ponto mais alto e mais baixo em ~500m)" step="1">
+        </div>
+        <div class="form-field">
+          <label>Direção de escoamento das águas pluviais no entorno</label>
+          <select id="a-topo-escoa-ent">
+            <option value="">Selecione…</option>
+            <option>Para vale ao Norte</option><option>Para vale ao Sul</option>
+            <option>Para vale ao Leste</option><option>Para vale ao Oeste</option>
+            <option>Múltiplas direções — divisor de águas</option>
+            <option>Planície — escoamento lento / difuso</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Influência da topografia na ventilação local</label>
+          <select id="a-topo-vento">
+            <option value="">Selecione…</option>
+            <option>Vale canaliza vento — reforça direção predominante</option>
+            <option>Barreira topográfica a barlavento — área protegida</option>
+            <option>Topo exposto — vento forte em todas as direções</option>
+            <option>Encosta — ventos anabáticos (dia) e catabáticos (noite)</option>
+            <option>Neutro — topografia plana sem influência direcional</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Bacia visual do entorno — visibilidade a partir do lote</label>
+          <div class="rating-group" id="r-topo-visual"></div>
+        </div>
+        <div class="form-field">
+          <label>Fontes de dados topográficos do entorno consultadas</label>
+          <input type="text" id="a-topo-fonte-ent" placeholder="ex: SRTM 30m (INPE), TOPODATA (INPE), Google Earth, carta 1:50.000">
         </div>
       </div>
       <div class="block-map-wrap" data-theme="topo">
@@ -4642,7 +4684,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Topografia do Lote — Condicionante Projetual -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Topografia — escala do entorno e do lote</span></div>
+    <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Topografia do lote</span></div>
     <div class="block-body">
       <div class="info-box">
         A topografia condiciona diretamente: <strong>insolação</strong> (encostas N vs S), <strong>ventilação</strong>
@@ -4650,52 +4692,10 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <strong>acessibilidade</strong> (rampas e degraus — NBR 9050), <strong>sistema construtivo</strong>
         (corte/aterro, arrimos, fundações) e <strong>custos de obra</strong>.
         Fonte para curvas de nível: SRTM 30m · IBGE TOPODATA · levantamento planialtimétrico local.
+        <br><strong>Divisão de escalas:</strong> toda a topografia do <strong>entorno</strong> (qualitativa e quantitativa — morfologia, declividade, microclima, cota, variação altimétrica, escoamento) está em <strong>01 · Contexto Urbano → Topografia — escala do entorno</strong>. Aqui ficam <strong>apenas os dados do LOTE</strong> (para a implantação).
       </div>
 
-      <!-- Escala do Entorno -->
-      <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:8px 0 6px;text-transform:uppercase;letter-spacing:.08em">Escala do Entorno — morfologia regional</div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label>Cota altimétrica aproximada do lote (m)</label>
-          <input type="number" id="a-topo-cota-lote" placeholder="ex: 790" step="0.5">
-          <small style="color:var(--t3)">Verificar: Google Earth / SRTM / TOPODATA / levantamento</small>
-        </div>
-        <div class="form-field">
-          <label>Variação altimétrica do entorno próximo (m)</label>
-          <input type="number" id="a-topo-delta-ent" placeholder="ex: 45 (diferença entre ponto mais alto e mais baixo em ~500m)" step="1">
-        </div>
-        <div class="form-field">
-          <label>Direção de escoamento das águas pluviais no entorno</label>
-          <select id="a-topo-escoa-ent">
-            <option value="">Selecione…</option>
-            <option>Para vale ao Norte</option><option>Para vale ao Sul</option>
-            <option>Para vale ao Leste</option><option>Para vale ao Oeste</option>
-            <option>Múltiplas direções — divisor de águas</option>
-            <option>Planície — escoamento lento / difuso</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Influência da topografia na ventilação local</label>
-          <select id="a-topo-vento">
-            <option value="">Selecione…</option>
-            <option>Valle canaliza vento — reforça direção predominante</option>
-            <option>Barreira topográfica a barlavento — área protegida</option>
-            <option>Topo exposto — vento forte em todas as direções</option>
-            <option>Encosta — ventos anabáticos (dia) e catabáticos (noite)</option>
-            <option>Neutro — topografia plana sem influência direcional</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Bacia visual do entorno — visibilidade a partir do lote</label>
-          <div class="rating-group" id="r-topo-visual"></div>
-        </div>
-        <div class="form-field">
-          <label>Fontes de dados topográficos do entorno consultadas</label>
-          <input type="text" id="a-topo-fonte-ent" placeholder="ex: SRTM 30m (INPE), TOPODATA (INPE), Google Earth, carta 1:50.000">
-        </div>
-      </div>
-
-      <!-- Escala do Lote -->
+      <!-- Escala do Lote (a topografia de ENTORNO foi consolidada em 01 · Contexto Urbano → Topografia — escala do entorno) -->
       <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.08em">Escala do Lote — dados para implantação</div>
       <div class="form-grid">
         <div class="form-field">
