@@ -15078,6 +15078,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
   const obs = props.obs || '';
   const tipo = props.tipo || '';
   const estado = props.estado || '';
+  const peca = props.peca || '';
   // isPoint pela geometria REAL da feição (todas as camadas aceitam polygon,
   // então gating por layerDef.geom escondia pictograma/raio de pontos desenhados)
   const _feat = (_mlFeatures[lid]||[]).find(x => x.id===fid || String(x.id)===String(fid));
@@ -15138,6 +15139,12 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
           </select>
         </div>
       </div>
+
+      <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:8px;font-weight:600">PEÇA (sistema de espaços livres)</label>
+      <select id="popup-peca" style="width:100%;padding:4px 5px;font-size:.6rem;border:1px solid var(--line2);border-radius:3px;box-sizing:border-box">
+        <option value="">— não classificar —</option>
+        ${SEL_PECAS.map(p=>`<option value="${p.id}" ${peca===p.id?'selected':''}>${escHtml(p.label)}</option>`).join('')}
+      </select>
 
       ${isPoint ? `
         <label style="display:block;font-size:.55rem;color:var(--t3);margin-top:8px;font-weight:600">PICTOGRAMA</label>
@@ -15263,6 +15270,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
       const novoRotulo = popupEl.querySelector('#popup-rotulo').value.trim();
       const novoTipo = (popupEl.querySelector('#popup-tipo')?.value || '').trim();
       const novoEstado = popupEl.querySelector('#popup-estado')?.value || '';
+      const novaPeca = popupEl.querySelector('#popup-peca')?.value || '';
       const novaCor = popupEl.querySelector('#popup-cor')?.value || '';
       const novaObs = popupEl.querySelector('#popup-obs').value.trim();
       const raioEl = popupEl.querySelector('#popup-raio');
@@ -15276,6 +15284,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
         rotulo: novoRotulo || undefined,
         tipo: novoTipo || undefined,
         estado: novoEstado || undefined,
+        peca: novaPeca || undefined,
         pictograma: picSel || undefined,
         corOverride: (novaCor && novaCor.toLowerCase() !== (layerDef.color || '').toLowerCase()) ? novaCor : undefined,
         obs: novaObs || undefined,
@@ -15530,6 +15539,18 @@ const SEL_GRUPOS = {
   sintese:        { label:'Síntese SWOT',                    layers:['swot'] },
   base:           { label:'Base / outros',                   layers:['terreno','notas'] }
 };
+// Peças do Sistema de Espaços Livres (Tardin) — classificam os ELEMENTOS do sistema no
+// partido (distinto de SEL_GRUPOS, que agrupa camadas). Cada feição pode ser uma peça;
+// as ações/verbos operativos se aplicam às peças (ver [[partido-verbos-mapa-plan]]).
+const SEL_PECAS = [
+  { id:'matriz',     label:'Matriz',       cor:'#2e7d32', desc:'Grande estrutura contínua que organiza o sistema (ex.: fundo de vale, corredor verde).' },
+  { id:'fragmento',  label:'Fragmento',    cor:'#7cb342', desc:'Espaço livre isolado, a ser conectado à rede (ex.: mancha verde solta).' },
+  { id:'praca',      label:'Praça',        cor:'#c0ca33', desc:'Espaço livre de permanência e convívio.' },
+  { id:'conector',   label:'Conector',     cor:'#1e88e5', desc:'Elemento linear que liga peças (ex.: rua qualificada, calçadão, ciclovia).' },
+  { id:'fronteira',  label:'Fronteira',    cor:'#8e24aa', desc:'Borda/limite entre áreas, a demarcar (ex.: borda do parque).' },
+  { id:'corpodagua', label:"Corpo d'água", cor:'#0097a7', desc:'Lagoa, rio, reservatório — peça-chave do suporte hídrico.' },
+];
+function _selPeca(id){ return SEL_PECAS.find(p=>p.id===id); }
 function exportarPacoteSEL(){
   const grupoDe={}; Object.entries(SEL_GRUPOS).forEach(([k,g])=>g.layers.forEach(id=>{ grupoDe[id]=k; }));
   const feats=[];
