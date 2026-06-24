@@ -4967,7 +4967,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Imageabilidade -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Leitura da imagem urbana</span></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Leitura da imagem urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -4989,6 +4989,14 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div class="form-field span2">
           <label>Bairros/Distritos (districts) — áreas com caráter homogêneo</label>
           <textarea id="p-districts" placeholder="Áreas residenciais, comerciais, industriais, históricas com identidade própria..."></textarea>
+        </div>
+      </div>
+      <div class="info-box" style="margin:10px 0 8px;font-size:.62rem">Além de descrever acima, <strong>espacialize</strong> a imagem urbana no mapa — marcos, nós, caminhos, bordas e bairros (Lynch). As feições aparecem no <strong>Mapa de Análise (aba 09)</strong>.</div>
+      <div class="block-map-wrap" data-theme="lynch">
+        <div class="block-map"></div>
+        <div class="block-map-info">
+          <span>Mapa temático · pontos (marcos/nós), linhas (caminhos/bordas) e polígonos (bairros)</span>
+          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Abrir no Mapa de Análise →</a>
         </div>
       </div>
     </div>
