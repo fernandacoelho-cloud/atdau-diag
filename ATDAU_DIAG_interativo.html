@@ -5908,6 +5908,10 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </div>
       <div id="prog-total" style="margin-top:8px;font-size:.66rem;font-weight:600;color:var(--teal)"></div>
       <div id="prog-checagem"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="instr-btn" onclick="exportarProgramaCSV()" style="font-size:.62rem" title="CSV (abre no Excel/Sheets, funciona sem internet) — ambientes, áreas, setor, capacidade, requisitos + totais">⬇ Programa em CSV</button>
+        <button class="instr-btn" onclick="exportarProgramaXLSX()" style="font-size:.62rem" title="Planilha .xlsx formatada (abas Programa + Resumo, células numéricas) — requer internet no momento da exportação">⬇ Programa em XLSX</button>
+      </div>
     </div>
   </div>
 
@@ -11347,6 +11351,125 @@ function renderProgChecagem(){
   }
   html += '</div>';
   el.innerHTML = html;
+}
+// ── Exportar o programa dimensionado para CSV (abre no Excel/Sheets) ──
+// Separador ";" + decimal vírgula + BOM = compatível com Excel em pt-BR.
+// String pura (testável offline); exportarProgramaCSV() apenas baixa.
+function _csvCell(v){
+  let s = (v==null) ? '' : String(v);
+  if(/[";\n\r]/.test(s) || /^\s|\s$/.test(s)) s = '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+function _programaCSVString(){
+  const list = (state.prog_ambientes||[]).filter(a=>a && (a.nome||a.area||a.ocup||a.req));
+  if(!list.length) return '';
+  const numBR = (n,dec=2)=>{ const x=parseFloat(n); return isFinite(x) ? x.toFixed(dec).replace('.',',') : ''; };
+  const SEP=';', NL='\r\n';
+  const linha = arr => arr.map(_csvCell).join(SEP);
+  const out = [];
+  out.push(linha(['Ambiente','Setor','Qtd','Área unitária (m²)','Área total (m²)','Pé-direito (m)','Capacidade','Requisitos']));
+  list.forEach(a=>{
+    const qtd = parseFloat(a.qtd)||1;
+    const areaUn = parseFloat(a.area)||0;
+    const st = _progSetor(a.setor);
+    out.push(linha([
+      a.nome||'',
+      st ? st.label : '',
+      (a.qtd!=null && a.qtd!=='') ? a.qtd : '1',
+      areaUn ? numBR(areaUn) : '',
+      areaUn ? numBR(areaUn*qtd) : '',
+      (a.pd!=null && a.pd!=='') ? numBR(a.pd,1) : '',
+      a.ocup||'',
+      a.req||''
+    ]));
+  });
+  const {util,pct,circ,construida}=_progAreas();
+  out.push('');
+  out.push(linha(['Resumo']));
+  out.push(linha(['Área útil programada (m²)', numBR(util)]));
+  out.push(linha(['Circulação e paredes (%)', isFinite(pct)?numBR(pct,0):'0']));
+  out.push(linha(['Circulação e paredes (m²)', numBR(circ)]));
+  out.push(linha(['Área construída estimada (m²)', numBR(construida)]));
+  const {terreno,ca,to,maxCA,maxTO}=_progPotencial();
+  if(terreno>0 && (ca>0||to>0)){
+    out.push('');
+    out.push(linha(['Potencial construtivo do lote']));
+    out.push(linha(['Área do terreno (m²)', numBR(terreno)]));
+    if(ca>0){
+      out.push(linha(['CA (coef. de aproveitamento)', numBR(ca,2)]));
+      out.push(linha(['Área máx. construível pelo CA (m²)', numBR(maxCA)]));
+      out.push(linha(['Folga (+) / excesso (−) vs. área construída (m²)', numBR(maxCA-construida)]));
+    }
+    if(to>0){
+      out.push(linha(['TO (taxa de ocupação %)', numBR(to,0)]));
+      out.push(linha(['Projeção máx. no térreo pela TO (m²)', numBR(maxTO)]));
+    }
+  }
+  return '﻿' + out.join(NL) + NL;   // BOM p/ acentos abrirem certos no Excel
+}
+function _progNomeSlug(){
+  const nome = (state['proj-nome'] || (document.getElementById('proj-nome')||{}).value || 'programa').trim();
+  return nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50) || 'programa';
+}
+function exportarProgramaCSV(){
+  const csv = _programaCSVString();
+  if(!csv){ alert('O programa dimensionado está vazio. Puxe os itens do programa de necessidades ou adicione ambientes antes de exportar.'); return; }
+  baixarArquivo('programa-'+_progNomeSlug()+'.csv', csv, 'text/csv;charset=utf-8');
+  if(typeof mostrarStatus==='function') mostrarStatus('Programa exportado em CSV ✓');
+}
+// ── Exportar o programa em .xlsx de verdade (planilha formatada) via SheetJS ──
+// A lib é carregada SOB DEMANDA (no clique), não no <script> inicial — não pesa o load
+// e só precisa de rede no momento da exportação. O CSV acima é o caminho sem dependência.
+let _xlsxLibPromise = null;
+function _carregarSheetJS(){
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  if(_xlsxLibPromise) return _xlsxLibPromise;
+  _xlsxLibPromise = new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=()=>{ window.XLSX ? resolve(window.XLSX) : reject(new Error('XLSX não inicializou')); };
+    s.onerror=()=>{ _xlsxLibPromise=null; reject(new Error('falha ao carregar a biblioteca (precisa de internet)')); };
+    document.head.appendChild(s);
+  });
+  return _xlsxLibPromise;
+}
+async function exportarProgramaXLSX(){
+  const list = (state.prog_ambientes||[]).filter(a=>a && (a.nome||a.area||a.ocup||a.req));
+  if(!list.length){ alert('O programa dimensionado está vazio. Puxe os itens do programa de necessidades ou adicione ambientes antes de exportar.'); return; }
+  let XLSX;
+  try { XLSX = await _carregarSheetJS(); }
+  catch(e){ alert('Não foi possível gerar o .xlsx: '+e.message+'.\nUse o botão "Programa em CSV" — ele funciona sem internet.'); return; }
+  const r1 = n => { const x=parseFloat(n); return isFinite(x) ? Math.round(x*100)/100 : null; };
+  // aba Programa — células numéricas (somáveis no Excel)
+  const aoa = [['Ambiente','Setor','Qtd','Área unitária (m²)','Área total (m²)','Pé-direito (m)','Capacidade','Requisitos']];
+  list.forEach(a=>{
+    const qtd=parseFloat(a.qtd)||1, areaUn=parseFloat(a.area)||0, pd=parseFloat(a.pd);
+    const st=_progSetor(a.setor);
+    aoa.push([ a.nome||'', st?st.label:'', qtd, areaUn||null, areaUn?r1(areaUn*qtd):null, isFinite(pd)?pd:null, a.ocup||'', a.req||'' ]);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:26},{wch:12},{wch:6},{wch:15},{wch:15},{wch:13},{wch:16},{wch:42}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Programa');
+  // aba Resumo — áreas + potencial do lote
+  const {util,pct,circ,construida}=_progAreas();
+  const res=[['Resumo',''],
+    ['Área útil programada (m²)', r1(util)],
+    ['Circulação e paredes (%)', isFinite(pct)?pct:0],
+    ['Circulação e paredes (m²)', r1(circ)],
+    ['Área construída estimada (m²)', r1(construida)]];
+  const {terreno,ca,to,maxCA,maxTO}=_progPotencial();
+  if(terreno>0 && (ca>0||to>0)){
+    res.push(['',''],['Potencial construtivo do lote','']);
+    res.push(['Área do terreno (m²)', r1(terreno)]);
+    if(ca>0){ res.push(['CA (coef. de aproveitamento)', r1(ca)],['Área máx. construível pelo CA (m²)', r1(maxCA)],['Folga (+) / excesso (−) vs. área construída (m²)', r1(maxCA-construida)]); }
+    if(to>0){ res.push(['TO (taxa de ocupação %)', r1(to)],['Projeção máx. no térreo pela TO (m²)', r1(maxTO)]); }
+  }
+  const ws2 = XLSX.utils.aoa_to_sheet(res);
+  ws2['!cols']=[{wch:44},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
+  XLSX.writeFile(wb, 'programa-'+_progNomeSlug()+'.xlsx');
+  if(typeof mostrarStatus==='function') mostrarStatus('Programa exportado em XLSX ✓');
 }
 // ── Organograma / fluxograma: bolhas por setor (área = tamanho) + adjacências da matriz ──
 function _organogramaSVGString(){
