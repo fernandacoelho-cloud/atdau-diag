@@ -5973,6 +5973,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <div id="dir-summary-bar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+  <button class="instr-btn" onclick="partidoPuxarDiretrizes()" style="font-size:.64rem;margin-bottom:12px" title="Gera diretrizes a partir das peças do SEL e dos verbos operativos aplicados às feições no Mapa de Análise (o partido vira diretriz)">↳ puxar diretrizes do partido (peças + verbos no mapa)</button>
   <div id="dir-cats-container"></div>
 
 
@@ -9571,6 +9572,40 @@ function delDirCat(catId, idx) {
 // Compat: addDirManual, renderDirManual → mantidos como alias
 function addDirManual() { addDirCat('programa'); }
 function renderDirManual() { DIR_CATS.forEach(c => renderDirManCat(c.id)); }
+
+// Gancho partido→diretrizes: cada verbo aplicado a uma peça (no Mapa de Análise) vira uma
+// diretriz na dimensão correspondente. Fecha o fluxo "o dado entra uma vez e anda".
+const VERBO_GRUPO_DIRCAT = {
+  sel:'urbana', topologia:'urbana', urbano:'urbana',
+  topografia:'implantacao', forma:'implantacao', volume:'implantacao',
+  paisagem:'visual', programa:'programa'
+};
+function partidoPuxarDiretrizes(){
+  if(typeof _mlFeatures==='undefined'){ if(typeof alert==='function') alert('Sem feições no mapa.'); return 0; }
+  const _vb = id => (typeof VERBOS_OPERATIVOS!=='undefined' ? (VERBOS_OPERATIVOS.find(v=>v.id===id)||{}) : {});
+  const _pc = id => (typeof _selPeca==='function' ? (_selPeca(id)||{}) : {});
+  if(!state.dir_cats) state.dir_cats={};
+  let n=0;
+  Object.keys(_mlFeatures).forEach(lid=>{ (_mlFeatures[lid]||[]).forEach(f=>{
+    const p = f && f.props; if(!p || !p.peca || !Array.isArray(p.verbos) || !p.verbos.length) return;
+    const pecaLbl = _pc(p.peca).label || p.peca;
+    const rot = (p.rotulo || p.label || '').toString().trim();
+    p.verbos.forEach(vid=>{
+      const v = _vb(vid); if(!v.label) return;
+      const cat = VERBO_GRUPO_DIRCAT[v.grupo] || 'implantacao';
+      const text = v.label + ' ' + pecaLbl + (rot?(' ("'+rot+'")'):'') + ' [partido]';
+      if(!state.dir_cats[cat]) state.dir_cats[cat]=[];
+      if(state.dir_cats[cat].some(d=>d && d.text===text)) return;   // idempotente
+      state.dir_cats[cat].push({ text, pri:'D', origem:'partido' });
+      n++;
+    });
+  }); });
+  if(typeof autoSave==='function') autoSave();
+  if(typeof renderDiretrizes==='function') renderDiretrizes();
+  if(typeof renderDirManual==='function') renderDirManual();
+  if(typeof mostrarStatus==='function') mostrarStatus(n ? ('Diretrizes do partido geradas ✓ ('+n+')') : 'Nenhuma peça com verbos no mapa, ou já geradas.');
+  return n;
+}
 
 // ══════════════════════════════════════════════════
 // PROGRAMA DE NECESSIDADES — lista viva que coevolui com as diretrizes
