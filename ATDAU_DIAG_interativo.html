@@ -8243,6 +8243,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('.block-map-wrap, .maplibregl-popup')) return;
     agendarCompletude();
   });
+  // primeiro acesso: abre o tour uma vez (não dispara sob automação)
+  setTimeout(_onboardingPrimeiroAcesso, 400);
 });
 
 // ══════════════════════════════════════════════════
@@ -8664,8 +8666,10 @@ const TUT_PERCURSOS = {
   }
 };
 let TUT_ATUAL = 'novato';
+let _tutBoasVindas = false;   // mostra a faixa de boas-vindas quando o tour abre no primeiro acesso
 
-function abrirTutorial(){
+function abrirTutorial(firstRun){
+  _tutBoasVindas = !!firstRun;
   let m = document.getElementById('tut-modal');
   if(m){ m.style.display='flex'; renderTutorial(); return; }
   m = document.createElement('div');
@@ -8693,6 +8697,18 @@ function abrirTutorial(){
   renderTutorial();
 }
 function fecharTutorial(){ const m=document.getElementById('tut-modal'); if(m) m.style.display='none'; }
+// Primeiro acesso: abre o tour automaticamente uma única vez (flag no localStorage).
+// Pulado sob automação (navigator.webdriver) para não interferir nos testes; force=true
+// exercita a lógica diretamente. Retorna true se abriu o tour agora.
+function _onboardingPrimeiroAcesso(force){
+  try{
+    if(!force && navigator.webdriver) return false;       // não dispara em testes/automação
+    if(localStorage.getItem('atdau-diag-onboarded')) return false;  // já passou pelo primeiro acesso
+    localStorage.setItem('atdau-diag-onboarded','1');
+    if(typeof abrirTutorial==='function'){ abrirTutorial(true); return true; }
+  }catch(e){}
+  return false;
+}
 // Modal dedicado "Sobre · autoria" (acessível pelo botão dedicado da topbar
 // e pelo selo de versão).
 const _ROTULO_SOBRE='font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);padding-top:2px';
@@ -8793,8 +8809,13 @@ function renderTutorial(){
   }).join('');
 
   const p = TUT_PERCURSOS[TUT_ATUAL];
+  // faixa de boas-vindas — só no primeiro acesso (o tour abre sozinho uma vez)
+  const boasVindas = _tutBoasVindas ? `<div style="background:rgba(31,111,92,.1);border:1px solid var(--teal);border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:1.1rem;line-height:1">👋</span>
+      <div style="font-size:.64rem;line-height:1.55;color:var(--t1)"><strong>Bem-vindo(a)!</strong> Este guia abriu sozinho no seu primeiro acesso. Ele mostra como percorrer a ferramenta — não precisa seguir em ordem. Feche quando quiser; para reabrir, use o botão <strong>🎯 Como usar</strong> no topo.</div>
+    </div>` : '';
   // descrição + fluxo vertical: cada nó é clicável → abre a aba correspondente
-  let html = `<div style="background:#fff;border:1px solid var(--line2);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+  let html = boasVindas + `<div style="background:#fff;border:1px solid var(--line2);border-radius:8px;padding:12px 14px;margin-bottom:14px">
     <div style="font-size:.7rem;font-weight:800;color:var(--t1);margin-bottom:8px">⚡ Início rápido — 5 passos</div>
     <ol style="margin:0;padding-left:18px;font-size:.62rem;line-height:1.6;color:var(--t2)">
       <li><strong>Identifique</strong> o projeto e <strong>defina o Escopo</strong> (aba Identificação).</li>
