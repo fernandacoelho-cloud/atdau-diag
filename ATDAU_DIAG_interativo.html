@@ -6466,6 +6466,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <textarea id="obs-conflitos" placeholder="ex: Pedestres atravessam fora da faixa; carros invadem calçada para estacionar; ausência de bancos força permanência em pé..."></textarea>
       </div>
 
+      <div data-multimodal="instr:observacao" data-mm-label="Registro de campo — observação do entorno"></div>
+
       <div class="instr-actions">
         <button class="instr-btn instr-btn-primary" onclick="exportInstrument('observacao')">📄 Exportar JSON</button>
         <button class="instr-btn instr-btn-secondary" onclick="resetCounters()">🔄 Zerar contadores</button>
@@ -6595,6 +6597,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <label>Síntese da avaliação de qualidade</label>
         <textarea id="gehl-sintese" placeholder="Quais critérios mais comprometidos? Quais são os pontos fortes? Como o projeto pode aprimorar as dimensões mais frágeis?"></textarea>
       </div>
+
+      <div data-multimodal="instr:gehl-12" data-mm-label="Registro de campo — 12 critérios (Gehl)"></div>
 
       <div class="instr-actions">
         <button class="instr-btn instr-btn-primary" onclick="exportInstrument('gehl-12')">📄 Exportar JSON</button>
@@ -7015,6 +7019,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <label>Síntese do walk-through e principais não-conformidades</label>
         <textarea id="wt-sintese" placeholder="Liste por prioridade os achados que comprometem o desempenho. Indique se as não-conformidades são de projeto, execução ou uso/manutenção."></textarea>
       </div>
+
+      <div data-multimodal="instr:walk-through-nbr" data-mm-label="Registro de campo — walk-through (APO)"></div>
 
       <div class="instr-actions">
         <button class="instr-btn instr-btn-primary" onclick="exportInstrument('walk-through-nbr')">📄 Exportar JSON</button>
@@ -8243,6 +8249,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('.block-map-wrap, .maplibregl-popup')) return;
     agendarCompletude();
   });
+  // registros multimodais (texto+foto+áudio) nos instrumentos de campo
+  if(typeof MMStore!=='undefined'){ try{ MMStore.load(); Multimodal.mountAll(); }catch(e){} }
   // primeiro acesso: abre o tour uma vez (não dispara sob automação)
   setTimeout(_onboardingPrimeiroAcesso, 400);
 });
@@ -12895,7 +12903,8 @@ const PROJ_STORES = [
   'atdau-diag-photos',      // fotos dos instrumentos
   'atdau-diag-croquis',     // croquis
   'atdau-diag-mapa-anotado',// mapa-síntese anotado
-  'atdau-diag-setores'      // setores SIDRA carregados
+  'atdau-diag-setores',     // setores SIDRA carregados
+  'atdau-diag-multimodal'   // registros multimodais (texto+foto+áudio) dos instrumentos
 ];
 
 // Equipe Fatia 2 — merge: junta o arquivo .atdau.json de um colaborador ao projeto
@@ -21930,6 +21939,86 @@ function _maRenderEditAudios(){
   wrap.innerHTML=_maEditAudios.map((d,i)=>`<div style="display:flex;gap:6px;align-items:center"><audio controls preload="none" src="${d}" style="flex:1;height:30px"></audio><button type="button" onclick="maRemoveAudio(${i})" title="remover" style="border:none;background:#e0506a;color:#fff;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:.62rem;line-height:1;flex:none">✕</button></div>`).join('');
 }
 function maRemoveAudio(i){ _maEditAudios.splice(i,1); _maRenderEditAudios(); }
+
+// ── Componente multimodal reutilizável (texto + foto + áudio) p/ instrumentos de campo ──
+// Reusa _imgToDataURL/_fileToDataURL e o padrão MediaRecorder do Mapa Anotado. Persiste em
+// MMStore (localStorage próprio, em PROJ_STORES → viaja no export). Montagem declarativa:
+// qualquer <div data-multimodal="<chave>" data-mm-label="..."> é montado por Multimodal.mountAll().
+const MMStore = {
+  data:{},
+  load(){ try{ const r=localStorage.getItem('atdau-diag-multimodal'); if(r) this.data=JSON.parse(r)||{}; }catch(e){ this.data={}; } },
+  save(){ try{ localStorage.setItem('atdau-diag-multimodal', JSON.stringify(this.data)); return true; }catch(e){ alert('⚠️ Armazenamento de mídia próximo do limite. Remova fotos/áudios antigos.'); return false; } },
+  get(key){ if(!this.data[key]) this.data[key]={nota:'',fotos:[],audios:[]}; return this.data[key]; }
+};
+const Multimodal = {
+  _rec:{},
+  mountAll(){ document.querySelectorAll('[data-multimodal]').forEach(el=>{ if(!el.dataset.mmReady) this.mount(el); }); },
+  mount(el){
+    el.dataset.mmReady='1';
+    const key=el.dataset.multimodal, label=el.dataset.mmLabel||'Registro de campo';
+    const e=MMStore.get(key);
+    el.innerHTML=`
+      <div style="border:1px solid var(--line2);border-radius:8px;padding:10px 12px;margin-top:12px;background:var(--bg2)">
+        <div style="font-size:.62rem;font-weight:700;color:var(--t2);margin-bottom:7px">📎 ${escHtml(label)} <span style="font-weight:400;color:var(--t3)">— texto · foto · áudio</span></div>
+        <textarea class="mm-nota" placeholder="Anotação livre do local…" style="width:100%;min-height:46px;font-size:.62rem;border:1px solid var(--line2);border-radius:6px;padding:6px 8px;box-sizing:border-box;resize:vertical">${escHtml(e.nota||'')}</textarea>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;align-items:center">
+          <button type="button" class="instr-btn mm-foto-btn" style="font-size:.6rem">📷 Foto</button>
+          <button type="button" class="instr-btn mm-rec-btn" style="font-size:.6rem">🎤 Gravar</button>
+          <button type="button" class="instr-btn mm-aud-btn" style="font-size:.6rem">📤 Áudio</button>
+          <input type="file" class="mm-foto-input" accept="image/*" capture="environment" multiple style="display:none">
+          <input type="file" class="mm-aud-input" accept="audio/*" multiple style="display:none">
+          <span class="mm-rec-status" style="font-size:.56rem;color:#e0506a"></span>
+        </div>
+        <div class="mm-fotos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+        <div class="mm-audios" style="display:flex;flex-direction:column;gap:5px;margin-top:8px"></div>
+      </div>`;
+    const q=s=>el.querySelector(s);
+    q('.mm-nota').addEventListener('input', ev=>{ MMStore.get(key).nota=ev.target.value; MMStore.save(); });
+    q('.mm-foto-btn').addEventListener('click', ()=>q('.mm-foto-input').click());
+    q('.mm-aud-btn').addEventListener('click', ()=>q('.mm-aud-input').click());
+    q('.mm-foto-input').addEventListener('change', async ev=>{
+      const files=[...(ev.target.files||[])]; ev.target.value='';
+      for(const f of files){ if(!/^image\//.test(f.type)) continue; try{ MMStore.get(key).fotos.push(await _imgToDataURL(f,1100)); }catch(_){} }
+      MMStore.save(); this._renderFotos(el,key);
+    });
+    q('.mm-aud-input').addEventListener('change', async ev=>{
+      const files=[...(ev.target.files||[])]; ev.target.value='';
+      for(const f of files){ if(!/^audio\//.test(f.type)) continue; try{ MMStore.get(key).audios.push(await _fileToDataURL(f)); }catch(_){} }
+      MMStore.save(); this._renderAudios(el,key);
+    });
+    q('.mm-rec-btn').addEventListener('click', ()=>this._toggleRec(el,key));
+    this._renderFotos(el,key); this._renderAudios(el,key);
+  },
+  _renderFotos(el,key){
+    const wrap=el.querySelector('.mm-fotos'); if(!wrap) return; const fotos=MMStore.get(key).fotos;
+    wrap.innerHTML=fotos.map((d,i)=>`<div style="position:relative"><img src="${d}" style="width:58px;height:58px;object-fit:cover;border-radius:5px;border:1px solid var(--line2)"><button type="button" data-i="${i}" class="mm-foto-del" title="remover" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#e0506a;color:#fff;cursor:pointer;font-size:.6rem;line-height:1">✕</button></div>`).join('');
+    wrap.querySelectorAll('.mm-foto-del').forEach(b=>b.addEventListener('click',()=>{ MMStore.get(key).fotos.splice(+b.dataset.i,1); MMStore.save(); this._renderFotos(el,key); }));
+  },
+  _renderAudios(el,key){
+    const wrap=el.querySelector('.mm-audios'); if(!wrap) return; const audios=MMStore.get(key).audios;
+    wrap.innerHTML=audios.map((d,i)=>`<div style="display:flex;gap:6px;align-items:center"><audio controls preload="none" src="${d}" style="flex:1;height:30px"></audio><button type="button" data-i="${i}" class="mm-aud-del" title="remover" style="border:none;background:#e0506a;color:#fff;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:.6rem;line-height:1;flex:none">✕</button></div>`).join('');
+    wrap.querySelectorAll('.mm-aud-del').forEach(b=>b.addEventListener('click',()=>{ MMStore.get(key).audios.splice(+b.dataset.i,1); MMStore.save(); this._renderAudios(el,key); }));
+  },
+  _toggleRec(el,key){
+    const cur=this._rec[key]; const btn=el.querySelector('.mm-rec-btn'); const status=el.querySelector('.mm-rec-status');
+    if(cur && cur.rec && cur.rec.state==='recording'){ cur.rec.stop(); return; }
+    if(typeof MediaRecorder==='undefined' || !navigator.mediaDevices){ alert('Gravação não suportada neste navegador. Use o botão Áudio (upload).'); return; }
+    navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+      let rec; try{ rec=new MediaRecorder(stream,{audioBitsPerSecond:32000}); }catch(_){ rec=new MediaRecorder(stream); }
+      const chunks=[]; this._rec[key]={rec,stream};
+      rec.ondataavailable=ev=>{ if(ev.data && ev.data.size) chunks.push(ev.data); };
+      rec.onstop=()=>{
+        const blob=new Blob(chunks,{type:(rec.mimeType)||'audio/webm'}); const fr=new FileReader();
+        fr.onload=()=>{ MMStore.get(key).audios.push(fr.result); MMStore.save(); this._renderAudios(el,key); };
+        fr.readAsDataURL(blob);
+        try{ stream.getTracks().forEach(t=>t.stop()); }catch(_){} this._rec[key]=null;
+        if(status) status.textContent=''; if(btn){ btn.textContent='🎤 Gravar'; btn.style.color=''; }
+      };
+      rec.start();
+      if(status) status.textContent='🔴 gravando… clique para parar'; if(btn){ btn.textContent='⏹ Parar'; btn.style.color='#e0506a'; }
+    }).catch(err=>alert('Não foi possível acessar o microfone: '+(err && err.message||err)));
+  }
+};
 
 function maRenderList() {
   const list = document.getElementById('ma-lista');
