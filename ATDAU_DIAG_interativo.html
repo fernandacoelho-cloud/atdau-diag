@@ -1084,9 +1084,12 @@ select option{background:var(--bg3)}
 .maplibregl-map.mapa-expandido {
   position:fixed !important; inset:14px !important; width:auto !important; height:auto !important;
   z-index:9000 !important; box-shadow:0 10px 50px rgba(0,0,0,.45); border-radius:10px;
+  background: var(--bg1,#faf9f5) !important;   /* opaco: sem fundo, a página atrás vazava pelo canvas */
 }
 body.tem-mapa-expandido { overflow:hidden; }
-.ml-expand-btn { font-size:15px; line-height:1; font-weight:700; }
+.ml-expand-btn { display:flex !important; align-items:center; justify-content:center; gap:4px; width:auto !important; min-width:29px; height:29px; padding:0 9px; font-size:11px; font-weight:700; color:var(--t2); }
+.ml-expand-btn svg { display:block; flex:none; }
+.ml-expand-lbl { line-height:1; }
 .maplibregl-ctrl-group { background: var(--bg4) !important; border: 1px solid var(--line2) !important; }
 .maplibregl-ctrl-group button { background: var(--bg4) !important; color: var(--t2) !important; }
 .ml-layer-item { margin-bottom:6px }
@@ -14161,6 +14164,12 @@ const MapLegend = {
 // Controle "abrir maior" — expande o mapa numa sobreposição via CSS. NÃO usa a API de
 // tela cheia do SO (que iframes/preview embutidos bloqueiam, fazendo o MapLibre esconder
 // o próprio FullscreenControl) → este botão aparece e funciona em qualquer contexto.
+// ícones SVG (renderizam em qualquer fonte; o glifo ⛶ não existe no Windows → botão vazio)
+const _SVG_EXPANDIR = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.5H2.5V6M10 2.5h3.5V6M6 13.5H2.5V10M10 13.5h3.5V10"/></svg>';
+const _SVG_RESTAURAR = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+// botão com rótulo de texto (ícone sozinho passava despercebido)
+const _EXP_HTML = _SVG_EXPANDIR + '<span class="ml-expand-lbl">maior</span>';
+const _EXP_CLOSE_HTML = _SVG_RESTAURAR + '<span class="ml-expand-lbl">fechar</span>';
 function _criarControleExpandir(){
   return {
     onAdd(map){
@@ -14169,7 +14178,7 @@ function _criarControleExpandir(){
       div.className = 'maplibregl-ctrl maplibregl-ctrl-group';
       const btn = document.createElement('button');
       btn.type = 'button'; btn.className = 'ml-expand-btn';
-      btn.title = 'Abrir maior / restaurar'; btn.setAttribute('aria-label','Abrir maior'); btn.textContent = '⛶';
+      btn.title = 'Abrir maior / restaurar'; btn.setAttribute('aria-label','Abrir maior'); btn.innerHTML = _EXP_HTML;
       btn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); _toggleMapaExpandido(map, btn); };
       div.appendChild(btn); this._c = div; return div;
     },
@@ -14178,18 +14187,26 @@ function _criarControleExpandir(){
 }
 function _toggleMapaExpandido(map, btn){
   const c = map.getContainer();
-  const exp = c.classList.toggle('mapa-expandido');
-  document.body.classList.toggle('tem-mapa-expandido', exp);
+  if(c.classList.contains('mapa-expandido')){ _restaurarMapaExpandido(); return; }
+  // PORTAL: move o mapa para o <body> enquanto expandido. Sem isso, o position:fixed fica
+  // preso ao primeiro ancestral com transform/filter e o mapa era RECORTADO pelo overflow do
+  // painel (e o conteúdo da aba aparecia por cima, com a barra de comandos inacessível).
+  const ph = document.createComment('mapa-exp-ph');
+  if(c.parentNode){ c.parentNode.insertBefore(ph, c); c.__ph = ph; }
+  document.body.appendChild(c);
+  c.classList.add('mapa-expandido');
+  document.body.classList.add('tem-mapa-expandido');
   c.__expandBtn = btn || c.__expandBtn; c.__expandMap = map;
-  if(c.__expandBtn) c.__expandBtn.textContent = exp ? '✕' : '⛶';
-  if(c.__expandBtn) c.__expandBtn.title = exp ? 'Restaurar tamanho' : 'Abrir maior / restaurar';
+  if(c.__expandBtn){ c.__expandBtn.innerHTML = _EXP_CLOSE_HTML; c.__expandBtn.title = 'Restaurar tamanho'; }
   setTimeout(()=>{ try{ map.resize(); }catch(e){} }, 60);
 }
 function _restaurarMapaExpandido(){
   const c = document.querySelector('.mapa-expandido'); if(!c) return false;
   c.classList.remove('mapa-expandido');
   document.body.classList.remove('tem-mapa-expandido');
-  if(c.__expandBtn){ c.__expandBtn.textContent='⛶'; c.__expandBtn.title='Abrir maior / restaurar'; }
+  // devolve o mapa ao lugar original (marcado pelo placeholder)
+  if(c.__ph && c.__ph.parentNode){ c.__ph.parentNode.insertBefore(c, c.__ph); c.__ph.parentNode.removeChild(c.__ph); c.__ph = null; }
+  if(c.__expandBtn){ c.__expandBtn.innerHTML=_EXP_HTML; c.__expandBtn.title='Abrir maior / restaurar'; }
   const m = c.__expandMap; setTimeout(()=>{ try{ m && m.resize(); }catch(e){} }, 60);
   return true;
 }
