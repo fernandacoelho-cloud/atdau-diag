@@ -7828,8 +7828,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════ PANEL 10: MAPA-SÍNTESE (base64 via iframe) ════════════════ -->
 <div class="panel" id="panel-10" style="padding:0">
-  <div class="sec-title" style="padding:18px 24px 0">Mapa-Síntese — Partido e Diretrizes Projetuais <div class="sec-line"></div></div>
-  <p style="padding:6px 24px 14px;color:var(--t2);font-size:13px;max-width:760px">Editor diagramático do partido (condicionantes PFOA + intenções projetuais), georreferenciado, com edificações reais 2D/3D, trajetória solar e relevo. A síntese projetual que decorre do diagnóstico.</p>
+  <div class="sec-title" style="padding:18px 24px 0">Proposição — Partido (Mapa-Síntese) <div class="sec-line"></div></div>
+  <p style="padding:6px 24px 14px;color:var(--t2);font-size:13px;max-width:760px">Aqui você <strong>propõe</strong>: o partido (condicionantes PFOA + intenções projetuais) sobre a base real, com edificações 2D/3D, trajetória solar e relevo. A <strong>leitura/diagnóstico</strong> fica no <strong>Mapa de Análise</strong> e na <strong>Síntese SWOT</strong> (aba 09) — esta etapa é o passo seguinte, que materializa o partido.</p>
   <div style="padding:0 24px 28px">
     <div id="partido-resumo" style="margin-bottom:16px"></div>
     <div style="border:1px solid var(--line2,#e0ddd5);border-radius:14px;padding:32px;text-align:center;background:linear-gradient(135deg,#FAFAF8,#F2EFE9)">
@@ -8644,7 +8644,7 @@ const TUT_PERCURSOS = {
       {n:9, lbl:'Instrumentos de Coleta',      tag:'escolha 1–2 (Gehl, Lynch, Rheingantz…)'},
       {n:12,lbl:'Obras Análogas',              tag:'cadastre 2–3 referências'},
       {n:6, lbl:'Mapa de Análise',             tag:'cruze achados georreferenciados'},
-      {n:10,lbl:'Mapa-Síntese',                tag:'síntese cartográfica do diagnóstico'},
+      {n:10,lbl:'Mapa-Síntese',                tag:'proposição: o partido sobre a base real'},
       {n:7, lbl:'Síntese SWOT',                tag:'consolide os pontos da PFOA'},
       {n:13,lbl:'Programa',                    tag:'dimensionado, com Problem Seeking'},
       {n:8, lbl:'Diretrizes',                  tag:'partido com vínculo a necessidades'}
@@ -13152,7 +13152,7 @@ function _emitirRelatorio(R, opts){
     let temAlgo=false;
     const mapas=[
       {inst:(typeof _mlMap!=='undefined'?_mlMap:null),       cap:'Mapa de Análise — feições e camadas do diagnóstico.',                  leg:(typeof mlLegendItems==='function'?mlLegendItems:null),    legT:'Legenda'},
-      {inst:(typeof _maInst!=='undefined'?_maInst:null),     cap:'Mapa-Síntese (Mapa Anotado) — anotações georreferenciadas de campo.',  leg:(typeof maLegendItems==='function'?maLegendItems:null),    legT:'Categorias'},
+      {inst:(typeof _maInst!=='undefined'?_maInst:null),     cap:'Mapa Anotado — anotações georreferenciadas de campo.',  leg:(typeof maLegendItems==='function'?maLegendItems:null),    legT:'Categorias'},
       {inst:(typeof _sidraMapaInst!=='undefined'?_sidraMapaInst:null), cap:'Mapa SIDRA/IBGE — dados censitários por setor.',               leg:(typeof sidraLegendItems==='function'?sidraLegendItems:null), legT:'Censo/IBGE'},
     ];
     let primeiroMapa=true;
