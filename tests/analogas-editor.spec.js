@@ -23,7 +23,7 @@ test('Editor gráfico: SVG tem tamanho usável e o desenho aparece', async ({ pa
   // abrir editor pelo atalho ✏️
   await page.evaluate(() => {
     const panel = document.getElementById('an-analise-panel');
-    [...panel.querySelectorAll('button')].find(b => b.textContent.trim() === '✏️').click();
+    [...panel.querySelectorAll('button')].find(b => b.textContent.trim().startsWith('✏️')).click();
   });
   await page.waitForTimeout(400);
 

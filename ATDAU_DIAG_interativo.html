@@ -1321,6 +1321,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <button class="tb-export" onclick="salvarProjeto()" title="Salvar todo o projeto em um arquivo para reabrir depois, em qualquer computador">📁 Salvar projeto</button>
   <input type="file" id="proj-file-input" accept=".json,.atdau.json" style="display:none" onchange="abrirProjeto(this)">
   <button class="tb-save" id="btn-save" onclick="salvar()" title="Salvar rascunho neste navegador (rápido, mas não é arquivo)">💾 Salvar</button>
+  <span id="save-indic" title="Estado do salvamento automático neste navegador. Para arquivo portátil, use Salvar projeto." style="font-size:.56rem;color:var(--t3);white-space:nowrap;align-self:center"></span>
   <button class="tb-save" id="btn-modo" onclick="toggleModoCampo()" title="Alternar entre Escritório (denso) e Campo (fontes maiores, alvos de toque) — útil em tablet/celular" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">🏢 Escritório</button>
   <button class="tb-save" onclick="abrirTutorial()" title="Veja como percorrer a ferramenta" style="background:transparent;border:1px solid var(--teal);color:var(--teal)">🎯 Como usar</button>
   <button class="tb-save" onclick="abrirGlossario()" title="Termos e métodos em linguagem simples" style="background:transparent;border:1px solid var(--line2);color:var(--t2)">📖 Glossário</button>
@@ -5554,6 +5555,19 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <input type="file" id="ml-import-file" accept=".zip,.geojson,.json" style="display:none" onchange="mlHandleImport(this)">
     <button onclick="mlClearAll()" class="add-btn" style="color:var(--red);border-color:rgba(224,80,106,.3)">🗑 Limpar tudo</button>
   </div>
+
+  <details class="edif-box" style="margin:8px 0;border:1px solid var(--line2);border-radius:8px;padding:8px 12px;background:var(--bg3)">
+    <summary style="cursor:pointer;font-size:.66rem;font-weight:700;color:#1f8d49">🏢 Prédios reais (footprints 2D / 3D)</summary>
+    <div style="font-size:.6rem;color:var(--t2);line-height:1.5;margin:8px 0">Traz as edificações reais do recorte como camada sobre o mapa (mesmas fontes do Mapa-Síntese). Marque <strong>Volume 3D</strong> para extrudar. <span style="color:var(--t3)">Aparecem a partir do zoom ~12–14; precisa de internet.</span></div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:.66rem;color:var(--t1)">
+      <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-ob" onchange="_edifToggleOB(this.checked, this.closest('.edif-box'))"> Open Buildings <span style="color:var(--t3)">(Google+MS · BR)</span></label>
+      <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-osm" onchange="_edifToggleOSM(this.checked, this.closest('.edif-box'))"> OSM <span style="color:var(--t3)">(OpenFreeMap · com altura)</span></label>
+      <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-3d" onchange="_edifToggle3D(this.checked)"> Volume 3D</label>
+      <label style="display:flex;gap:6px;align-items:center"><span>Altura sem dado (m):</span><input type="number" class="edif-h" min="2" max="300" value="9" title="Altura usada nos prédios sem dado: Open Buildings (uniforme) e fallback do OSM. ≈ andares × 3 m." onchange="_edifSetAltura(this.value, this.closest('.edif-box'))" style="width:60px;padding:3px 5px;border:1px solid var(--line2);border-radius:4px;font-size:.62rem;text-align:center;box-sizing:border-box"></label>
+    </div>
+    <div style="font-size:.54rem;color:var(--t3);margin-top:6px">Open Buildings não traz altura (extrusão uniforme); OSM usa a altura real quando existe. A altura acima ≈ nº de andares × 3 m.</div>
+    <div class="edif-status" style="font-size:.56rem;color:var(--t3);margin-top:5px"></div>
+  </details>
 
   <details id="mapas-salvos-box" style="margin:8px 0;border:1px solid var(--line2);border-radius:8px;padding:8px 12px;background:var(--bg3)" ontoggle="if(this.open)renderMapasSalvos()">
     <summary style="cursor:pointer;font-size:.66rem;font-weight:700;color:#1f8d49">🗺️ Mapas salvos para o relatório (<span id="mapas-salvos-count">0</span>)</summary>
@@ -10603,7 +10617,7 @@ function renderAnaliseAnaloga(){
       inativos.forEach(s=>{
         html += `<span style="display:inline-flex;align-items:stretch;border-radius:11px;overflow:hidden;border:1px dashed ${cat.cor}">
           <button onclick="toggleAnaliseSub('${obraId}','${cat.id}','${s.id}')" style="font-size:.56rem;padding:3px 8px;border:none;background:transparent;color:${cat.cor};cursor:pointer" title="${escHtml(s.prompt)}">+ ${escHtml(s.label)}</button>
-          <button onclick="iniciarAnaliseGrafica('${obraId}','${cat.id}','${s.id}')" style="font-size:.6rem;padding:3px 7px;border:none;border-left:1px dashed ${cat.cor};background:${cat.cor}1a;color:${cat.cor};cursor:pointer" title="Desenhar sobre imagem neste tema (abre o editor)">✏️</button>
+          <button onclick="iniciarAnaliseGrafica('${obraId}','${cat.id}','${s.id}')" style="font-size:.6rem;padding:3px 7px;border:none;border-left:1px dashed ${cat.cor};background:${cat.cor}1a;color:${cat.cor};cursor:pointer;white-space:nowrap" title="Desenhar sobre imagem neste tema (abre o editor)">✏️ desenhar</button>
         </span>`;
       });
       html += '</div>';
@@ -12298,16 +12312,41 @@ function preencherDados(){
 // ══════════════════════════════════════════════════
 // SAVE / LOAD
 // ══════════════════════════════════════════════════
+// % usado do localStorage (~5 M chars na maioria dos navegadores; 2 bytes/char).
+// Fotos/áudios em base64 são o que enche — o indicador avisa ANTES de estourar.
+function _lsUsagePct(){
+  try{
+    let chars=0;
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); chars += k.length + (localStorage.getItem(k)||'').length; }
+    return Math.round(chars/5000000*100);
+  }catch(e){ return 0; }
+}
+// Indicador persistente de salvamento (topbar): "✓ salvo HH:MM" e, se o armazenamento
+// estiver alto, o alerta de quota; em falha, o estado de erro com a ação a tomar.
+function _updateSaveIndic(ok){
+  const el=document.getElementById('save-indic'); if(!el) return;
+  if(!ok){
+    el.textContent='⚠ não salvo — armazenamento cheio; use "Salvar projeto" (arquivo) e remova fotos/áudios antigos';
+    el.style.color='var(--red,#b5503a)';
+    return;
+  }
+  const h=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const pct=_lsUsagePct();
+  if(pct>=80){ el.textContent=`✓ salvo ${h} · ⚠ armazenamento ${pct}%`; el.style.color='#9a6b1e'; }
+  else { el.textContent=`✓ salvo ${h}`+(pct>=60?` · armazenamento ${pct}%`:''); el.style.color='var(--t3)'; }
+}
 function salvar(){
   coletarDados();
   try{
     localStorage.setItem('atdau-diag-v1',JSON.stringify(state));
     mostrarStatus('Salvo ✓');
     updateMeta();
+    _updateSaveIndic(true);
     document.getElementById('btn-save').textContent='💾 Salvo ✓';
     setTimeout(()=>{ document.getElementById('btn-save').textContent='💾 Salvar'; },2000);
   }catch(e){
     mostrarStatus('Erro ao salvar');
+    _updateSaveIndic(false);
     console.error(e);
   }
 }
@@ -14161,6 +14200,15 @@ const MapLegend = {
 
 // Adiciona uma seta de norte fixa (overlay) ao container de um mapa MapLibre.
 // A seta acompanha a rotação (bearing) do mapa, como numa prancha técnica.
+// ══ REGRA DE DESIGN (descobribilidade) ═══════════════════════════════════
+// Ação importante NUNCA é só-ícone nem flutua solta no canto do mapa:
+//  1. botão com ÍCONE + RÓTULO DE TEXTO (ex.: "⤢ maior", "🏢 Prédios", "💾 Salvar vista");
+//  2. de preferência em BARRA/BLOCO FIXO fora do canvas (abaixo/acima do mapa);
+//  3. glifos unicode exóticos não renderizam no Windows (⛶ = botão vazio) → usar SVG/emoji+texto;
+//  4. feedback persistente para ações silenciosas (ver #save-indic).
+// Motivo: a usuária não achou o "abrir maior" (2×) nem o "Prédios" quando eram só-ícone
+// no canto. ✕ de remover por linha é exceção aceita (convenção universal + title).
+// ═════════════════════════════════════════════════════════════════════════
 // Controle "abrir maior" — expande o mapa numa sobreposição via CSS. NÃO usa a API de
 // tela cheia do SO (que iframes/preview embutidos bloqueiam, fazendo o MapLibre esconder
 // o próprio FullscreenControl) → este botão aparece e funciona em qualquer contexto.
@@ -14454,6 +14502,115 @@ function removerVistaMapa(id){
   if(typeof mostrarStatus==='function') mostrarStatus('Vista removida ✓');
 }
 
+// ════════════════════════════════════════════════════════════════════
+// EDIFICAÇÕES no Mapa de Análise — prédios reais (footprints) como overlay,
+// 2D + Volume 3D. Duas fontes (iguais às do Mapa-Síntese):
+//  · OSM / OpenFreeMap (fonte vetorial 'openmaptiles', camada 'building', altura real)
+//  · Open Buildings (Google+MS) via PMTiles (cobertura BR; só geometria)
+// Onda 1 = geometria + 3D (cor neutra). Onda 2 = cor por uso (cruzar com manchas 'uso').
+// ════════════════════════════════════════════════════════════════════
+// Funções operam em QUALQUER mapa (Mapa de Análise OU block-maps); estado por mapa em map.__edif.
+const _OFM_TILEJSON = 'https://tiles.openfreemap.org/planet';
+const _OB_PMTILES   = 'pmtiles://https://data.source.coop/vida/google-microsoft-open-buildings/pmtiles/go_ms_building_footprints.pmtiles';
+const _OB_SRCLAYER  = 'building_footprints';   // nome da camada na fonte VIDA
+let _pmtilesPromise=null;
+function _edifState(map){ if(!map.__edif) map.__edif={osm:false,ob:false,d3:false,obH:9}; return map.__edif; }
+
+function _ensurePMTiles(){
+  if(window.pmtiles && window._pmtilesReg) return Promise.resolve();
+  if(_pmtilesPromise) return _pmtilesPromise;
+  _pmtilesPromise = new Promise((resolve,reject)=>{
+    const reg=()=>{ try{ if(!window._pmtilesReg){ const pr=new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles',pr.tile); window._pmtilesReg=true; } resolve(); }catch(e){ reject(e); } };
+    if(window.pmtiles) return reg();
+    const s=document.createElement('script'); s.src='https://unpkg.com/pmtiles@3.0.6/dist/pmtiles.js';
+    s.onload=reg; s.onerror=()=>{ _pmtilesPromise=null; reject(new Error('falha ao carregar a biblioteca de PMTiles (precisa de internet)')); };
+    document.head.appendChild(s);
+  });
+  return _pmtilesPromise;
+}
+// OSM / OpenFreeMap (tem altura real via render_height/height)
+function _edifAddOSM(map){
+  if(!map.getSource('openmaptiles')) map.addSource('openmaptiles',{type:'vector',url:_OFM_TILEJSON});
+  if(!map.getLayer('edif-osm-fill'))
+    map.addLayer({id:'edif-osm-fill',source:'openmaptiles','source-layer':'building',type:'fill',minzoom:12,paint:{'fill-color':'#B8AE9E','fill-opacity':0.55}});
+  if(!map.getLayer('edif-osm-line'))
+    map.addLayer({id:'edif-osm-line',source:'openmaptiles','source-layer':'building',type:'line',minzoom:13,paint:{'line-color':'#8A7355','line-width':0.8}});
+  if(_edifState(map).d3) _edifAddOSM3D(map);
+}
+function _edifAddOSM3D(map){
+  if(!map.getSource('openmaptiles')) return;
+  if(!map.getLayer('edif-osm-3d'))
+    map.addLayer({id:'edif-osm-3d',source:'openmaptiles','source-layer':'building',type:'fill-extrusion',minzoom:14,paint:{'fill-extrusion-color':'#C9C2B4','fill-extrusion-height':['coalesce',['get','render_height'],['get','height'],_edifState(map).obH||9],'fill-extrusion-base':['coalesce',['get','render_min_height'],['get','min_height'],0],'fill-extrusion-opacity':0.9}});
+}
+function _edifRemoveOSM(map){ ['edif-osm-3d','edif-osm-line','edif-osm-fill'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); }); }
+// Open Buildings (Google+MS) via PMTiles — só geometria → altura uniforme
+function _edifAddOB(map){
+  if(!map.getSource('overture-build')) map.addSource('overture-build',{type:'vector',url:_OB_PMTILES});
+  if(!map.getLayer('edif-ob-fill'))
+    map.addLayer({id:'edif-ob-fill',source:'overture-build','source-layer':_OB_SRCLAYER,type:'fill',minzoom:12,paint:{'fill-color':'#B8AE9E','fill-opacity':0.5}});
+  if(!map.getLayer('edif-ob-line'))
+    map.addLayer({id:'edif-ob-line',source:'overture-build','source-layer':_OB_SRCLAYER,type:'line',minzoom:13,paint:{'line-color':'#8A7355','line-width':0.7}});
+  if(_edifState(map).d3) _edifAddOB3D(map);
+}
+function _edifAddOB3D(map){
+  if(!map.getSource('overture-build')) return;
+  if(!map.getLayer('edif-ob-3d'))
+    map.addLayer({id:'edif-ob-3d',source:'overture-build','source-layer':_OB_SRCLAYER,type:'fill-extrusion',minzoom:13,paint:{'fill-extrusion-color':'#C9C2B4','fill-extrusion-height':(_edifState(map).obH||9),'fill-extrusion-opacity':0.9}});
+}
+function _edifRemoveOB(map){ ['edif-ob-3d','edif-ob-line','edif-ob-fill'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); }); }
+// altura (m) dos prédios SEM dado de altura: Open Buildings (uniforme) + fallback do OSM. Ao vivo.
+function _edifSetAltura(v, ctrl, map){
+  map = map || _mlMap; if(!map) return;
+  const h = Math.max(1, Math.min(300, parseFloat(v)||9));
+  _edifState(map).obH = h;
+  try{ if(map.getLayer('edif-ob-3d')) map.setPaintProperty('edif-ob-3d','fill-extrusion-height', h); }catch(e){}
+  try{ if(map.getLayer('edif-osm-3d')) map.setPaintProperty('edif-osm-3d','fill-extrusion-height',['coalesce',['get','render_height'],['get','height'], h]); }catch(e){}
+}
+function _edifAplicarPitch(map){ if(_edifState(map).d3 && map.getPitch()<5) map.easeTo({pitch:55,duration:600}); }
+// tenta adicionar já; se o estilo estiver em troca (block-map mudando basemap), addLayer lança
+// "Style is not done loading" → adia p/ o próximo idle e tenta de novo (adds são idempotentes).
+function _edifWhenReady(map, fn){ try{ fn(); }catch(e){ try{ map.once('idle', ()=>{ try{ fn(); }catch(_){} }); }catch(_){} } }
+function _edifToggleOSM(on, ctrl, map){
+  map = map || _mlMap; if(!map) return;
+  _edifState(map).osm=on;
+  if(on) _edifWhenReady(map, ()=>{ try{ _edifAddOSM(map); _edifAplicarPitch(map); }catch(e){ console.warn('OSM edif:',e.message); } });
+  else _edifRemoveOSM(map);
+}
+function _edifToggleOB(on, ctrl, map){
+  map = map || _mlMap; if(!map) return;
+  _edifState(map).ob=on;
+  const st=ctrl && ctrl.querySelector('.edif-status');
+  if(on){
+    if(st) st.textContent='Carregando Open Buildings…';
+    _ensurePMTiles().then(()=>{ if(!_edifState(map).ob) return; _edifWhenReady(map, ()=>{ try{ _edifAddOB(map); _edifAplicarPitch(map); }catch(e){ console.warn('OB edif:',e.message); } }); if(st) st.textContent=''; })
+      .catch(e=>{ _edifState(map).ob=false; if(ctrl){ const cb=ctrl.querySelector('.edif-ob'); if(cb) cb.checked=false; } if(st) st.textContent=''; alert('Não foi possível carregar Open Buildings: '+e.message+'\nUse OSM ou tente online.'); });
+  } else _edifRemoveOB(map);
+}
+function _edifToggle3D(on, ctrl, map){
+  map = map || _mlMap; if(!map) return;
+  const s=_edifState(map); s.d3=on;
+  if(on){ _edifWhenReady(map, ()=>{ if(s.osm) _edifAddOSM3D(map); if(s.ob) _edifAddOB3D(map); }); map.easeTo({pitch:55,duration:600}); }
+  else { ['edif-osm-3d','edif-ob-3d'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); }); map.easeTo({pitch:0,duration:500}); }
+}
+// injeta o controle "🏢 Prédios" na barra inferior de um block-map (mesmo motor do Mapa de Análise)
+function _injectBlockMapEdifControl(wrap, map){
+  const info = wrap.querySelector('.block-map-info');
+  if(!info || info.querySelector('.edif-box-bm')) return;
+  const box = document.createElement('span');
+  box.className = 'edif-box edif-box-bm';
+  box.style.cssText = 'display:inline-flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:.58rem;color:var(--t2)';
+  box.innerHTML = `<span style="font-weight:700">🏢 Prédios:</span>
+    <label style="display:inline-flex;gap:3px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-ob"> Open Buildings</label>
+    <label style="display:inline-flex;gap:3px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-osm"> OSM</label>
+    <label style="display:inline-flex;gap:3px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-3d"> 3D</label>
+    <label style="display:inline-flex;gap:3px;align-items:center" title="Altura (m) dos prédios sem dado — Open Buildings (uniforme) e fallback do OSM. ≈ andares × 3 m."><input type="number" class="edif-h" min="2" max="300" value="9" style="width:46px;padding:2px 4px;border:1px solid var(--line2);border-radius:4px;font-size:.56rem;text-align:center"> m</label>
+    <span class="edif-status" style="color:var(--t3)"></span>`;
+  box.querySelector('.edif-ob').onchange  = (e)=>_edifToggleOB(e.target.checked, box, map);
+  box.querySelector('.edif-osm').onchange = (e)=>_edifToggleOSM(e.target.checked, box, map);
+  box.querySelector('.edif-3d').onchange  = (e)=>_edifToggle3D(e.target.checked, box, map);
+  box.querySelector('.edif-h').onchange   = (e)=>_edifSetAltura(e.target.value, box, map);
+  info.appendChild(box);
+}
 function mlInit() {
   if (_mlMap) return;
   const el = document.getElementById('ml-map');
@@ -18124,6 +18281,8 @@ function initBlockMap(wrap) {
     // Controles auxiliares
     _injectBlockMapBasemapControl(wrap, map, themeId);
     _injectBlockMapDrawTools(wrap, map, themeId);
+    _injectBlockMapEdifControl(wrap, map);   // prédios reais (OSM + Open Buildings, 2D/3D) tb nos block-maps
+
     // Controle especial para temas que se beneficiam de relevo (topo, risco, agua)
     if(['topo','risco','agua'].includes(themeId)){
       _injectBlockMapTerrainControl(wrap, map, themeId);

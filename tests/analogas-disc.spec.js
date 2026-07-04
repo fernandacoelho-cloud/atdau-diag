@@ -30,7 +30,7 @@ test.describe('Obras Análogas — descoberta do editor gráfico', () => {
       return {
         selecionada: sel?.options[sel.selectedIndex]?.text,
         banner: (panel?.textContent || '').includes('Para desenhar sobre uma imagem'),
-        lapis: panel ? [...panel.querySelectorAll('button')].filter(b => b.textContent.trim() === '✏️').length : 0,
+        lapis: panel ? [...panel.querySelectorAll('button')].filter(b => b.textContent.trim().startsWith('✏️')).length : 0,
       };
     });
     expect(r.selecionada).toBe('Casa de Vidro'); // auto-selecionada
@@ -50,7 +50,7 @@ test.describe('Obras Análogas — descoberta do editor gráfico', () => {
 
     await page.evaluate(() => {
       const panel = document.getElementById('an-analise-panel');
-      const lapis = [...panel.querySelectorAll('button')].find(b => b.textContent.trim() === '✏️');
+      const lapis = [...panel.querySelectorAll('button')].find(b => b.textContent.trim().startsWith('✏️'));
       lapis.click();
     });
     await page.waitForTimeout(400);
