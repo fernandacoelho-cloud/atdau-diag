@@ -5564,6 +5564,17 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-osm" onchange="_edifToggleOSM(this.checked, this.closest('.edif-box'))"> OSM <span style="color:var(--t3)">(OpenFreeMap · com altura)</span></label>
       <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" class="edif-3d" onchange="_edifToggle3D(this.checked)"> Volume 3D</label>
       <label style="display:flex;gap:6px;align-items:center"><span>Altura sem dado (m):</span><input type="number" class="edif-h" min="2" max="300" value="9" title="Altura usada nos prédios sem dado: Open Buildings (uniforme) e fallback do OSM. ≈ andares × 3 m." onchange="_edifSetAltura(this.value, this.closest('.edif-box'))" style="width:60px;padding:3px 5px;border:1px solid var(--line2);border-radius:4px;font-size:.62rem;text-align:center;box-sizing:border-box"></label>
+      <label style="display:flex;gap:6px;align-items:center;cursor:pointer;font-weight:700;color:#1f6f5c" title="Clique num prédio real para definir pavimentos/uso — ele vira feição sua na camada 'Edificações (gabarito)', classificada por faixa de altura (o mapa de gabarito)."><input type="checkbox" class="edif-editar" onchange="_gabSetMode(this.checked)"> 🖱 Editar prédios (gabarito)</label>
+    </div>
+    <div class="gab-multi" style="display:none;gap:9px;align-items:center;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2);font-size:.62rem;color:var(--t1)">
+      <span style="font-weight:700;color:#1f6f5c">Seleção múltipla:</span>
+      <span style="color:var(--t3)">Shift+clique nos prédios, ou</span>
+      <button type="button" class="instr-btn gab-rect-btn" onclick="_gabRectToggle(this)" style="font-size:.6rem" title="Arme e arraste no mapa: todos os prédios dentro do retângulo entram na seleção">▭ Selecionar área (arraste)</button>
+      <span class="gab-sel-count" style="font-weight:700">0 selecionados</span>
+      <label style="display:flex;gap:4px;align-items:center">pavimentos <input type="number" class="gab-multi-pav" min="1" max="120" placeholder="ex: 2" style="width:56px;padding:3px 5px;border:1px solid var(--line2);border-radius:4px;font-size:.62rem;text-align:center;box-sizing:border-box"></label>
+      <select class="gab-multi-uso" style="font-size:.6rem;padding:3px 5px;border:1px solid var(--line2);border-radius:4px;background:var(--bg4);color:var(--t1)"></select>
+      <button type="button" class="instr-btn" onclick="_gabAplicarSelecao()" style="font-size:.6rem;font-weight:700;color:#1f6f5c;border-color:#1f6f5c" title="Aplica os pavimentos (e o uso, se escolhido) a todos os prédios selecionados">✔ Aplicar aos selecionados</button>
+      <button type="button" class="instr-btn" onclick="_gabSelClear()" style="font-size:.6rem" title="Esvazia a seleção sem alterar nada">✕ limpar seleção</button>
     </div>
     <div style="font-size:.54rem;color:var(--t3);margin-top:6px">Open Buildings não traz altura (extrusão uniforme); OSM usa a altura real quando existe. A altura acima ≈ nº de andares × 3 m.</div>
     <div class="edif-status" style="font-size:.56rem;color:var(--t3);margin-top:5px"></div>
@@ -13798,6 +13809,7 @@ const ML_LAYERS = [
   { id:'uc',        name:'Unidades de Conservação', color:null,    geom:['polygon','polyline','point'],           icon:'🛡️', desc:'Áreas legalmente protegidas (SNUC) — RESTRIÇÃO ao projeto. Importe do CNUC/ICMBio/IEF ou desenhe; classifique por regime (Proteção Integral, Uso Sustentável, RPPN, zona de amortecimento)' },
   { id:'zona',      name:'Zoneamento',            color:'#4f9bf8', geom:['polygon','polyline','point'],           icon:'📐', desc:'Zonas do plano diretor (ZR, ZM, ZC...)' },
   { id:'morfo',     name:'Morfologia urbana',    color:'#7E5A9B', geom:['polygon','polyline','point'], icon:'🏛️', desc:'Tipologias, regiões morfológicas, marcos visuais, fachadas' },
+  { id:'gabarito',  name:'Edificações (gabarito)', color:null,    geom:['polygon'], icon:'🏢', desc:'Prédios reais adotados do mapa (modo "editar prédios") ou desenhados, classificados por faixa de pavimentos — o mapa de gabarito' },
   { id:'equip',     name:'Equipamentos',          color:'#f0bf3a', geom:['polygon','polyline','point'],             icon:'📍', desc:'UBS, escola, CRAS, ponto de ônibus, delegacia...' },
   { id:'impacto',   name:'Empreendimentos de impacto', color:'#a16207', geom:['polygon','polyline','point'], icon:'🏭', desc:'Grandes equipamentos, geradores de tráfego, EIV/RIMA' },
   { id:'patrim',    name:'Patrimônio Cultural',   color:'#c9923b', geom:['polygon','polyline','point'],  icon:'🏛️', desc:'Bens tombados (federal/estadual/municipal), conjuntos urbanos' },
@@ -14528,34 +14540,41 @@ function _ensurePMTiles(){
   });
   return _pmtilesPromise;
 }
+// opacidade/altura que somem quando o prédio foi ADOTADO pelo gabarito, e realce
+// quando está SELECIONADO no modo seleção múltipla (feature-states 'adotado'/'sel')
+function _edifOp(v){ return ['case',['boolean',['feature-state','adotado'],false], 0.04, ['case',['boolean',['feature-state','sel'],false], 0.8, v]]; }
+function _edifCor(base){ return ['case',['boolean',['feature-state','sel'],false], '#1f6f5c', base]; }
+function _edifH(expr){ return ['case',['boolean',['feature-state','adotado'],false], 0, expr]; }
 // OSM / OpenFreeMap (tem altura real via render_height/height)
 function _edifAddOSM(map){
   if(!map.getSource('openmaptiles')) map.addSource('openmaptiles',{type:'vector',url:_OFM_TILEJSON});
   if(!map.getLayer('edif-osm-fill'))
-    map.addLayer({id:'edif-osm-fill',source:'openmaptiles','source-layer':'building',type:'fill',minzoom:12,paint:{'fill-color':'#B8AE9E','fill-opacity':0.55}});
+    map.addLayer({id:'edif-osm-fill',source:'openmaptiles','source-layer':'building',type:'fill',minzoom:12,paint:{'fill-color':_edifCor('#B8AE9E'),'fill-opacity':_edifOp(0.55)}});
   if(!map.getLayer('edif-osm-line'))
-    map.addLayer({id:'edif-osm-line',source:'openmaptiles','source-layer':'building',type:'line',minzoom:13,paint:{'line-color':'#8A7355','line-width':0.8}});
+    map.addLayer({id:'edif-osm-line',source:'openmaptiles','source-layer':'building',type:'line',minzoom:13,paint:{'line-color':'#8A7355','line-width':0.8,'line-opacity':_edifOp(1)}});
   if(_edifState(map).d3) _edifAddOSM3D(map);
+  if(typeof _gabReaplicarOcultos==='function') _gabReaplicarOcultos('osm', map);
 }
 function _edifAddOSM3D(map){
   if(!map.getSource('openmaptiles')) return;
   if(!map.getLayer('edif-osm-3d'))
-    map.addLayer({id:'edif-osm-3d',source:'openmaptiles','source-layer':'building',type:'fill-extrusion',minzoom:14,paint:{'fill-extrusion-color':'#C9C2B4','fill-extrusion-height':['coalesce',['get','render_height'],['get','height'],_edifState(map).obH||9],'fill-extrusion-base':['coalesce',['get','render_min_height'],['get','min_height'],0],'fill-extrusion-opacity':0.9}});
+    map.addLayer({id:'edif-osm-3d',source:'openmaptiles','source-layer':'building',type:'fill-extrusion',minzoom:14,paint:{'fill-extrusion-color':'#C9C2B4','fill-extrusion-height':_edifH(['coalesce',['get','render_height'],['get','height'],_edifState(map).obH||9]),'fill-extrusion-base':['coalesce',['get','render_min_height'],['get','min_height'],0],'fill-extrusion-opacity':0.9}});
 }
 function _edifRemoveOSM(map){ ['edif-osm-3d','edif-osm-line','edif-osm-fill'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); }); }
 // Open Buildings (Google+MS) via PMTiles — só geometria → altura uniforme
 function _edifAddOB(map){
   if(!map.getSource('overture-build')) map.addSource('overture-build',{type:'vector',url:_OB_PMTILES});
   if(!map.getLayer('edif-ob-fill'))
-    map.addLayer({id:'edif-ob-fill',source:'overture-build','source-layer':_OB_SRCLAYER,type:'fill',minzoom:12,paint:{'fill-color':'#B8AE9E','fill-opacity':0.5}});
+    map.addLayer({id:'edif-ob-fill',source:'overture-build','source-layer':_OB_SRCLAYER,type:'fill',minzoom:12,paint:{'fill-color':_edifCor('#B8AE9E'),'fill-opacity':_edifOp(0.5)}});
   if(!map.getLayer('edif-ob-line'))
-    map.addLayer({id:'edif-ob-line',source:'overture-build','source-layer':_OB_SRCLAYER,type:'line',minzoom:13,paint:{'line-color':'#8A7355','line-width':0.7}});
+    map.addLayer({id:'edif-ob-line',source:'overture-build','source-layer':_OB_SRCLAYER,type:'line',minzoom:13,paint:{'line-color':'#8A7355','line-width':0.7,'line-opacity':_edifOp(1)}});
   if(_edifState(map).d3) _edifAddOB3D(map);
+  if(typeof _gabReaplicarOcultos==='function') _gabReaplicarOcultos('ob', map);
 }
 function _edifAddOB3D(map){
   if(!map.getSource('overture-build')) return;
   if(!map.getLayer('edif-ob-3d'))
-    map.addLayer({id:'edif-ob-3d',source:'overture-build','source-layer':_OB_SRCLAYER,type:'fill-extrusion',minzoom:13,paint:{'fill-extrusion-color':'#C9C2B4','fill-extrusion-height':(_edifState(map).obH||9),'fill-extrusion-opacity':0.9}});
+    map.addLayer({id:'edif-ob-3d',source:'overture-build','source-layer':_OB_SRCLAYER,type:'fill-extrusion',minzoom:13,paint:{'fill-extrusion-color':'#C9C2B4','fill-extrusion-height':_edifH(_edifState(map).obH||9),'fill-extrusion-opacity':0.9}});
 }
 function _edifRemoveOB(map){ ['edif-ob-3d','edif-ob-line','edif-ob-fill'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); }); }
 // altura (m) dos prédios SEM dado de altura: Open Buildings (uniforme) + fallback do OSM. Ao vivo.
@@ -14563,8 +14582,8 @@ function _edifSetAltura(v, ctrl, map){
   map = map || _mlMap; if(!map) return;
   const h = Math.max(1, Math.min(300, parseFloat(v)||9));
   _edifState(map).obH = h;
-  try{ if(map.getLayer('edif-ob-3d')) map.setPaintProperty('edif-ob-3d','fill-extrusion-height', h); }catch(e){}
-  try{ if(map.getLayer('edif-osm-3d')) map.setPaintProperty('edif-osm-3d','fill-extrusion-height',['coalesce',['get','render_height'],['get','height'], h]); }catch(e){}
+  try{ if(map.getLayer('edif-ob-3d')) map.setPaintProperty('edif-ob-3d','fill-extrusion-height', _edifH(h)); }catch(e){}
+  try{ if(map.getLayer('edif-osm-3d')) map.setPaintProperty('edif-osm-3d','fill-extrusion-height', _edifH(['coalesce',['get','render_height'],['get','height'], h])); }catch(e){}
 }
 function _edifAplicarPitch(map){ if(_edifState(map).d3 && map.getPitch()<5) map.easeTo({pitch:55,duration:600}); }
 // tenta adicionar já; se o estilo estiver em troca (block-map mudando basemap), addLayer lança
@@ -14589,8 +14608,8 @@ function _edifToggleOB(on, ctrl, map){
 function _edifToggle3D(on, ctrl, map){
   map = map || _mlMap; if(!map) return;
   const s=_edifState(map); s.d3=on;
-  if(on){ _edifWhenReady(map, ()=>{ if(s.osm) _edifAddOSM3D(map); if(s.ob) _edifAddOB3D(map); }); map.easeTo({pitch:55,duration:600}); }
-  else { ['edif-osm-3d','edif-ob-3d'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); }); map.easeTo({pitch:0,duration:500}); }
+  if(on){ _edifWhenReady(map, ()=>{ if(s.osm) _edifAddOSM3D(map); if(s.ob) _edifAddOB3D(map); if(typeof _gabAdd3D==='function') _gabAdd3D(map); }); map.easeTo({pitch:55,duration:600}); }
+  else { ['edif-osm-3d','edif-ob-3d','gab-3d'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); }); map.easeTo({pitch:0,duration:500}); }
 }
 // injeta o controle "🏢 Prédios" na barra inferior de um block-map (mesmo motor do Mapa de Análise)
 function _injectBlockMapEdifControl(wrap, map){
@@ -14610,6 +14629,283 @@ function _injectBlockMapEdifControl(wrap, map){
   box.querySelector('.edif-3d').onchange  = (e)=>_edifToggle3D(e.target.checked, box, map);
   box.querySelector('.edif-h').onchange   = (e)=>_edifSetAltura(e.target.value, box, map);
   info.appendChild(box);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// MAPA DE GABARITO — "editar prédios": clique num prédio real (OSM/Open Buildings)
+// e ele vira feição SUA na camada 'gabarito' (_mlFeatures → persiste, exporta,
+// entra na legenda/relatório), classificada por FAIXA DE PAVIMENTOS (cor da faixa).
+// O original é ocultado via feature-state (os ids existem nas duas fontes — verificado).
+// Também aceita prédios desenhados à mão na própria camada.
+// ════════════════════════════════════════════════════════════════════
+const GAB_FAIXAS = [
+  { id:'1-2',  label:'1–2 pavimentos',  max:2,        cor:'#f2d95c' },
+  { id:'3-4',  label:'3–4 pavimentos',  max:4,        cor:'#eda63f' },
+  { id:'5-8',  label:'5–8 pavimentos',  max:8,        cor:'#d95f3b' },
+  { id:'9-15', label:'9–15 pavimentos', max:15,       cor:'#a3448c' },
+  { id:'15+',  label:'15+ pavimentos',  max:Infinity, cor:'#5f2d80' },
+];
+function _gabFaixa(pav){ const p=parseFloat(pav)||1; return GAB_FAIXAS.find(f=>p<=f.max); }
+function _gabAplicarCor(f){ f.props.cor = _gabFaixa(f.props.pavimentos).cor; }
+let _gabMode = false, _gabPopupInst = null;
+function _gabSetMode(on){
+  _gabMode = !!on;
+  if(_mlMap){ try{ _mlMap.getCanvas().style.cursor = _gabMode?'pointer':''; }catch(e){} }
+  const hint=document.getElementById('ml-draw-hint');
+  if(hint){
+    if(_gabMode){ hint.style.display='block'; hint.textContent='🖱 Editar prédios: clique num prédio real (ligue Open Buildings ou OSM acima) para definir pavimentos/uso — ele vira feição sua na camada "Edificações (gabarito)". Shift+clique acumula seleção; clique num prédio já adotado para reeditar.'; }
+    else if((hint.textContent||'').startsWith('🖱')){ hint.style.display='none'; hint.textContent=''; }
+  }
+  // linha de seleção múltipla (Shift+clique / retângulo / aplicar em grupo)
+  const multi=document.querySelector('.edif-box .gab-multi');
+  if(multi){
+    multi.style.display = _gabMode ? 'flex' : 'none';
+    const sel=multi.querySelector('.gab-multi-uso');
+    if(sel && !sel.options.length){
+      sel.innerHTML = ['<option value="">— uso (opcional) —</option>']
+        .concat(ML_USO_CATS.map(u=>`<option value="${u.id}">${u.label}</option>`)).join('');
+    }
+  }
+  if(_gabMode) _gabRectInit();
+  else { if(typeof _gabSelClear==='function') _gabSelClear(); if(_gabRectArmed) _gabRectToggle(); }
+}
+// Prédios OSM se sobrepõem (quarteirões inteiros mapeados como building por cima dos
+// prédios individuais): no clique, escolhe o MENOR polígono sob o cursor — é o que o
+// usuário está mirando.
+function _gabBBoxArea(geom){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  const ring=r=>r.forEach(p=>{ if(p[0]<minX)minX=p[0]; if(p[0]>maxX)maxX=p[0]; if(p[1]<minY)minY=p[1]; if(p[1]>maxY)maxY=p[1]; });
+  (geom.type==='Polygon'?geom.coordinates:geom.coordinates.flat()).forEach(ring);
+  return (maxX-minX)*(maxY-minY);
+}
+function _gabPick(feats){
+  let best=null, bestA=Infinity;
+  (feats||[]).forEach(f=>{
+    if(!f.geometry || (f.geometry.type!=='Polygon' && f.geometry.type!=='MultiPolygon')) return;
+    const a=_gabBBoxArea(f.geometry);
+    if(a<bestA){ bestA=a; best=f; }
+  });
+  return best;
+}
+// clique no modo editar prédios: Shift+clique = alterna na SELEÇÃO MÚLTIPLA;
+// clique normal: 1º tenta prédio já adotado (reedita), depois OB/OSM (adota)
+function _gabHandleClick(e){
+  // normaliza o ponto p/ [x,y]: um objeto {x,y} cru (eventos sintéticos/testes) degrada a
+  // query do MapLibre para o viewport inteiro — o array é sempre seguro
+  const pt = (e.point && typeof e.point.x==='number') ? [e.point.x, e.point.y] : e.point;
+  if(e.originalEvent && e.originalEvent.shiftKey){
+    const pg = _mlMap.getLayer('fill-gabarito') ? _mlMap.queryRenderedFeatures(pt,{layers:['fill-gabarito']}) : [];
+    if(pg.length){
+      const fid = pg[0].properties && pg[0].properties._fid;
+      if(fid!=null){ _gabSelToggle({kind:'gab', fid}); return true; }
+    }
+    const rl = ['edif-ob-fill','edif-osm-fill'].filter(id=>_mlMap.getLayer(id));
+    const f = rl.length ? _gabPick(_mlMap.queryRenderedFeatures(pt,{layers:rl})) : null;
+    if(f) _gabSelToggle({kind:'real', src:(f.layer.id.indexOf('-ob-')>=0?'ob':'osm'), srcId:String(f.id), srcLayer:f.sourceLayer, geom:f.geometry});
+    return true;   // Shift+clique no modo prédios nunca cai no fluxo normal
+  }
+  const proprias = _mlMap.getLayer('fill-gabarito') ? _mlMap.queryRenderedFeatures(pt,{layers:['fill-gabarito']}) : [];
+  if(proprias.length){
+    const fid = proprias[0].properties && proprias[0].properties._fid;
+    const g = (_mlFeatures['gabarito']||[]).find(x=>String(x.id)===String(fid));
+    if(g){ _gabOpenPopup(g, e.lngLat); return true; }
+  }
+  const reais = ['edif-ob-fill','edif-osm-fill'].filter(id=>_mlMap.getLayer(id));
+  if(!reais.length){ alert('Para adotar prédios, ligue "Open Buildings" ou "OSM" no bloco 🏢 Prédios reais (acima do mapa).'); return true; }
+  const f = _gabPick(_mlMap.queryRenderedFeatures(pt,{layers:reais}));   // menor polígono sob o cursor
+  if(!f) return false;                                  // não era prédio: deixa o clique seguir
+  const src = f.layer.id.indexOf('-ob-')>=0 ? 'ob' : 'osm';
+  const exist = (_mlFeatures['gabarito']||[]).find(g=>g.props && g.props.src===src && g.props.srcId===String(f.id));
+  if(exist){ _gabOpenPopup(exist, e.lngLat); return true; }
+  // OSM com altura real → pavimentos pré-preenchidos (~3 m/pav)
+  const hReal = src==='osm' && f.properties ? parseFloat(f.properties.render_height||f.properties.height) : NaN;
+  const nf = { id: Date.now(), geom: f.geometry,
+    props: { src, srcId:String(f.id), srcLayer: f.sourceLayer,
+             pavimentos: isFinite(hReal)&&hReal>0 ? Math.max(1,Math.round(hReal/3)) : undefined } };
+  _gabAplicarCor(nf);
+  _mlFeatures['gabarito'].push(nf);
+  mlRefreshSource('gabarito');
+  _gabOcultarOriginal(nf.props);
+  mlSaveState();
+  _gabOpenPopup(nf, e.lngLat);
+  return true;
+}
+function _gabOpenPopup(f, lngLat){
+  if(_gabPopupInst){ try{ _gabPopupInst.remove(); }catch(e){} }
+  const usoOpts = ['<option value="">— uso (opcional) —</option>']
+    .concat(ML_USO_CATS.map(u=>`<option value="${u.id}"${f.props.uso===u.id?' selected':''}>${u.label}</option>`)).join('');
+  const origem = f.props.src==='osm' ? 'OSM' : (f.props.src==='ob' ? 'Open Buildings' : 'desenhado');
+  const el=document.createElement('div');
+  el.innerHTML = `<div style="font-size:.68rem;min-width:196px">
+    <div style="font-weight:700;margin-bottom:6px">🏢 Prédio <span style="font-weight:400;color:#888">(${origem})</span></div>
+    <label style="display:block;font-size:.58rem;color:#666;margin-bottom:2px">Nº de pavimentos</label>
+    <input type="number" id="gab-pav" min="1" max="120" value="${f.props.pavimentos!=null?f.props.pavimentos:''}" placeholder="ex: 2" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;margin-bottom:6px">
+    <select id="gab-uso" style="width:100%;font-size:.62rem;padding:4px;border:1px solid #ccc;border-radius:4px;margin-bottom:6px">${usoOpts}</select>
+    <input type="text" id="gab-rotulo" value="${escHtml(f.props.rotulo||'')}" placeholder="rótulo (opcional)" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;margin-bottom:8px">
+    <div style="display:flex;gap:6px">
+      <button id="gab-salvar" style="flex:1;padding:5px;background:#1f6f5c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.64rem;font-weight:700">Salvar</button>
+      <button id="gab-remover" title="Devolve o prédio ao mapa base" style="padding:5px 9px;background:none;border:1px solid #e0506a;color:#e0506a;border-radius:4px;cursor:pointer;font-size:.62rem">Remover</button>
+    </div></div>`;
+  el.querySelector('#gab-salvar').onclick = ()=>{
+    const pav = parseFloat(el.querySelector('#gab-pav').value);
+    f.props.pavimentos = isFinite(pav)&&pav>0 ? pav : undefined;
+    f.props.uso = el.querySelector('#gab-uso').value || undefined;
+    f.props.rotulo = el.querySelector('#gab-rotulo').value.trim() || undefined;
+    _gabAplicarCor(f);
+    mlRefreshSource('gabarito');
+    mlSaveState();
+    try{ _gabPopupInst.remove(); }catch(e){}
+  };
+  el.querySelector('#gab-remover').onclick = ()=>{
+    _mlFeatures['gabarito'] = (_mlFeatures['gabarito']||[]).filter(x=>x!==f);
+    _gabMostrarOriginal(f.props);
+    mlRefreshSource('gabarito');
+    mlSaveState();
+    try{ _gabPopupInst.remove(); }catch(e){}
+  };
+  _gabPopupInst = new maplibregl.Popup({closeOnClick:false, maxWidth:'250px'}).setLngLat(lngLat).setDOMContent(el).addTo(_mlMap);
+}
+// oculta/mostra o prédio ORIGINAL da fonte de tiles (feature-state 'adotado')
+function _gabFsSpec(props){
+  if(props.src==='ob')  return { source:'overture-build', sourceLayer: props.srcLayer||_OB_SRCLAYER };
+  if(props.src==='osm') return { source:'openmaptiles',   sourceLayer: props.srcLayer||'building' };
+  return null;
+}
+function _gabIdNum(v){ return (v!=null && v!=='' && !isNaN(+v)) ? +v : v; }
+function _gabOcultarOriginal(props, map){
+  map = map || _mlMap;
+  const s=_gabFsSpec(props); if(!s || !map || !map.getSource(s.source)) return;
+  try{ map.setFeatureState(Object.assign({id:_gabIdNum(props.srcId)}, s), {adotado:true}); }catch(e){}
+}
+function _gabMostrarOriginal(props, map){
+  map = map || _mlMap;
+  const s=_gabFsSpec(props); if(!s || !map || !map.getSource(s.source)) return;
+  try{ map.removeFeatureState(Object.assign({id:_gabIdNum(props.srcId)}, s)); }catch(e){}
+}
+// reaplica os ocultos de uma fonte NUM mapa (chamado ao ligar OSM/OB — feature-state é por sessão)
+function _gabReaplicarOcultos(srcKey, map){
+  (_mlFeatures['gabarito']||[]).forEach(g=>{ if(g.props && g.props.src===srcKey && g.props.srcId) _gabOcultarOriginal(g.props, map); });
+}
+// extrusão 3D dos prédios do gabarito (altura = pavimentos × 3 m, cor da faixa)
+function _gabAdd3D(map){
+  if(!map.getSource('src-gabarito') || map.getLayer('gab-3d')) return;
+  map.addLayer({ id:'gab-3d', source:'src-gabarito', type:'fill-extrusion', filter:['==','$type','Polygon'],
+    paint:{ 'fill-extrusion-color':['case',['has','cor'],['get','cor'],'#C9C2B4'],
+            'fill-extrusion-height':['*',['coalesce',['to-number',['get','pavimentos']],1],3],
+            'fill-extrusion-opacity':0.95 } });
+}
+function _gabRemove3D(map){ if(map.getLayer('gab-3d')) map.removeLayer('gab-3d'); }
+
+// ── Fatia 2: SELEÇÃO MÚLTIPLA — Shift+clique acumula; "▭ Selecionar área" (arraste);
+// "Aplicar aos selecionados" define pavimentos/uso do grupo inteiro num gesto. ──
+let _gabSelList = [];   // {kind:'real',src,srcId,srcLayer,geom} | {kind:'gab',fid}
+let _gabRectArmed = false, _gabRectStartPt = null, _gabRectBoxEl = null;
+function _gabSelKey(it){ return it.kind==='real' ? 'r:'+it.src+':'+it.srcId : 'g:'+it.fid; }
+function _gabSelMark(it, on){
+  if(it.kind!=='real') return;
+  const s=_gabFsSpec({src:it.src, srcLayer:it.srcLayer}); if(!s || !_mlMap.getSource(s.source)) return;
+  try{
+    if(on) _mlMap.setFeatureState(Object.assign({id:_gabIdNum(it.srcId)}, s), {sel:true});
+    else   _mlMap.removeFeatureState(Object.assign({id:_gabIdNum(it.srcId)}, s), 'sel');
+  }catch(e){}
+}
+// contorno de destaque nos prédios JÁ adotados que estão na seleção
+function _gabSelOutline(){
+  const fids=_gabSelList.filter(x=>x.kind==='gab').map(x=>x.fid);
+  try{
+    if(!_mlMap.getLayer('gab-sel-line')){
+      if(!fids.length) return;
+      _mlMap.addLayer({id:'gab-sel-line',source:'src-gabarito',type:'line',filter:['==','$type','Polygon'],paint:{'line-color':'#1f6f5c','line-width':3}});
+    }
+    _mlMap.setFilter('gab-sel-line', fids.length ? ['in',['get','_fid'],['literal',fids]] : ['==',['get','_fid'],'__nenhum__']);
+  }catch(e){}
+}
+function _gabSelRender(){
+  const el=document.querySelector('.edif-box .gab-sel-count');
+  if(el) el.textContent=_gabSelList.length+' selecionado'+(_gabSelList.length===1?'':'s');
+}
+function _gabSelToggle(it){
+  const k=_gabSelKey(it);
+  const i=_gabSelList.findIndex(x=>_gabSelKey(x)===k);
+  if(i>=0){ const rem=_gabSelList.splice(i,1)[0]; _gabSelMark(rem,false); }
+  else { _gabSelList.push(it); _gabSelMark(it,true); }
+  _gabSelOutline(); _gabSelRender();
+}
+function _gabSelClear(){
+  _gabSelList.forEach(it=>_gabSelMark(it,false));
+  _gabSelList=[]; _gabSelOutline(); _gabSelRender();
+}
+// seleciona todos os prédios (reais e adotados) dentro do retângulo de tela [p1,p2]
+function _gabSelecionarBox(p1, p2){
+  const layers=['edif-ob-fill','edif-osm-fill','fill-gabarito'].filter(id=>_mlMap.getLayer(id));
+  const feats=_mlMap.queryRenderedFeatures([p1,p2],{layers});
+  feats.forEach(f=>{
+    let it;
+    if(f.layer.id==='fill-gabarito'){
+      const fid=f.properties && f.properties._fid; if(fid==null) return;
+      it={kind:'gab', fid};
+    } else {
+      if(!f.geometry || (f.geometry.type!=='Polygon' && f.geometry.type!=='MultiPolygon')) return;
+      it={kind:'real', src:(f.layer.id.indexOf('-ob-')>=0?'ob':'osm'), srcId:String(f.id), srcLayer:f.sourceLayer, geom:f.geometry};
+    }
+    const k=_gabSelKey(it);
+    if(!_gabSelList.some(x=>_gabSelKey(x)===k)){ _gabSelList.push(it); _gabSelMark(it,true); }
+  });
+  _gabSelOutline(); _gabSelRender();
+}
+function _gabAplicarSelecao(){
+  if(!_gabSelList.length){ alert('Nenhum prédio selecionado.\nShift+clique nos prédios ou use "▭ Selecionar área" (arraste no mapa).'); return; }
+  const pav=parseFloat((document.querySelector('.edif-box .gab-multi-pav')||{}).value);
+  const uso=(document.querySelector('.edif-box .gab-multi-uso')||{}).value;
+  if(!isFinite(pav) || pav<1){ alert('Informe o nº de pavimentos para aplicar aos selecionados.'); return; }
+  let n=0;
+  _gabSelList.forEach(it=>{
+    let g;
+    if(it.kind==='gab'){
+      g=(_mlFeatures['gabarito']||[]).find(x=>String(x.id)===String(it.fid)); if(!g) return;
+    } else {
+      g=(_mlFeatures['gabarito']||[]).find(x=>x.props && x.props.src===it.src && x.props.srcId===it.srcId);
+      if(!g){ g={ id: Date.now()+Math.random(), geom: it.geom, props:{ src:it.src, srcId:it.srcId, srcLayer:it.srcLayer } }; _mlFeatures['gabarito'].push(g); _gabOcultarOriginal(g.props); }
+    }
+    g.props.pavimentos=pav; if(uso) g.props.uso=uso; _gabAplicarCor(g); n++;
+  });
+  _gabSelClear();
+  mlRefreshSource('gabarito');
+  mlSaveState();
+  if(typeof mostrarStatus==='function') mostrarStatus(n+' prédio(s) → '+pav+' pavimento(s) ✓');
+}
+// "▭ Selecionar área": arma o próximo arrasto no mapa (desarma após um uso)
+function _gabRectToggle(btn){
+  if(!_mlMap) return;
+  _gabRectArmed=!_gabRectArmed;
+  const b=btn||document.querySelector('.edif-box .gab-rect-btn');
+  if(b){ b.style.background=_gabRectArmed?'rgba(31,111,92,.18)':''; b.style.borderColor=_gabRectArmed?'#1f6f5c':''; }
+  try{ _mlMap.getCanvas().style.cursor=_gabRectArmed?'crosshair':(_gabMode?'pointer':''); }catch(e){}
+  if(_gabRectArmed) _mlMap.dragPan.disable(); else _mlMap.dragPan.enable();
+}
+function _gabRectInit(){
+  if(_gabRectInit._done || !_mlMap) return; _gabRectInit._done=true;
+  const cont=_mlMap.getContainer();
+  _mlMap.on('mousedown', e=>{
+    if(!_gabRectArmed) return;
+    _gabRectStartPt=e.point;
+    _gabRectBoxEl=document.createElement('div');
+    _gabRectBoxEl.style.cssText='position:absolute;border:2px dashed #1f6f5c;background:rgba(31,111,92,.08);z-index:20;pointer-events:none';
+    cont.appendChild(_gabRectBoxEl);
+  });
+  _mlMap.on('mousemove', e=>{
+    if(!_gabRectArmed || !_gabRectStartPt || !_gabRectBoxEl) return;
+    const a=_gabRectStartPt, b=e.point;
+    Object.assign(_gabRectBoxEl.style,{ left:Math.min(a.x,b.x)+'px', top:Math.min(a.y,b.y)+'px', width:Math.abs(a.x-b.x)+'px', height:Math.abs(a.y-b.y)+'px' });
+  });
+  _mlMap.on('mouseup', e=>{
+    if(!_gabRectArmed || !_gabRectStartPt) return;
+    const a=_gabRectStartPt, b=e.point;
+    if(_gabRectBoxEl){ try{ _gabRectBoxEl.remove(); }catch(_){} _gabRectBoxEl=null; }
+    _gabRectStartPt=null;
+    _gabSelecionarBox([Math.min(a.x,b.x),Math.min(a.y,b.y)],[Math.max(a.x,b.x),Math.max(a.y,b.y)]);
+    _gabRectToggle();   // desarma (um arrasto por vez; o botão rearma)
+  });
 }
 function mlInit() {
   if (_mlMap) return;
@@ -14872,7 +15168,7 @@ function mlAplicarEstilo(layerId, st) {
   if (!_mlMap) return;
   // camadas com cor por feição (uso/equip/swot): preserva ['get','cor'] em vez
   // de pintar tudo com a cor única do estilo (senão swot/uso ficariam cinza)
-  const corPorFeicao = ['uso','equip','swot','cobertura','uc'].includes(layerId);
+  const corPorFeicao = ['uso','equip','swot','cobertura','uc','gabarito'].includes(layerId);
   const fillC = corPorFeicao ? ['case',['has','cor'],['get','cor'], st.fillColor] : st.fillColor;
   const lineC = corPorFeicao ? ['case',['has','cor'],['get','cor'], st.lineColor] : st.lineColor;
   const dash = (MAP_LINE_DASHES[st.lineStyle]||MAP_LINE_DASHES.solid).arr;
@@ -14931,6 +15227,14 @@ function mlLegendItems() {
           if(!n) return;
           itens.push({ id:'swot-'+k, label:'🎯 '+SWOT_LABELS[k], geom:geomPrincipal, count:n,
             style:{ fillColor:SWOT_COLORS[k], lineColor:SWOT_COLORS[k], fillOpacity:(geomPrincipal==='point'?1:0.35), lineWidth:1.6, lineStyle:'solid' } });
+        });
+      } else if (l.id==='gabarito') {
+        // Gabarito: uma entrada por faixa de pavimentos presente (cor da faixa)
+        GAB_FAIXAS.forEach(fx=>{
+          const n = todas.filter(f => _gabFaixa(f.props && f.props.pavimentos).id===fx.id).length;
+          if(!n) return;
+          itens.push({ id:'gab-'+fx.id, label:'🏢 '+fx.label, geom:'polygon', count:n,
+            style:{ fillColor:fx.cor, lineColor:fx.cor, fillOpacity:0.55, lineWidth:1.2, lineStyle:'solid' } });
         });
       } else if (l.id==='cobertura' && !(cat && cat.valores && cat.valores.length)) {
         // Cobertura do solo: uma entrada por classe presente, com a cor MapBiomas
@@ -15262,6 +15566,10 @@ function mlCancelDraw() {
 }
 
 function mlOnClick(e) {
+  // modo "editar prédios" (gabarito): adota/reedita o prédio clicado; se não era prédio, segue o fluxo normal
+  if (_gabMode && !_mlDraw.mode) {
+    if (_gabHandleClick(e)) return;
+  }
   if (!_mlDraw.mode) {
     mlHandleFeatureClick(e);
     return;
@@ -17529,8 +17837,8 @@ const ML_THEMES = {
   },
   morfo: {
     label:'🏛️ Morfologia Urbana',
-    desc:'Tipologias edificadas, regiões morfológicas, marcos visuais, padrões de quadras e lotes.',
-    layers:['terreno','morfo','notas'],
+    desc:'Tipologias edificadas, regiões morfológicas, marcos visuais, padrões de quadras e lotes. A camada "Edificações (gabarito)" traz os prédios adotados classificados por faixa de pavimentos.',
+    layers:['terreno','morfo','gabarito','notas'],
     defaultLayer:'morfo', defaultGeom:'polygon',
     hide:['uso','app','risco','zona','equip','lynch','viario','infra','agua','topo','acess','mobil','livres','impacto','patrim','segur','eixos']
   },

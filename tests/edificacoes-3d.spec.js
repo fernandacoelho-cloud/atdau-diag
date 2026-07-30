@@ -49,10 +49,12 @@ test('Edificações: controle adiciona prédios OSM + Open Buildings (2D/3D) no 
   expect(await page.evaluate(() => !!_mlMap.getLayer('edif-ob-fill'))).toBe(true);
 
   // editar a altura dos prédios sem dado (Open Buildings) atualiza a extrusão ao vivo
+  // (a paint é a expressão ['case', <adotado?>, 0, ALTURA] — prédios adotados pelo gabarito somem)
   expect(await page.evaluate(() => !!_mlMap.getLayer('edif-ob-3d'))).toBe(true);
   await page.evaluate(() => { const i = document.querySelector('.edif-box .edif-h'); i.value = '24'; i.dispatchEvent(new Event('change', { bubbles: true })); });
   await page.waitForTimeout(150);
-  expect(await page.evaluate(() => _mlMap.getPaintProperty('edif-ob-3d', 'fill-extrusion-height'))).toBe(24);
+  const hExpr = await page.evaluate(() => _mlMap.getPaintProperty('edif-ob-3d', 'fill-extrusion-height'));
+  expect(Array.isArray(hExpr) ? hExpr[hExpr.length - 1] : hExpr).toBe(24);
 
   // desligar OSM remove só as camadas OSM (Open Buildings permanece)
   await page.evaluate(() => { const cb = document.querySelector('.edif-osm'); cb.checked = false; cb.dispatchEvent(new Event('change', { bubbles: true })); });
