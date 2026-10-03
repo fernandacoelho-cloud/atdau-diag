@@ -69,4 +69,11 @@ test('Guia visual abre na própria ferramenta, com prints, e leva à aba', async
   await page.evaluate(() => document.querySelector('#guia-corpo').shadowRoot.querySelector('article[data-aba="7"] button.ir-aba').click());
   await expect(page.locator('#guia-modal')).toBeHidden();
   await expect(page.locator('#nav-7')).toHaveClass(/active/);
+  // toda aba do menu tem "por quê?" que cai num cartão do guia (Viabilidade → cartão 00)
+  const semCartao = await page.evaluate(() => [...document.querySelectorAll('.sec-nav-item')].map(nv => +nv.id.slice(4)).filter(n => {
+    irPara(n, document.getElementById('nav-' + n)); abrirGuia(n);
+    const sh = document.querySelector('#guia-corpo').shadowRoot; fecharGuia();
+    return !sh.querySelector(`article[data-aba="${n == 11 ? 0 : n}"]`) || !document.querySelector('#panel-' + n + ' .fluxo-trilho .ft-guia');
+  }));
+  expect(semCartao).toEqual([]);
 });

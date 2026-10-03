@@ -22611,6 +22611,7 @@ function abrirGuia(aba){
   }
   m.style.display='flex';
   const sh=m.querySelector('#guia-corpo').shadowRoot, corpo=m.querySelector('#guia-corpo');
+  if(aba==11) aba=0;   // Viabilidade preliminar é explicada no cartão 00 (Identificação e escopo)
   const alvo=(aba!=null) && sh && sh.querySelector(`article[data-aba="${aba}"]`);
   setTimeout(()=>{ if(alvo) alvo.scrollIntoView({block:'start'}); else corpo.scrollTop=0; },30);
 }
