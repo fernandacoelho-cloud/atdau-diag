@@ -2130,7 +2130,12 @@ function diagImportar(boot){
   document.getElementById('diagProgLista').innerHTML=prog.length?prog.map(p=>`<div>• ${diagEsc(p.item)}${p.area?` <span style="color:var(--t4)">· ${diagEsc(String(p.area))} m²</span>`:''}${p.setor?` <span style="color:var(--t4)">· ${diagEsc(p.setor)}</span>`:''}</div>`).join(''):'<div class="props-empty">Sem itens de programa.</div>';
   document.getElementById('diagEnunTxt').textContent=pk.enunciado||'— ainda não redigido no DIAG —';
   if(baseMode!=='map' || !map) setBase('map');   // diagrama restaurado pode já dizer 'map' sem o mapa existir
-  const depois=()=>{ if(pk.centro&&Array.isArray(pk.centro)) map.jumpTo({center:pk.centro,zoom:pk.zoom||16}); diagAplicarCamadas(); diagImportarSwot(boot); };
+  const depois=()=>{
+    // com lote/terreno: centra nele; sem: enquadra tudo o que veio do DIAG
+    if(!pk.centroDoLote && Array.isArray(pk.bbox)) map.fitBounds(pk.bbox,{padding:80,maxZoom:17,duration:0});
+    else if(pk.centro&&Array.isArray(pk.centro)) map.jumpTo({center:pk.centro,zoom:pk.zoom||16});
+    diagAplicarCamadas(); diagImportarSwot(boot);
+  };
   if(map&&map.loaded()) depois(); else if(map) map.once('load',depois);
   const n=(pk.swot||[]).length, nc=Object.keys(pk.camadas||{}).length;
   hint.textContent=`✓ Diagnóstico recebido do DIAG — ${n} feição(ões) SWOT, ${nc} camada(s), ${dirs.length} diretriz(es)`;

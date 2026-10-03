@@ -136,3 +136,29 @@ test('Ida e volta DIAG ↔ Mapa-Síntese (file://, sem localStorage)', async ({ 
   const out = await emitir(page);
   expect(out.some(l => l.includes('[Partido · Mapa-Síntese]  →  Eixo estruturante: Eixo de pedestres até a praça'))).toBe(true);
 });
+
+test('Sem lote/terreno, o Mapa-Síntese enquadra os desenhos recebidos (não abre no centro-padrão)', async ({ page, context }) => {
+  test.setTimeout(90000);
+  page.on('dialog', d => d.accept().catch(() => {}));
+  await page.goto(DIAG_URL); await page.waitForTimeout(1200);
+  // projeto sem lote nem terreno, com SWOT longe do centro-padrão (Belo Horizonte)
+  const longe = [-44.30, -20.10];
+  await page.evaluate(c => {
+    state['ml-lot'] = null;
+    const r = [[c[0], c[1]], [c[0] + .004, c[1]], [c[0] + .004, c[1] + .004], [c[0], c[1]]];
+    state['ml-features'] = { swot: [{ id: 's1', geom: { type: 'Polygon', coordinates: [r] }, props: { swot: 'F' } }], notas: [{ id: 'n1', geom: { type: 'Point', coordinates: [c[0] + .006, c[1] + .006] }, props: {} }] };
+    _mlCarregarFeicoesDoState(); _mlLotCoord = null;
+  }, longe);
+  await page.locator('#nav-10').click(); await page.waitForTimeout(300);
+  const pk = await page.evaluate(() => _diagHandoffMontar());
+  expect(pk.centroDoLote).toBeFalsy();
+  expect(pk.bbox[0][0]).toBeCloseTo(-44.30, 3);
+  expect(pk.bbox[1][0]).toBeCloseTo(-44.294, 3);
+  const [ms] = await Promise.all([context.waitForEvent('page'), page.evaluate(() => abrirMapaSinteseNovaAba())]);
+  await ms.waitForFunction(() => typeof map !== 'undefined' && map && map.loaded() && elements.some(e => e.diagId), null, { timeout: 40000 });
+  await ms.waitForTimeout(800);
+  const c = await ms.evaluate(() => { const m = map.getCenter(); const b = map.getBounds(); return { lng: m.lng, lat: m.lat, contem: b.contains([-44.298, -20.098]) && b.contains([-44.294, -20.094]) }; });
+  expect(c.contem).toBe(true);
+  expect(Math.abs(c.lng - (-44.297))).toBeLessThan(0.01);
+  await ms.close();
+});
