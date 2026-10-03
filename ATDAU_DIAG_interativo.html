@@ -2610,7 +2610,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           </div>
         </div>
         <div style="margin-top:8px;padding:7px 10px;background:rgba(74,107,142,.08);border-left:3px solid var(--blue);border-radius:4px;font-size:.58rem">
-          <strong>Como usar:</strong> baixe o shape do município (em SIRGAS 2000 EPSG:4674 ou WGS84 4326), recorte a área de interesse no QGIS se necessário, e importe o arquivo .zip ou .geojson no botão "⬆ Importar shape/GeoJSON" da barra inferior do mapa deste bloco. A camada aparecerá no Mapa de Análise (aba 09) e poderá ser cruzada com a sua delimitação do terreno.
+          <strong>Como usar:</strong> baixe o shape do município (em SIRGAS 2000 EPSG:4674 ou WGS84 4326), recorte a área de interesse no QGIS se necessário, e importe o arquivo .zip ou .geojson no botão "⬆ Importar shape/GeoJSON" da barra inferior do mapa deste bloco. A camada aparecerá no Mapa de Análise (aba 08) e poderá ser cruzada com a sua delimitação do terreno.
         </div>
       </div>
       <div class="form-grid">
@@ -3707,7 +3707,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Mapeamento temático do entorno</span></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
-        Mapeie cada dimensão do diagnóstico diretamente na base cartográfica. Dados compartilhados com o <strong>Painel 06 · Mapa de Análise</strong> — o que você desenhar aqui aparece lá, e vice-versa.
+        Mapeie cada dimensão do diagnóstico diretamente na base cartográfica. Dados compartilhados com o <strong>08 · Mapa de Análise</strong> — o que você desenhar aqui aparece lá, e vice-versa.
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
         <button class="theme-tab active" id="ttab-viario"  onclick="mlSelectTheme('viario')">🛣️ Viário</button>
@@ -3731,7 +3731,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header"><span class="block-icon">📌</span><span class="block-title">Achados do levantamento — Contexto Urbano</span></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
-        <strong>Achados são insumos diretos da Síntese SWOT.</strong> Adicione cada constatação relevante do levantamento e classifique-a como <strong>P</strong>, <strong>F</strong>, <strong>O</strong> ou <strong>A</strong>. O sistema agrupa automaticamente todos os achados na aba <em>07 · Síntese SWOT</em>, organizados pela matriz <strong>PFOA</strong> (versão brasileira da matriz SWOT — Strengths/Weaknesses/Opportunities/Threats).
+        <strong>Achados são insumos diretos da Síntese SWOT.</strong> Adicione cada constatação relevante do levantamento e classifique-a como <strong>P</strong>, <strong>F</strong>, <strong>O</strong> ou <strong>A</strong>. O sistema agrupa automaticamente todos os achados na aba <em>Síntese SWOT</em>, organizados pela matriz <strong>PFOA</strong> (versão brasileira da matriz SWOT — Strengths/Weaknesses/Opportunities/Threats).
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:.62rem">
           <div style="background:rgba(34,196,116,.1);border-left:3px solid #22c474;padding:5px 9px;border-radius:3px"><strong style="color:#15803d">P · Potencialidade</strong> — atributo interno positivo do local (ex.: insolação norte excelente, lote com testada ampla)</div>
           <div style="background:rgba(224,80,106,.1);border-left:3px solid #e0506a;padding:5px 9px;border-radius:3px"><strong style="color:#b91c1c">F · Fragilidade</strong> — atributo interno negativo do local (ex.: declividade acentuada, vizinhos próximos ao norte)</div>
@@ -4997,7 +4997,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="p-districts" placeholder="Áreas residenciais, comerciais, industriais, históricas com identidade própria..."></textarea>
         </div>
       </div>
-      <div class="info-box" style="margin:10px 0 8px;font-size:.62rem">Além de descrever acima, <strong>espacialize</strong> a imagem urbana no mapa — marcos, nós, caminhos, bordas e bairros (Lynch). As feições aparecem no <strong>Mapa de Análise (aba 09)</strong>.</div>
+      <div class="info-box" style="margin:10px 0 8px;font-size:.62rem">Além de descrever acima, <strong>espacialize</strong> a imagem urbana no mapa — marcos, nós, caminhos, bordas e bairros (Lynch). As feições aparecem no <strong>Mapa de Análise (aba 08)</strong>.</div>
       <div class="block-map-wrap" data-theme="lynch">
         <div class="block-map"></div>
         <div class="block-map-info">
@@ -5195,7 +5195,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Análise de Morfologia Urbana — 6 dimensões</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:12px">
-        <strong>Análise morfológica do tecido urbano</strong> baseada em Costa & Netto (2017), Lamas (2017) e Conzen (1960). A morfologia urbana é o estudo da <strong>forma física</strong> da cidade — articulando traçado, parcelamento, edificações e usos. Aqui você caracteriza o tecido em 6 dimensões fundamentais; cada uma alimenta o Mapa de Análise (aba 09) com sua camada própria.
+        <strong>Análise morfológica do tecido urbano</strong> baseada em Costa & Netto (2017), Lamas (2017) e Conzen (1960). A morfologia urbana é o estudo da <strong>forma física</strong> da cidade — articulando traçado, parcelamento, edificações e usos. Aqui você caracteriza o tecido em 6 dimensões fundamentais; cada uma alimenta o Mapa de Análise (aba 08) com sua camada própria.
         <br><br>
         <em style="font-size:.6rem">Referências:</em>
         <em style="font-size:.6rem">COSTA, S. A. P.; NETTO, M. M. G. <strong>Fundamentos de Morfologia Urbana.</strong> Belo Horizonte: C/Arte, 2017.</em><br>
@@ -5486,7 +5486,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </details>
 
       <div class="info-box" style="font-size:.6rem;background:rgba(31,111,92,.05)">
-        💡 <strong>Próximo passo:</strong> as 6 dimensões alimentam o <strong>Mapa de Análise (aba 09)</strong>, onde você poderá desenhar shapes, importar camadas e filtrar quais dimensões habilitar na composição final.
+        💡 <strong>Próximo passo:</strong> as 6 dimensões alimentam o <strong>Mapa de Análise (aba 08)</strong>, onde você poderá desenhar shapes, importar camadas e filtrar quais dimensões habilitar na composição final.
       </div>
       <div class="block-map-wrap" data-theme="morfo">
         <div class="block-map"></div>
@@ -5809,8 +5809,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:.57rem;background:var(--bg4);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;margin-bottom:10px">
         <span style="font-weight:700;color:var(--t2)">Funil da síntese →</span>
         <span style="color:var(--teal);font-weight:700;background:rgba(31,111,92,.12);border-radius:4px;padding:1px 6px">① Leitura · o que se <em>destaca</em></span>
-        <span style="color:var(--t3)">→ ② Problema (Programação) · o que <em>resolver</em></span>
-        <span style="color:var(--t3)">→ ③ Diretrizes · como <em>decidir</em></span>
+        <span style="color:var(--t3)">→ ② Diretrizes · como <em>decidir</em></span>
+        <span style="color:var(--t3)">→ ③ Programação · o que <em>resolver</em> (enunciado do problema)</span>
       </div>
       <div class="form-field">
         <label>Síntese interpretativa — aspectos de destaque</label>
@@ -5900,7 +5900,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
     <div class="block-body">
       <div class="info-box" style="font-size:.62rem;margin-bottom:12px">
-        O programa começa como <strong>hipótese preliminar</strong> e <em>coevolui</em> com as diretrizes (aba seguinte) e com as necessidades declaradas na aba Identificação (Valores e questões). Programa e partido amadurecem juntos — a lista ganha marcas de revisão conforme você projeta. A ferramenta registra o ajuste; a decisão é sua.
+        O programa começa como <strong>hipótese preliminar</strong> e <em>coevolui</em> com as diretrizes (aba anterior — em especial o eixo <em>Programa e Funcionalidade</em>) e com as necessidades declaradas na aba Identificação (Valores e questões). Programa e partido amadurecem juntos — a lista ganha marcas de revisão conforme você projeta. A ferramenta registra o ajuste; a decisão é sua.
       </div>
       <div id="programa-lista"></div>
       <button class="instr-btn" onclick="gerarProgramaTemplate()" style="font-size:.62rem;margin:9px 0 2px" title="Gera uma lista base de ambientes a partir da categoria/tipologia escolhida na Identificação — você ajusta depois">✨ Gerar programa base pela tipologia</button>
@@ -5975,8 +5975,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:.57rem;background:var(--bg4);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;margin-bottom:10px">
         <span style="font-weight:700;color:var(--t2)">Funil da síntese →</span>
         <span style="color:var(--t3)">① Leitura (SWOT) · o que se <em>destaca</em> →</span>
-        <span style="color:var(--teal);font-weight:700;background:rgba(31,111,92,.12);border-radius:4px;padding:1px 6px">② Problema · o que <em>resolver</em></span>
-        <span style="color:var(--t3)">→ ③ Diretrizes · como <em>decidir</em></span>
+        <span style="color:var(--t3)">② Diretrizes · como <em>decidir</em> →</span>
+        <span style="color:var(--teal);font-weight:700;background:rgba(31,111,92,.12);border-radius:4px;padding:1px 6px">③ Programação · o que <em>resolver</em> (enunciado do problema)</span>
       </div>
       <div class="info-box" style="font-size:.6rem;margin-bottom:10px">O produto final da programação, no método <em>Problem Seeking</em>, é o <strong>enunciado do problema</strong> — uma síntese clara do que o projeto precisa resolver, que faz a ponte para a fase de projeto. Redija com base em tudo que levantou.</div>
       <div class="form-field"><textarea id="prog-enunciado" placeholder="Sintetize o problema de projeto: dada a demanda X, no sítio Y, com as restrições Z, o projeto deve resolver... Este enunciado orienta o partido e as diretrizes." oninput="autoSave()" style="min-height:90px"></textarea></div>
@@ -5997,8 +5997,8 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:.57rem;background:var(--bg4);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;margin-bottom:10px">
     <span style="font-weight:700;color:var(--t2)">Funil da síntese →</span>
     <span style="color:var(--t3)">① Leitura (SWOT) · o que se <em>destaca</em> →</span>
-    <span style="color:var(--t3)">② Problema (Programação) · o que <em>resolver</em> →</span>
-    <span style="color:var(--teal);font-weight:700;background:rgba(31,111,92,.12);border-radius:4px;padding:1px 6px">③ Diretrizes · como <em>decidir</em></span>
+    <span style="color:var(--teal);font-weight:700;background:rgba(31,111,92,.12);border-radius:4px;padding:1px 6px">② Diretrizes · como <em>decidir</em></span>
+    <span style="color:var(--t3)">→ ③ Programação · o que <em>resolver</em> (enunciado do problema)</span>
   </div>
 
   <div class="info-box">
@@ -6008,7 +6008,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     As geradas automaticamente partem dos achados classificados (P/F/O/A); as manuais são estratégias adicionais.
     Prioridades: <strong>● Essencial</strong> · <strong>◉ Desejável</strong> · <strong>○ Aspiracional</strong>.
     <br><br>
-    <strong>Coevolução com o programa:</strong> a lista de itens do programa de necessidades mora agora na aba <em>Programação Arquitetônica</em> (onde se desdobra em ambientes dimensionados). Ao redigir uma diretriz aqui, você pode registrar que ela <strong>ajustou</strong> ou <strong>criou</strong> um item daquela lista — o vínculo continua funcionando entre as abas. Essa lista, por sua vez, traduz as <em>necessidades</em> declaradas na aba Identificação (Valores e questões). A cadeia é: <em>valores → questões → necessidades</em> (Identificação) → <em>itens/ambientes</em> (Programação) → <em>diretrizes</em> (esta aba).
+    <strong>Diretrizes antes do programa.</strong> As diretrizes decorrem do diagnóstico (achados P/F/O/A, campo e referências) e são decisões estratégicas em 10 dimensões — uma delas, <em>Programa e Funcionalidade</em>, é o eixo que diz <strong>o que o programa precisa garantir</strong>. A aba seguinte, <em>Programação Arquitetônica</em>, formaliza o problema: traduz essas diretrizes e as <em>necessidades</em> da Identificação em ambientes dimensionados, relações e metas, até o <em>enunciado do problema</em>. Ao redigir uma diretriz aqui, você pode registrar que ela <strong>ajusta</strong> ou <strong>cria</strong> um item do programa — o vínculo fica gravado e aparece no relatório (rastreabilidade). A cadeia é: <em>valores → necessidades</em> (Identificação) → <em>achados</em> (Diagnóstico, Campo, Análogas) → <em>diretrizes</em> (esta aba) → <em>programa e enunciado</em> (Programação) → <em>partido</em> (Mapa-Síntese).
   </div>
 
   <div id="dir-summary-bar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
@@ -6570,7 +6570,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <div class="block">
   <div class="block-header"><span class="block-icon">🌳</span><span class="block-title">Mapa da escala — Áreas livres</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
   <div class="block-body">
-    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize os instrumentos da escala de espaços abertos (parques, praças, áreas verdes). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 09)</strong> para composição final.</div>
+    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize os instrumentos da escala de espaços abertos (parques, praças, áreas verdes). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
     <div class="block-map-wrap" data-theme="livres">
       <div class="block-map"></div>
       <div class="block-map-info">
@@ -6836,7 +6836,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <div class="block">
   <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Mapa da escala — Lote/Terreno</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
   <div class="block-body">
-    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize os achados da escala do lote (visita técnica, dimensões, recuos). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 09)</strong> para composição final.</div>
+    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize os achados da escala do lote (visita técnica, dimensões, recuos). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
     <div class="block-map-wrap" data-theme="morfo">
       <div class="block-map"></div>
       <div class="block-map-info">
@@ -7236,7 +7236,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <div class="block">
   <div class="block-header"><span class="block-icon">👁️</span><span class="block-title">Mapa da escala — Transversais</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
   <div class="block-body">
-    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize instrumentos transversais (Lynch, Gehl, mapa mental, observação sistemática). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 09)</strong> para composição final.</div>
+    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize instrumentos transversais (Lynch, Gehl, mapa mental, observação sistemática). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
     <div class="block-map-wrap" data-theme="lynch">
       <div class="block-map"></div>
       <div class="block-map-info">
@@ -7634,7 +7634,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <div class="block">
   <div class="block-header"><span class="block-icon">✏️</span><span class="block-title">Mapa da escala — Síntese</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
   <div class="block-body">
-    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Mapa síntese da matriz de descoberta — cruzamentos qualitativos. As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 09)</strong> para composição final.</div>
+    <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Mapa síntese da matriz de descoberta — cruzamentos qualitativos. As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
     <div class="block-map-wrap" data-theme="notas">
       <div class="block-map"></div>
       <div class="block-map-info">
@@ -7712,6 +7712,23 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div class="instr-actions">
         <button class="instr-btn instr-btn-primary" onclick="exportInstrument('matriz-descobertas')">📄 Exportar JSON</button>
         <button class="instr-btn instr-btn-secondary" onclick="window.print()">🖨️ Imprimir para anotação manual</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Achados do CAMPO: o levantamento de campo passa a alimentar o SWOT/Diretrizes (antes ia só ao relatório) -->
+  <div class="block block-open" style="border-left:3px solid var(--teal)">
+    <div class="block-header"><span class="block-icon">📌</span><span class="block-title">Achados do levantamento de campo</span></div>
+    <div class="block-body">
+      <div class="info-box" style="margin-bottom:10px;font-size:.62rem">
+        <strong>O campo entra na síntese.</strong> Cada descoberta relevante dos instrumentos (walk-through, entrevistas, observação, Matriz de Descobertas) vira um achado classificado <strong>P / F / O / A</strong> e segue para a <em>Síntese SWOT</em> e as <em>Diretrizes</em>, junto com os achados documentais.
+        Use <strong>"puxar sínteses da Matriz"</strong> para trazer as sínteses acima como achados (você classifica depois), ou escreva achados diretamente.
+      </div>
+      <button class="instr-btn" onclick="mdPuxarAchados()" style="font-size:.64rem;margin-bottom:8px" title="Transforma cada campo de síntese preenchido na Matriz de Descobertas (mensagem-chave, prazos, dimensões) num achado">↳ puxar sínteses da Matriz como achados</button>
+      <div class="finding-list" id="findings-9"></div>
+      <div class="add-finding">
+        <input type="text" id="inp-f9" placeholder="Descreva um achado do campo…" onkeydown="if(event.key==='Enter')addFinding(9)">
+        <button class="add-btn" onclick="addFinding(9)">+ Adicionar achado</button>
       </div>
     </div>
   </div>
@@ -7846,6 +7863,25 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <button class="instr-btn instr-btn-primary" onclick="addRefCriterio()" style="font-size:.62rem">+ critério</button>
       </div>
       <div id="ref-matriz-criterios"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+        <button class="instr-btn" onclick="refCriteriosParaRequisitos()" style="font-size:.62rem" title="Leva os critérios com meta (coluna ★) para 'Requisitos e metas de desempenho' na Programação">↳ critérios → requisitos do programa (Programação)</button>
+        <button class="instr-btn" onclick="refCriteriosComoAchados()" style="font-size:.62rem" title="Cada critério com meta vira um achado (Oportunidade) para a Síntese SWOT e as Diretrizes">↳ critérios → achados (SWOT)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Achados das ANÁLOGAS: o estudo de referências passa a alimentar o SWOT/Diretrizes -->
+  <div class="block block-open" style="border-left:3px solid var(--teal)">
+    <div class="block-header"><span class="block-icon">📌</span><span class="block-title">Achados — Obras Análogas</span></div>
+    <div class="block-body">
+      <div class="info-box" style="margin-bottom:10px;font-size:.62rem">
+        <strong>O que as referências ensinam sobre o seu problema.</strong> Lições e critérios viram achados <strong>P / F / O / A</strong> (em geral <em>Oportunidades</em>: o que aproveitar; ou <em>Ameaças</em>: o que evitar) e seguem para a <em>Síntese SWOT</em> e as <em>Diretrizes</em>. A lição de cada obra também pode virar diretriz direta pelo botão "promover a diretriz" no quadro acima.
+      </div>
+      <div class="finding-list" id="findings-12"></div>
+      <div class="add-finding">
+        <input type="text" id="inp-f12" placeholder="Descreva um achado a partir das referências…" onkeydown="if(event.key==='Enter')addFinding(12)">
+        <button class="add-btn" onclick="addFinding(12)">+ Adicionar achado</button>
+      </div>
     </div>
   </div>
 
@@ -7861,7 +7897,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <!-- ════════════════ PANEL 10: MAPA-SÍNTESE (base64 via iframe) ════════════════ -->
 <div class="panel" id="panel-10" style="padding:0">
   <div class="sec-title" style="padding:18px 24px 0">Proposição — Partido (Mapa-Síntese) <div class="sec-line"></div></div>
-  <p style="padding:6px 24px 14px;color:var(--t2);font-size:13px;max-width:760px">Aqui você <strong>propõe</strong>: o partido (condicionantes PFOA + intenções projetuais) sobre a base real, com edificações 2D/3D, trajetória solar e relevo. A <strong>leitura/diagnóstico</strong> fica no <strong>Mapa de Análise</strong> e na <strong>Síntese SWOT</strong> (aba 09) — esta etapa é o passo seguinte, que materializa o partido.</p>
+  <p style="padding:6px 24px 14px;color:var(--t2);font-size:13px;max-width:760px">Aqui você <strong>propõe</strong>: o partido (condicionantes PFOA + intenções projetuais) sobre a base real, com edificações 2D/3D, trajetória solar e relevo. A <strong>leitura/diagnóstico</strong> fica no <strong>Mapa de Análise</strong> e na <strong>Síntese SWOT</strong> — esta etapa é o passo seguinte, que materializa o partido.</p>
   <div style="padding:0 24px 28px">
     <div id="partido-resumo" style="margin-bottom:16px"></div>
     <div style="border:1px solid var(--line2,#e0ddd5);border-radius:14px;padding:32px;text-align:center;background:linear-gradient(135deg,#FAFAF8,#F2EFE9)">
@@ -7878,7 +7914,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <span style="font-size:1.2rem">🗺️</span> Vem do QGIS? Importe seus shapes
       </h3>
       <p style="font-size:13px;color:var(--t2);line-height:1.55;margin:0 0 12px">
-        A DIAG conversa com o QGIS por arquivos. Se você já tem cartografia produzida lá — limites de área de estudo, malha viária editada, polígonos de patrimônio, áreas de risco mapeadas — pode importar para o <strong>Mapa-Síntese</strong> e para o <strong>Mapa de Análise (aba 09)</strong>.
+        A DIAG conversa com o QGIS por arquivos. Se você já tem cartografia produzida lá — limites de área de estudo, malha viária editada, polígonos de patrimônio, áreas de risco mapeadas — pode importar para o <strong>Mapa-Síntese</strong> e para o <strong>Mapa de Análise (aba 08)</strong>.
       </p>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
@@ -7895,7 +7931,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div style="background:white;border:1px solid var(--line);border-radius:6px;padding:11px 14px">
           <strong style="font-size:.72rem;color:var(--gold)">📤 Como abrir no Pré-Projeto</strong>
           <ol style="margin:6px 0 0;padding-left:18px;font-size:.62rem;color:var(--t2);line-height:1.55">
-            <li>No Mapa de Análise (aba 09), botão <em>"⬆ Importar"</em> aceita .geojson e .zip (shape)</li>
+            <li>No Mapa de Análise (aba 08), botão <em>"⬆ Importar"</em> aceita .geojson e .zip (shape)</li>
             <li>Em cada bloco temático com "📍 Mostrar mapa", a barra inferior tem <em>"⬆ Importar shape/GeoJSON"</em></li>
             <li>O arquivo importado vira camada no Pré-Projeto e aparece no Mapa-Síntese</li>
           </ol>
@@ -8229,7 +8265,7 @@ window.MS_B64="PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9InB0LUJSIj4KPGhlYWQ+CjxtZXRhI
 // ══════════════════════════════════════════════════
 let state = {
   proj:{}, contexto:{}, leg:{}, amb:{}, paisa:{}, ocu:{},
-  findings: {1:[],2:[],3:[],4:[],5:[],14:[]},
+  findings: {1:[],2:[],3:[],4:[],5:[],9:[],12:[],14:[]},
   dinamica: null, // Dinâmica Territorial (panel-14) — preenchido sob demanda por _dinState()
   swot_narrativa:'',
   dir_manual:[],
@@ -9006,6 +9042,7 @@ function irPara(n, el){
   if(n===14 && typeof renderDinamica==='function') renderDinamica();
   if(n===10 && typeof renderPartidoResumo==='function') renderPartidoResumo();
   if(n===9 && typeof renderUserProfiles==='function'){ renderUserProfiles('mapa-comportamental'); renderUserProfiles('stationary-mapping'); }
+  if(n===9 || n===12) renderFindings(n);   // achados do campo / das análogas
   if(n===0 && typeof renderValores==='function') renderValores();
   if(typeof renderFluxoTrilho==='function') renderFluxoTrilho(n);
   if(typeof atualizarCompletude==='function') atualizarCompletude();
@@ -9237,7 +9274,7 @@ function renderFindings(sec){
     const div=document.createElement('div');
     div.className='finding-item';
     div.innerHTML=`
-      <div class="finding-text" title="Clique duplo para editar">${f.mapeado?'<span title="Vinculado a um desenho no mapa" style="cursor:default">📍 </span>':''}${f.text}</div>
+      <div class="finding-text" title="Clique duplo para editar">${f.mapeado?'<span title="Vinculado a um desenho no mapa" style="cursor:default">📍 </span>':''}${f.text}${f.origem?` <span style="font-size:.52rem;color:var(--t3)" title="Origem do achado">· ${escHtml(f.origem)}</span>`:''}</div>
       <div class="finding-class">
         ${['P','F','O','A'].map(c=>`<button class="fc-btn ${c} ${f.class===c?'active':''}" onclick="setFClass(${sec},${idx},'${c}')" title="${{P:'Potencialidade',F:'Fragilidade',O:'Oportunidade',A:'Ameaça'}[c]}">${c}</button>`).join('')}
       </div>
@@ -9247,7 +9284,7 @@ function renderFindings(sec){
 }
 
 function renderAllFindings(){
-  [1,2,3,4,5,14].forEach(s=>renderFindings(s));
+  FINDING_SECS.forEach(s=>renderFindings(s));
 }
 
 function setFClass(sec,idx,cls){
@@ -9267,10 +9304,23 @@ function delFinding(sec,idx){
 // ══════════════════════════════════════════════════
 // SWOT
 // ══════════════════════════════════════════════════
+// Abas que geram ACHADOS (insumo do SWOT/Diretrizes). 9 = campo (Instrumentos + Matriz de
+// Descobertas) e 12 = Obras Análogas entraram em 2026-10: antes eram becos sem saída (iam só
+// ao relatório). A ordem é a do fluxo: documental → campo → análogas → território.
+const FINDING_SECS = [1,2,3,4,5,9,12,14];
+const FINDING_SEC_LABEL = {1:'Contexto Urbano',2:'Legislação',3:'Condicionantes Ambientais',4:'Paisagem e Morfologia',5:'Ocupação e Usos',9:'Campo (Instrumentos)',12:'Obras Análogas',14:'Dinâmica Territorial'};
 function getAllFindings(){
   const all=[];
-  [1,2,3,4,5,14].forEach(s=> (state.findings[s]||[]).forEach(f=>all.push(f)));
+  FINDING_SECS.forEach(s=> (state.findings[s]||[]).forEach(f=>{ f.sec=s; all.push(f); }));
   return all;
+}
+// Cria um achado por código (campo/análogas): devolve false se já existe texto igual na aba
+function addFindingTexto(sec, text, cls, origem){
+  text=(text||'').toString().trim(); if(!text) return false;
+  if(!state.findings[sec]) state.findings[sec]=[];
+  if(state.findings[sec].some(f=>f.text===text)) return false;
+  state.findings[sec].push({id:Date.now()+Math.floor(Math.random()*1000), text, class:cls||'', origem:origem||''});
+  return true;
 }
 
 // ══════════════════════════════════════════════════
@@ -10346,8 +10396,43 @@ function delAnaloga(id) {
   renderAnalogas();
   autoSave();
 }
-// Promove a lição de uma obra análoga a uma diretriz projetual (Painel 08), conectando
+// Promove a lição de uma obra análoga a uma diretriz projetual (aba Diretrizes), conectando
 // o estudo de referências às diretrizes (antes desacoplados).
+// Critérios da matriz (obras × projeto) → Programação / achados. Fecha o fluxo das análogas.
+function _refCriteriosComMeta(){
+  const crits=Array.isArray(state.ref_criterios)?state.ref_criterios:[];
+  return crits.map(cr=>({ cr, meta: (typeof refMatrizGet==='function') ? refMatrizGet(cr.id,'projeto') : '' }));
+}
+function refCriteriosParaRequisitos(){
+  const lista=_refCriteriosComMeta(); if(!lista.length){ alert('Adicione critérios na matriz primeiro.'); return; }
+  const linhas=lista.map(({cr,meta})=>'• '+cr.text+(meta?(' — meta para o projeto: '+meta+'/5'):'')+' [matriz de critérios das análogas]');
+  const atual=(state['prog-req-desemp']||'').toString();
+  const novas=linhas.filter(l=>atual.indexOf(l)<0);
+  if(!novas.length){ mostrarStatus('Os critérios já estão nos requisitos.'); return; }
+  state['prog-req-desemp']=(atual?atual.replace(/\s+$/,'')+'\n':'')+novas.join('\n');
+  const ta=document.getElementById('prog-req-desemp'); if(ta) ta.value=state['prog-req-desemp'];
+  autoSave(); mostrarStatus(novas.length+' critério(s) levados aos requisitos do programa ✓');
+}
+function refCriteriosComoAchados(){
+  const lista=_refCriteriosComMeta(); if(!lista.length){ alert('Adicione critérios na matriz primeiro.'); return; }
+  let n=0;
+  lista.forEach(({cr,meta})=>{ if(addFindingTexto(12, 'Critério de referência: '+cr.text+(meta?(' (meta '+meta+'/5)'):''), 'O', 'matriz de critérios')) n++; });
+  renderFindings(12); autoSave(); marcarNavComDados();
+  mostrarStatus(n?(n+' achado(s) criado(s) a partir dos critérios ✓'):'Esses critérios já são achados.');
+}
+// Matriz de Descobertas (campo) → achados: cada síntese preenchida vira um achado (classificar depois)
+function mdPuxarAchados(){
+  if(typeof coletarDados==='function') coletarDados();
+  const campos=[['md-mensagem','mensagem-chave'],['md-curto','curto prazo'],['md-medio','médio prazo'],['md-longo','longo prazo'],
+    ['md-cond','condição ambiental'],['md-func','aspectos funcionais'],['md-urb','inserção urbana'],['md-satisf','satisfação do usuário'],['md-bairro','bairro / entorno']];
+  let n=0;
+  campos.forEach(([id,rot])=>{
+    const el=document.getElementById(id); const v=((el&&el.value)||state[id]||'').toString().trim(); if(!v) return;
+    v.split(/\n+/).map(s=>s.trim()).filter(s=>s.length>3).forEach(s=>{ if(addFindingTexto(9, s, '', 'Matriz de Descobertas · '+rot)) n++; });
+  });
+  renderFindings(9); autoSave(); marcarNavComDados();
+  mostrarStatus(n?(n+' achado(s) trazidos da Matriz ✓ — classifique P/F/O/A'):'Nada novo na Matriz para trazer (preencha as sínteses acima).');
+}
 function promoverLicaoComoDiretriz(obraId, catId){
   const obra = (state.analogas||[]).find(a=>String(a.id)===String(obraId));
   if(!obra) return;
@@ -12404,7 +12489,7 @@ function updateMeta(){
 }
 
 function marcarNavComDados(){
-  [1,2,3,4,5,14].forEach(s=>{
+  FINDING_SECS.forEach(s=>{
     const nav=document.getElementById(`nav-${s}`);
     if(nav) nav.classList.toggle('has-data', state.findings[s]&&state.findings[s].length>0);
   });
@@ -13355,7 +13440,8 @@ function _emitirRelatorio(R, opts){
     O:{label:'Oportunidades',   cor:[64,130,245], list:[]},
     A:{label:'Ameaças',         cor:[214,140,40], list:[]},
   };
-  all.forEach(f=>{ if(PFOA[f.class]) PFOA[f.class].list.push(f.text.trim()); });
+  const _secTag=f=>(f.sec===9||f.sec===12)?(' ['+(FINDING_SEC_LABEL[f.sec]||'')+']'):'';
+  all.forEach(f=>{ if(PFOA[f.class]) PFOA[f.class].list.push(f.text.trim()+_secTag(f)); });
 
   titulo('Síntese SWOT — achados do diagnóstico (PFOA)');
   if(all.length===0){
@@ -13386,6 +13472,31 @@ function _emitirRelatorio(R, opts){
     }
   }
 
+  // ─── DIRETRIZES PRIORITÁRIAS ───
+  titulo('Diretrizes prioritárias');
+  let diretrizes = [];
+  if(state.dir_cats){ Object.values(state.dir_cats).forEach(arr=>{ (arr||[]).forEach(d=>{ if(d && d.text) diretrizes.push(d.text); }); }); }
+  if(diretrizes.length===0){ diretrizes = [...PFOA.F.list.slice(0,4), ...PFOA.O.list.slice(0,3)]; }
+  if(diretrizes.length===0){ paragrafo('Defina diretrizes na aba Diretrizes para compor esta seção.'); }
+  else { diretrizes.forEach(d=> item(d)); }
+  espaco(2);
+
+  // ─── RASTREABILIDADE: achado → diretriz → programa (o dado entra uma vez e anda) ───
+  {
+    const linhas=[];
+    const _catLbl=id=>((typeof DIR_CATS!=='undefined'&&DIR_CATS.find(c=>c.id===id))||{}).label||id;
+    all.forEach(f=>{
+      if(!f.class || typeof dirDetectCats!=='function' || typeof dirGenText!=='function') return;
+      dirDetectCats(f.text).forEach(cid=>{ const rid=cid||({F:'conforto',P:'visual',O:'urbana',A:'sustentabilidade'}[f.class]); linhas.push('['+f.class+'] '+f.text.trim()+_secTag(f)+'  →  '+dirGenText(f,rid).replace(/<[^>]+>/g,'')+'  ('+_catLbl(rid)+')'); });
+    });
+    if(state.dir_cats){ Object.entries(state.dir_cats).forEach(([cid,arr])=>{ (arr||[]).forEach(d=>{
+      if(!d||!d.text) return;
+      if(d.origem&&/^ref:/.test(d.origem)){ const ob=(state.analogas||[]).find(a=>String(a.id)===d.origem.slice(4)); linhas.push('[Ref.] '+(ob?ob.nome:'obra análoga')+'  →  '+d.text+'  ('+_catLbl(cid)+')'); }
+    }); }); }
+    (Array.isArray(state.programa)?state.programa:[]).forEach(p=>{ (p.ajustes||[]).forEach(aj=>{ linhas.push('[Diretriz] '+aj.texto+'  →  programa: '+(p.item||p.nome||'')+(p.status?(' ('+((PROG_STATUS[p.status]||{}).label||p.status)+')'):'')); }); });
+    if(linhas.length){ titulo('Rastreabilidade — do achado à diretriz e ao programa'); paragrafo('Cada linha mostra de onde veio uma decisão: achado classificado (P/F/O/A), lição de obra análoga ou diretriz que ajustou/criou um item do programa.'); linhas.forEach(l=>item(l)); espaco(2); }
+  }
+
   // ─── PROGRAMA DE NECESSIDADES ───
   {
     const lista = Array.isArray(state.programa) ? state.programa.filter(p=>p && (p.item||p.nome)) : [];
@@ -13394,9 +13505,17 @@ function _emitirRelatorio(R, opts){
     const reqF=state['prog-req-func']||'', reqD=state['prog-req-desemp']||'', reqE=state['prog-req-econ']||'';
     const ench=state['prog-enunciado']||'';
     if(lista.length || ambientes.length || Object.keys(_rel).length || reqF || reqD || reqE || ench){
-      titulo('Programa de necessidades');
+      titulo('Programação arquitetônica');
+      {
+        const pm=state.prog_matriz||{};
+        if(typeof PROG_PASSOS!=='undefined' && Object.values(pm).some(v=>(v||'').toString().trim())){
+          subt('Matriz de programação — 5 passos × 4 considerações (Problem Seeking)');
+          const _CL={funcao:'Função',forma:'Forma',economia:'Economia',tempo:'Tempo'};
+          PROG_PASSOS.forEach(ps=>{ const cel=PROG_CONSID.map(c=>{ const v=(pm[ps.id+'_'+c]||'').toString().trim(); return v?(_CL[c]+': '+v):null; }).filter(Boolean); if(cel.length) item(ps.label+' — '+cel.join(' · ')); });
+        }
+      }
       if(lista.length){
-        subt('Itens do programa');
+        subt('Programa de necessidades — Itens do programa');
         lista.forEach(p=>{ const t=(p.item||p.nome||'').toString().trim(); if(!t) return; const a=p.area?(' — '+p.area+' m²'):''; const o=p.obs?(' ('+p.obs+')'):''; item(t+a+o); });
       }
       if(ambientes.length){
@@ -13441,15 +13560,6 @@ function _emitirRelatorio(R, opts){
       espaco(2);
     }
   }
-
-  // ─── DIRETRIZES PRIORITÁRIAS ───
-  titulo('Diretrizes prioritárias');
-  let diretrizes = [];
-  if(state.dir_cats){ Object.values(state.dir_cats).forEach(arr=>{ (arr||[]).forEach(d=>{ if(d && d.text) diretrizes.push(d.text); }); }); }
-  if(diretrizes.length===0){ diretrizes = [...PFOA.F.list.slice(0,4), ...PFOA.O.list.slice(0,3)]; }
-  if(diretrizes.length===0){ paragrafo('Defina diretrizes no Painel 8 para compor esta seção.'); }
-  else { diretrizes.forEach(d=> item(d)); }
-  espaco(2);
 
   // ─── NOTAS SOBRE AS OPERAÇÕES PROJETUAIS ───
   const notasVerbos = state['verbos-notas']||'';
