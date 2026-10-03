@@ -1,0 +1,423 @@
+<title>Guia visual do DIAG</title>
+<meta name="description" content="Fluxo da ferramenta ATDAU DIAG em 13 abas e 5 fases, com prints da própria ferramenta.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: coluna de leitura com o fluxo no topo; cada fase é uma faixa, cada aba um cartão com print. */
+:root{
+  --bg:#F7F6F2; --paper:#FFFFFF; --ink:#22231F; --ink2:#55584F; --ink3:#8A8C82;
+  --line:#E3E1D8; --accent:#C95F3F; --accent-soft:#F6E3DA; --teal:#1F6F5C; --teal-soft:#E2F0EB;
+  --f-prep:#7A7C72; --f-doc:#3B6B8C; --f-campo:#3D8B5A; --f-ana:#9A6B1E; --f-prop:#C95F3F;
+  --sans:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'Geist Mono',ui-monospace,Consolas,monospace;
+  --shadow:0 1px 2px rgba(34,35,31,.06),0 8px 24px rgba(34,35,31,.06);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#191A17; --paper:#22231F; --ink:#ECEBE4; --ink2:#B9BAB0; --ink3:#86887E;
+  --line:#34352F; --accent:#E07D5D; --accent-soft:#3A2A23; --teal:#5DB89E; --teal-soft:#1F302A;
+  --f-prep:#A3A59A; --f-doc:#7FAED0; --f-campo:#7BC496; --f-ana:#D6A65A; --f-prop:#E07D5D;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#191A17; --paper:#22231F; --ink:#ECEBE4; --ink2:#B9BAB0; --ink3:#86887E;
+  --line:#34352F; --accent:#E07D5D; --accent-soft:#3A2A23; --teal:#5DB89E; --teal-soft:#1F302A;
+  --f-prep:#A3A59A; --f-doc:#7FAED0; --f-campo:#7BC496; --f-ana:#D6A65A; --f-prop:#E07D5D;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:40px 80px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;letter-spacing:-.02em}
+h2{font-size:1.45rem;font-weight:600;letter-spacing:-.01em}
+h3{font-size:1.12rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.lead{color:var(--ink2);max-width:62ch;font-size:1.05rem}
+header{display:grid;gap:14px;margin-bottom:28px}
+.fluxo{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);overflow-x:auto}
+.fluxo svg{display:block;min-width:900px;width:100%;height:auto}
+.fluxo text{font-family:var(--sans)}
+.legenda{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--ink2);margin-top:10px}
+.legenda span{display:inline-flex;align-items:center;gap:6px}
+.legenda i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.caixa{background:var(--teal-soft);border:1px solid color-mix(in srgb,var(--teal) 35%,transparent);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
+.caixa strong{color:var(--teal)}
+.duas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:22px 0 40px}
+.fase{margin-top:56px;display:grid;gap:18px}
+.fase-cab{display:grid;gap:6px;border-top:2px solid var(--fc);padding-top:14px}
+.fase-cab .eyebrow{color:var(--fc)}
+.fase-cab p{color:var(--ink2);max-width:66ch}
+.etapa{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);overflow:hidden}
+.etapa.larga{grid-template-columns:1fr}
+.etapa figure{margin:0;background:var(--bg);border-right:1px solid var(--line);display:flex;align-items:flex-start}
+.etapa.larga figure{border-right:0;border-bottom:1px solid var(--line)}
+.etapa figure img{display:block;width:100%;height:auto}
+.etapa figure.topo img{aspect-ratio:1200/430;object-fit:cover;object-position:top}
+.etapa .txt{padding:20px 22px;display:grid;gap:12px;align-content:start;min-width:0}
+.titulo{display:flex;gap:12px;align-items:center}
+.num{font-family:var(--mono);font-size:.82rem;font-weight:500;min-width:2.4em;height:2.4em;padding:0 .5em;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:var(--fc);color:var(--paper);flex:none}
+.pergunta{font-style:italic;color:var(--ink2)}
+ul{margin:0;padding-left:1.1em;display:grid;gap:4px;color:var(--ink)}
+li::marker{color:var(--fc)}
+.exemplo{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:.92rem;color:var(--ink2)}
+.exemplo b{color:var(--ink);font-weight:600}
+.fazer{font-size:.88rem;color:var(--ink2);border-top:1px dashed var(--line);padding-top:10px}
+.fazer b{color:var(--accent);font-weight:600}
+.saida{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.76rem;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 10px;width:fit-content;max-width:100%;overflow-wrap:anywhere}
+.cadeia{margin-top:56px}
+.cadeia svg{min-width:760px}
+button.ir-aba{justify-self:start;font:inherit;font-size:.86rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:5px 12px;cursor:pointer}
+button.ir-aba:hover{background:var(--accent);color:var(--paper)}
+button.ir-aba:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+footer{margin-top:64px;color:var(--ink3);font-size:.82rem;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:760px){
+  .etapa{grid-template-columns:minmax(0,1fr)}
+  .etapa figure{border-right:0;border-bottom:1px solid var(--line)}
+  .wrap{padding-block:28px 60px}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">ATDAU DIAG · pré-projeto · diagnóstico urbano</span>
+  <h1>Guia visual do DIAG</h1>
+  <p class="lead">Treze abas organizadas em cinco fases. Cada fase entrega algo para a seguinte: os achados viram a SWOT, a SWOT vira diretrizes, as diretrizes viram programa e o programa vira partido no Mapa-Síntese. Os prints são da própria ferramenta, com um projeto-exemplo.</p>
+</header>
+
+<div class="fluxo" role="img" aria-label="Fluxo das 13 abas em 5 fases">
+<svg viewBox="0 0 1000 330" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink3)"/></marker>
+  </defs>
+  <!-- colunas das fases -->
+  <g font-size="11" font-weight="600" letter-spacing=".06em">
+    <text x="20" y="22" fill="var(--f-prep)">PREPARAÇÃO</text>
+    <text x="215" y="22" fill="var(--f-doc)">LEVANTAMENTO DOCUMENTAL</text>
+    <text x="420" y="22" fill="var(--f-campo)">LEVANTAMENTO DE CAMPO</text>
+    <text x="615" y="22" fill="var(--f-ana)">ANÁLISE E SÍNTESE</text>
+    <text x="810" y="22" fill="var(--f-prop)">PROPOSIÇÃO E ENTREGA</text>
+  </g>
+  <g font-size="12.5">
+    <!-- Preparação -->
+    <rect x="20" y="36" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-prep)"/><text x="32" y="58" fill="var(--ink)">Identificação · Escopo</text>
+    <rect x="20" y="78" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-prep)"/><text x="32" y="100" fill="var(--ink)">Viabilidade preliminar</text>
+    <!-- Documental -->
+    <rect x="215" y="36" width="180" height="34" rx="8" fill="var(--paper)" stroke="var(--f-doc)"/><text x="227" y="58" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-doc)">01</tspan>  Dinâmica Territorial</text>
+    <rect x="215" y="78" width="180" height="34" rx="8" fill="var(--paper)" stroke="var(--f-doc)"/><text x="227" y="100" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-doc)">02</tspan>  Contexto Urbano</text>
+    <rect x="215" y="120" width="180" height="34" rx="8" fill="var(--paper)" stroke="var(--f-doc)"/><text x="227" y="142" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-doc)">03</tspan>  Legislação</text>
+    <rect x="215" y="162" width="180" height="34" rx="8" fill="var(--paper)" stroke="var(--f-doc)"/><text x="227" y="184" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-doc)">04</tspan>  Condicionantes</text>
+    <rect x="215" y="204" width="180" height="34" rx="8" fill="var(--paper)" stroke="var(--f-doc)"/><text x="227" y="226" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-doc)">05</tspan>  Uso, Ocupação, Morfol.</text>
+    <!-- Campo -->
+    <rect x="420" y="36" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-campo)"/><text x="432" y="58" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-campo)">06</tspan>  Instrumentos</text>
+    <rect x="420" y="78" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-campo)"/><text x="432" y="100" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-campo)">07</tspan>  Governança</text>
+    <!-- Análise -->
+    <rect x="615" y="36" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-ana)"/><text x="627" y="58" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-ana)">08</tspan>  Mapa de Análise</text>
+    <rect x="615" y="78" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-ana)"/><text x="627" y="100" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-ana)">09</tspan>  Obras Análogas</text>
+    <rect x="615" y="120" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-ana)" stroke-width="2"/><text x="627" y="142" fill="var(--ink)" font-weight="600"><tspan font-family="var(--mono)" fill="var(--f-ana)">10</tspan>  Síntese SWOT</text>
+    <!-- Proposição -->
+    <rect x="810" y="36" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-prop)"/><text x="822" y="58" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-prop)">11</tspan>  Diretrizes</text>
+    <rect x="810" y="78" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-prop)"/><text x="822" y="100" fill="var(--ink)"><tspan font-family="var(--mono)" fill="var(--f-prop)">12</tspan>  Programação</text>
+    <rect x="810" y="120" width="170" height="34" rx="8" fill="var(--paper)" stroke="var(--f-prop)" stroke-width="2"/><text x="822" y="142" fill="var(--ink)" font-weight="600"><tspan font-family="var(--mono)" fill="var(--f-prop)">13</tspan>  Mapa-Síntese</text>
+  </g>
+  <!-- setas entre fases -->
+  <g stroke="var(--ink3)" stroke-width="1.4" fill="none" marker-end="url(#seta)">
+    <path d="M192,53 L211,53"/><path d="M397,53 L416,53"/><path d="M592,53 L611,53"/><path d="M787,137 L806,53"/>
+    <path d="M895,70 L895,76"/><path d="M895,112 L895,118"/>
+  </g>
+  <!-- mapa do diagnóstico, compartilhado -->
+  <rect x="215" y="262" width="570" height="30" rx="15" fill="var(--teal-soft)" stroke="var(--teal)" stroke-dasharray="4 3"/>
+  <text x="500" y="282" text-anchor="middle" font-size="12.5" fill="var(--teal)" font-weight="600">Mapa do diagnóstico · um só mapa com lentes, de 02 a 05, que reaparece no 08</text>
+  <g stroke="var(--teal)" stroke-width="1" stroke-dasharray="3 3" fill="none">
+    <path d="M305,238 L305,262"/>
+  </g>
+  <!-- achados -->
+  <text x="215" y="318" font-size="12" fill="var(--ink2)">Cada aba de levantamento termina em <tspan fill="var(--accent)" font-weight="600">achados</tspan> classificados (P · F · O · A), que se juntam sozinhos na Síntese SWOT.</text>
+</svg>
+<div class="legenda">
+  <span><i style="background:var(--f-prep)"></i>Preparação</span>
+  <span><i style="background:var(--f-doc)"></i>Documental</span>
+  <span><i style="background:var(--f-campo)"></i>Campo</span>
+  <span><i style="background:var(--f-ana)"></i>Análise e síntese</span>
+  <span><i style="background:var(--f-prop)"></i>Proposição e entrega</span>
+</div>
+</div>
+
+<div class="duas">
+  <div class="caixa">
+    <strong>Como ler os percentuais do menu</strong>
+    <p>Cada número é quanto <b>daquela aba</b> já foi feito. Os números não somam 100%: 13% numa aba e 50% em outra querem dizer que uma está no começo e a outra na metade. O painel da Identificação mostra a média das abas.</p>
+  </div>
+  <div class="caixa">
+    <strong>Abas com lista contam por etapas</strong>
+    <p>Diretrizes conta as 10 dimensões com alguma diretriz. Programação conta 6 etapas do método, Obras Análogas 4 e a SWOT 3. Mapa de Análise mostra o número de feições e Instrumentos o número de fichas iniciadas.</p>
+  </div>
+</div>
+
+<!-- ═══ PREPARAÇÃO ═══ -->
+<section class="fase" style="--fc:var(--f-prep)">
+  <div class="fase-cab"><span class="eyebrow">Fase 1 · Preparação</span><h2>Definir o projeto e o tamanho do diagnóstico</h2>
+  <p>Antes de levantar dados, diga o que é o projeto e quanto você vai aprofundar. O escopo decide quais blocos aparecem e como o progresso é medido.</p></div>
+  <article data-aba="0" class="etapa" style="--fc:var(--f-prep)">
+    <figure><img src="{{img:01-identificacao}}" alt="Aba Identificação com o painel de progresso por fase e a escolha do escopo"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">00</span><h3>Identificação e escopo</h3></div>
+      <p class="pergunta">O que é o projeto, para quem, e até onde vai o diagnóstico?</p>
+      <ul>
+        <li>Nome, tipologia, usuários e equipe.</li>
+        <li>Escopo: Essencial, Aprofundado ou Pleno, ajustável por dimensão.</li>
+        <li>O painel de progresso mostra as 5 fases e leva a cada aba com um clique.</li>
+        <li>Viabilidade preliminar: natureza pública ou privada e enquadramento.</li>
+      </ul>
+      <span class="saida">→ escopo e necessidades para todas as abas</span>
+      <p class="fazer"><b>Onde:</b> menu à esquerda, Identificação e Viabilidade preliminar.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══ DOCUMENTAL ═══ -->
+<section class="fase" style="--fc:var(--f-doc)">
+  <div class="fase-cab"><span class="eyebrow">Fase 2 · Levantamento documental</span><h2>Ler o território do maior para o menor</h2>
+  <p>Da mudança da mancha urbana até o lote. Nas abas 02 a 05 o mapa do diagnóstico fica fixo à direita: o botão <b>Ver no mapa</b> de cada bloco troca a lente e você desenha ali mesmo.</p></div>
+
+  <article data-aba="14" class="etapa" style="--fc:var(--f-doc)">
+    <figure class="topo"><img src="{{img:02-dinamica}}" alt="Aba Dinâmica Territorial com o mapa de cobertura do solo MapBiomas"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">01</span><h3>Dinâmica Territorial</h3></div>
+      <p class="pergunta">Como este pedaço de cidade mudou no tempo?</p>
+      <ul>
+        <li>Cobertura do solo por ano (MapBiomas) e avanço da mancha urbana.</li>
+        <li>Leia o que cresceu e sobre o quê: várzea, mata, campo.</li>
+      </ul>
+      <div class="exemplo"><b>Achado (ameaça):</b> a mancha urbana avançou 18% sobre a várzea entre 2000 e 2022.</div>
+      <p class="fazer"><b>Onde:</b> 01 · Dinâmica Territorial, botão Carregar mapa de cobertura.</p>
+    </div>
+  </article>
+
+  <article data-aba="1" class="etapa larga" style="--fc:var(--f-doc)">
+    <figure><img src="{{img:03-contexto-lente}}" alt="Aba Contexto Urbano com o mapa do diagnóstico na lente Áreas de risco"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">02</span><h3>Contexto Urbano e o mapa com lentes</h3></div>
+      <p class="pergunta">O que existe em volta: infraestrutura, riscos, equipamentos, patrimônio?</p>
+      <ul>
+        <li>Sete grupos temáticos (inserção, meio físico, infraestrutura, social…).</li>
+        <li>Cada bloco com mapa tem o botão <b>Ver no mapa</b>: a lente muda (aqui, Áreas de risco) e a barra de desenho passa a usar a camada certa.</li>
+        <li>Todos os desenhos ficam no mesmo mapa e reaparecem no Mapa de Análise.</li>
+      </ul>
+      <div class="exemplo"><b>Desenho:</b> polígono da várzea do córrego na lente Áreas de risco. <b>Achado:</b> terreno a 40 m da várzea, com histórico de alagamento.</div>
+      <p class="fazer"><b>Onde:</b> 02 · Contexto Urbano. Desmarque <i>Seguir a rolagem</i> para fixar o mapa enquanto lê.</p>
+    </div>
+  </article>
+
+  <article data-aba="2" class="etapa" style="--fc:var(--f-doc)">
+    <figure><img src="{{img:02b-legislacao}}" alt="Aba Legislação com os parâmetros do terreno e o mapa na lente Zoneamento"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">03</span><h3>Legislação Urbanística</h3></div>
+      <p class="pergunta">O que a lei permite neste lote?</p>
+      <ul>
+        <li>Área, testada e profundidade com cálculos automáticos.</li>
+        <li>Zoneamento, parâmetros (TO, CA, TP, gabarito, afastamentos) e usos permitidos.</li>
+        <li>Normas técnicas: Código de Obras e NBR. Os valores de referência só contam no progresso quando você confirma.</li>
+      </ul>
+      <div class="exemplo"><b>Achado (fragilidade):</b> zona de proteção do centro histórico, gabarito máximo de 2 pavimentos.</div>
+      <p class="fazer"><b>Onde:</b> 03 · Legislação. A lente Zoneamento abre pelo bloco Mapa de zoneamento.</p>
+    </div>
+  </article>
+
+  <article data-aba="3" class="etapa" style="--fc:var(--f-doc)">
+    <figure><img src="{{img:02c-condicionantes}}" alt="Aba Condicionantes Ambientais com orientação solar e o mapa do diagnóstico"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">04</span><h3>Condicionantes Ambientais</h3></div>
+      <p class="pergunta">Sol, vento, chuva, ruído e relevo: o que favorece e o que atrapalha?</p>
+      <ul>
+        <li>Orientação e insolação, ventos, dados do INMET e zona bioclimática.</li>
+        <li>Ruído e sensações registrados em campo.</li>
+        <li>Topografia do lote, que pode seguir para o ATDAU Implantação.</li>
+      </ul>
+      <div class="exemplo"><b>Achado (potencialidade):</b> insolação norte desobstruída no fundo do lote.</div>
+      <p class="fazer"><b>Onde:</b> 04 · Condicionantes Ambientais. O selo <i>documental + campo</i> diz de onde vem cada dado.</p>
+    </div>
+  </article>
+
+  <article data-aba="5" class="etapa" style="--fc:var(--f-doc)">
+    <figure><img src="{{img:04-uso-ocupacao}}" alt="Aba Uso, Ocupação e Morfologia com seus grupos fechados"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">05</span><h3>Uso, Ocupação, Morfologia e Paisagem</h3></div>
+      <p class="pergunta">Como o entorno é construído e como ele se parece?</p>
+      <ul>
+        <li>Usos do solo, figura-fundo, gabaritos e tipologias.</li>
+        <li>Morfologia, percursos, marcos e imagem urbana.</li>
+        <li>Desenhos de uso e patrimônio vão para o mesmo mapa.</li>
+      </ul>
+      <div class="exemplo"><b>Achado (potencialidade):</b> casario de 1 a 2 pavimentos no alinhamento, com ritmo contínuo de fachadas.</div>
+      <p class="fazer"><b>Onde:</b> 05 · Uso, Ocupação e Morfologia. Abra um grupo por vez.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══ CAMPO ═══ -->
+<section class="fase" style="--fc:var(--f-campo)">
+  <div class="fase-cab"><span class="eyebrow">Fase 3 · Levantamento de campo</span><h2>Ir ao lugar e ouvir quem vive nele</h2>
+  <p>Os instrumentos são opcionais: escolha os que fazem sentido para o projeto. A Governança registra os atores e como eles vão participar.</p></div>
+
+  <article data-aba="9" class="etapa" style="--fc:var(--f-campo)">
+    <figure><img src="{{img:05-campo-achados}}" alt="Matriz de Descobertas com achados de campo classificados"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">06</span><h3>Instrumentos de Coleta</h3></div>
+      <p class="pergunta">O que só se descobre estando lá?</p>
+      <ul>
+        <li>Fichas de Gehl, Lynch, Rheingantz, mapeamento comportamental e outros.</li>
+        <li>A Matriz de Descobertas reúne as mensagens-chave como achados.</li>
+        <li>O menu mostra quantas fichas você iniciou, não uma porcentagem.</li>
+      </ul>
+      <div class="exemplo"><b>Achado (fragilidade):</b> moradores evitam a praça à noite por falta de iluminação.</div>
+      <p class="fazer"><b>Onde:</b> 06 · Instrumentos de Coleta, subaba Matriz de Descobertas.</p>
+    </div>
+  </article>
+
+  <article data-aba="15" class="etapa" style="--fc:var(--f-campo)">
+    <figure><img src="{{img:05b-governanca}}" alt="Aba Governança com três atores cadastrados"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">07</span><h3>Governança e Participação</h3></div>
+      <p class="pergunta">Quem decide, quem é afetado e como vão participar?</p>
+      <ul>
+        <li>Cadastre atores com tipo, interesse e influência.</li>
+        <li>Mapa de atores interesse × influência (Mendelow).</li>
+        <li>Metas comunitárias e sessões de participação.</li>
+      </ul>
+      <div class="exemplo"><b>Ator:</b> Feirantes da Rua Direita, interesse alto e influência baixa: precisam ser ouvidos ativamente.</div>
+      <p class="fazer"><b>Onde:</b> 07 · Governança e Participação, botão + Adicionar.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══ ANÁLISE ═══ -->
+<section class="fase" style="--fc:var(--f-ana)">
+  <div class="fase-cab"><span class="eyebrow">Fase 4 · Análise e síntese</span><h2>Cruzar as camadas e classificar o que foi achado</h2>
+  <p>Aqui nada é digitado de novo: o mapa já tem os desenhos das abas anteriores e a SWOT já tem os achados.</p></div>
+
+  <article data-aba="6" class="etapa" style="--fc:var(--f-ana)">
+    <figure><img src="{{img:06-mapa-analise}}" alt="Mapa de Análise com várzea, Rua Direita, patrimônio com pictogramas e praça"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">08</span><h3>Mapa de Análise</h3></div>
+      <p class="pergunta">O que aparece quando as camadas ficam juntas?</p>
+      <ul>
+        <li>Ligue e desligue camadas: risco, viário, patrimônio, espaços livres, SWOT.</li>
+        <li>Pictogramas da biblioteca ou os seus, com rótulo.</li>
+        <li>Camada Síntese SWOT: marque P, F, O ou A direto no mapa.</li>
+      </ul>
+      <div class="exemplo"><b>Cruzamento:</b> a várzea encosta no fundo do lote e a Igreja Matriz fica em visada a partir da Rua Direita.</div>
+      <p class="fazer"><b>Onde:</b> 08 · Mapa de Análise. O menu mostra o número de feições desenhadas.</p>
+    </div>
+  </article>
+
+  <article data-aba="12" class="etapa" style="--fc:var(--f-ana)">
+    <figure><img src="{{img:07-analogas}}" alt="Obras Análogas com a matriz de critérios"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">09</span><h3>Obras Análogas</h3></div>
+      <p class="pergunta">Quem já resolveu um problema parecido, e como?</p>
+      <ul>
+        <li>Cadastre 2 ou 3 obras e o que aproveitar de cada uma.</li>
+        <li>Análise gráfica por Clark e Pause.</li>
+        <li>Matriz de critérios: notas por obra, que viram achados.</li>
+      </ul>
+      <div class="exemplo"><b>Referência:</b> Sesc Pompeia, a rua interna coberta como espaço de encontro. Vira diretriz com origem na obra.</div>
+      <p class="fazer"><b>Onde:</b> 09 · Obras Análogas.</p>
+    </div>
+  </article>
+
+  <article data-aba="7" class="etapa" style="--fc:var(--f-ana)">
+    <figure><img src="{{img:08-swot}}" alt="Síntese SWOT com os achados nos quatro quadrantes"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">10</span><h3>Síntese SWOT</h3></div>
+      <p class="pergunta">Juntando tudo, o que é força, fraqueza, oportunidade e ameaça?</p>
+      <ul>
+        <li>Os quadrantes se preenchem sozinhos com os achados classificados das abas 01 a 09.</li>
+        <li>Espacialize os achados no Mapa de Análise.</li>
+        <li>Escreva a leitura interpretativa do diagnóstico.</li>
+      </ul>
+      <span class="saida">→ achados classificados para as Diretrizes</span>
+      <p class="fazer"><b>Onde:</b> 10 · Síntese SWOT.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══ PROPOSIÇÃO ═══ -->
+<section class="fase" style="--fc:var(--f-prop)">
+  <div class="fase-cab"><span class="eyebrow">Fase 5 · Proposição e entrega</span><h2>Do diagnóstico às decisões de projeto</h2>
+  <p>Diretrizes primeiro, depois o programa, por fim o partido no mapa. Cada passo aponta de onde veio.</p></div>
+
+  <article data-aba="8" class="etapa" style="--fc:var(--f-prop)">
+    <figure><img src="{{img:09-diretrizes}}" alt="Diretrizes organizadas por dimensão"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">11</span><h3>Diretrizes</h3></div>
+      <p class="pergunta">O que o projeto deve fazer diante do que foi achado?</p>
+      <ul>
+        <li>10 dimensões: implantação, programa, urbana, conforto, sustentabilidade…</li>
+        <li>Cada diretriz com prioridade (essencial, desejável) e origem.</li>
+        <li>Achados da SWOT sugerem a dimensão.</li>
+      </ul>
+      <div class="exemplo"><b>Diretriz (programa, desejável):</b> prever salão multiuso que receba a feira de domingo.</div>
+      <p class="fazer"><b>Onde:</b> 11 · Diretrizes. O menu conta quantas das 10 dimensões têm diretriz.</p>
+    </div>
+  </article>
+
+  <article data-aba="13" class="etapa" style="--fc:var(--f-prop)">
+    <figure class="topo"><img src="{{img:10-programacao}}" alt="Programação Arquitetônica com a matriz 5 passos por 4 considerações"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">12</span><h3>Programação Arquitetônica</h3></div>
+      <p class="pergunta">Que espaços, de que tamanho, e qual é o problema a resolver?</p>
+      <ul>
+        <li>Programa de necessidades, uma lista viva: itens podem nascer de diretrizes.</li>
+        <li>Dimensionamento por setor e relações de proximidade.</li>
+        <li>Matriz Problem Seeking (5 passos × 4 considerações), requisitos e enunciado do problema.</li>
+      </ul>
+      <div class="exemplo"><b>Item:</b> Salão multiuso, 180 m², marcado <i>novo (da diretriz)</i>.</div>
+      <span class="saida">→ enunciado e programa para o Mapa-Síntese</span>
+      <p class="fazer"><b>Onde:</b> 12 · Programação. O menu conta as 6 etapas do método.</p>
+    </div>
+  </article>
+
+  <article data-aba="10" class="etapa larga" style="--fc:var(--f-prop)">
+    <figure><img src="{{img:11-mapa-sintese}}" alt="Editor do Mapa-Síntese com o terreno, achados e programa vindos do diagnóstico"></figure>
+    <div class="txt">
+      <div class="titulo"><span class="num">13</span><h3>Mapa-Síntese (partido)</h3></div>
+      <p class="pergunta">Como o partido responde ao lugar, sobre a base real?</p>
+      <ul>
+        <li>Abre em nova aba já com o lote, os desenhos do diagnóstico, a SWOT e o programa.</li>
+        <li>Desenhe o partido: acessos, setores, eixos, áreas livres.</li>
+        <li>Ao salvar, o partido volta para o DIAG e entra no relatório.</li>
+      </ul>
+      <span class="saida">→ relatório PDF e passagem para o ATDAU Implantação</span>
+      <p class="fazer"><b>Onde:</b> 13 · Mapa-Síntese, botão Abrir o Mapa-Síntese.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══ CADEIA ═══ -->
+<section class="cadeia fase" style="--fc:var(--accent)">
+  <div class="fase-cab"><span class="eyebrow">O fio dos dados</span><h2>O que cada etapa entrega para a próxima</h2></div>
+  <div class="fluxo">
+  <svg viewBox="0 0 1000 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cadeia: achados, SWOT, diretrizes, programa, partido">
+    <defs><marker id="seta2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+    <g font-size="13">
+      <rect x="10" y="30" width="170" height="56" rx="10" fill="var(--paper)" stroke="var(--f-doc)"/>
+      <text x="95" y="54" text-anchor="middle" fill="var(--ink)" font-weight="600">Achados</text><text x="95" y="73" text-anchor="middle" fill="var(--ink3)" font-size="11.5">abas 01 a 09 + desenhos</text>
+      <rect x="210" y="30" width="170" height="56" rx="10" fill="var(--paper)" stroke="var(--f-ana)"/>
+      <text x="295" y="54" text-anchor="middle" fill="var(--ink)" font-weight="600">Síntese SWOT</text><text x="295" y="73" text-anchor="middle" fill="var(--ink3)" font-size="11.5">P · F · O · A</text>
+      <rect x="410" y="30" width="170" height="56" rx="10" fill="var(--paper)" stroke="var(--f-prop)"/>
+      <text x="495" y="54" text-anchor="middle" fill="var(--ink)" font-weight="600">Diretrizes</text><text x="495" y="73" text-anchor="middle" fill="var(--ink3)" font-size="11.5">10 dimensões</text>
+      <rect x="610" y="30" width="170" height="56" rx="10" fill="var(--paper)" stroke="var(--f-prop)"/>
+      <text x="695" y="54" text-anchor="middle" fill="var(--ink)" font-weight="600">Programa</text><text x="695" y="73" text-anchor="middle" fill="var(--ink3)" font-size="11.5">lista viva + enunciado</text>
+      <rect x="810" y="30" width="180" height="56" rx="10" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="900" y="54" text-anchor="middle" fill="var(--ink)" font-weight="600">Partido</text><text x="900" y="73" text-anchor="middle" fill="var(--ink2)" font-size="11.5">Mapa-Síntese</text>
+    </g>
+    <g stroke="var(--accent)" stroke-width="1.6" marker-end="url(#seta2)"><path d="M182,58 L206,58"/><path d="M382,58 L406,58"/><path d="M582,58 L606,58"/><path d="M782,58 L806,58"/></g>
+    <g font-size="11.5" fill="var(--ink2)" text-anchor="middle">
+      <text x="194" y="118">classificar</text><text x="394" y="118">decidir</text><text x="594" y="118">dimensionar</text><text x="794" y="118">espacializar</text>
+    </g>
+    <path d="M900,92 C900,140 95,140 95,92" fill="none" stroke="var(--teal)" stroke-dasharray="4 4" stroke-width="1.2"/>
+    <text x="500" y="146" text-anchor="middle" font-size="11" fill="var(--teal)">o partido volta ao diagnóstico: se o desenho revela algo novo, registre como achado</text>
+  </svg>
+  </div>
+</section>
+
+<footer>ATDAU DIAG · Pré-Projeto e Diagnóstico Urbano · © 2025–2026 Fernanda Fonseca de Melo Coelho · IFMG Campus Santa Luzia. Prints com projeto-exemplo fictício no centro de Santa Luzia.</footer>
+</div>

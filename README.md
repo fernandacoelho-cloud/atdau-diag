@@ -17,9 +17,12 @@ atdau-diag/
 ├── ATDAU_DIAG_interativo.html      # arquivo principal (1.2 MB)
 ├── package.json                    # dependências (só Playwright pra testes)
 ├── src/
-│   └── mapa-sintese.html           # FONTE do editor Mapa-Síntese (embutido no DIAG em base64)
+│   ├── mapa-sintese.html           # FONTE do editor Mapa-Síntese (embutido no DIAG em base64)
+│   ├── guia-visual.html            # FONTE do guia visual (prints como {{img:NOME}}), embutido no DIAG
+│   └── guia-prints/*.webp          # prints do guia (projeto-exemplo fictício)
 ├── tools/
-│   └── embed-ms.py                 # re-embute src/mapa-sintese.html no DIAG (window.MS_B64)
+│   ├── embed-ms.py                 # re-embute src/mapa-sintese.html no DIAG (window.MS_B64)
+│   └── build-guia.py               # embute o guia + prints no DIAG (window.GUIA_HTML)
 ├── tests/
 │   └── *.spec.js                   # Playwright: fluxo, mapas, relatório, pictogramas, integrações
 ├── .gitignore                      # ignora node_modules e backups
@@ -36,6 +39,24 @@ O ATDAU_DIAG é mantido como **um único arquivo HTML** para que:
 - Não dependa de build ou bundler
 
 No futuro, se quisermos modularizar (separar JS em arquivos), criamos um script que reúne tudo no final em um único `.html`. Mas por enquanto editamos o arquivo direto.
+
+## Guia visual (dentro do DIAG)
+
+O guia com prints abre **na própria ferramenta**, num modal, como o guia do processo do ATDAU
+Implantação: pelo botão **📖 Guia visual com prints** do "🎯 Como usar" e pelo **📖 por quê?** no
+trilho "vem de / você está aqui / alimenta" de cada aba (abre no cartão daquela aba). Fonte legível em
+`src/guia-visual.html`; os prints ficam em `src/guia-prints/`. Depois de editar, rode:
+
+```bash
+python tools/build-guia.py
+```
+
+Para refazer os prints depois de mudar a interface:
+
+```bash
+SHOT_DIR=/caminho/prints npx playwright test --project=prints
+python tools/build-guia.py --prints /caminho/prints
+```
 
 ## Editor Mapa-Síntese (fonte em `src/`)
 

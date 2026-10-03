@@ -17,7 +17,7 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /sweep/,
+      testIgnore: /sweep|prints-guia/,
     },
     {
       // Varredura pesada (~4-6 min, todos os block-maps): npm run test:sweep
@@ -25,6 +25,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       testMatch: /sweep/,
       timeout: 600000,
+    },
+    {
+      // Prints do guia visual (projeto-exemplo): SHOT_DIR=<pasta> npx playwright test --project=prints
+      // depois: python tools/build-guia.py <pasta>
+      name: 'prints',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /prints-guia/,
+      timeout: 240000,
     },
   ],
 });
