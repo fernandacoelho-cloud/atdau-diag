@@ -115,6 +115,11 @@ test('Desenho de polígono funciona em todos os block-maps', async ({ page }) =>
         { lid: info.lid, antes: info.antes }, { timeout: 8000 });
       console.log(`  ok ${t.titulo} (camada ${info.lid})`);
 
+      // o desenho abre o modal "Vincular desenho a um achado" (tela cheia): pular, como o usuário
+      const pular = page.locator('#ml-vinculo-modal button', { hasText: 'Pular' });
+      if (await pular.count()) await pular.click();
+      await page.waitForFunction(() => !document.getElementById('ml-vinculo-modal'), null, { timeout: 3000 });
+
       await clickFb(btn); // fechar o wrap alivia os contextos WebGL
       await page.waitForTimeout(150);
     } catch (e) {

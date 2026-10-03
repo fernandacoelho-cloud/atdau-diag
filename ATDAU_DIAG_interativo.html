@@ -1087,6 +1087,8 @@ select option{background:var(--bg3)}
   background: var(--bg1,#faf9f5) !important;   /* opaco: sem fundo, a página atrás vazava pelo canvas */
 }
 body.tem-mapa-expandido { overflow:hidden; }
+/* barra de desenho do block-map: acima do mapa no normal; flutuando dentro dele quando expandido */
+.mapa-expandido > .block-map-draw-ctrl { position:absolute; top:8px; left:56px; right:60px; z-index:5; margin:0 !important; }
 .ml-expand-btn { display:flex !important; align-items:center; justify-content:center; gap:4px; width:auto !important; min-width:29px; height:29px; padding:0 9px; font-size:11px; font-weight:700; color:var(--t2); }
 .ml-expand-btn svg { display:block; flex:none; }
 .ml-expand-lbl { line-height:1; }
@@ -5532,17 +5534,17 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <select id="ml-basemap" onchange="mlSetBasemap(this.value)"
       style="font-size:.67rem;background:var(--bg4);border:1px solid var(--line2);color:var(--t2);border-radius:6px;padding:6px 10px">
       <optgroup label="Leve — para overlay de shapes">
-        <option value="positron_nl" selected>☁ Positron sem rótulos</option>
-        <option value="positron">☁ Positron com rótulos</option>
+        <option value="positron_nl" selected>☁ Cinza claro sem rótulos</option>
+        <option value="positron">☁ Cinza claro com rótulos</option>
         <option value="branco">⬜ Fundo branco</option>
       </optgroup>
       <optgroup label="Padrão">
-        <option value="voyager">🗺 Voyager (CARTO)</option>
+        <option value="voyager">🗺 Ruas (Esri)</option>
         <option value="osm">🗺 OpenStreetMap</option>
       </optgroup>
       <optgroup label="Especializado">
-        <option value="dark">🌑 Dark Matter</option>
-        <option value="dark_nl">🌑 Dark sem rótulos</option>
+        <option value="dark">🌑 Escuro com rótulos</option>
+        <option value="dark_nl">🌑 Escuro sem rótulos</option>
         <option value="satellite">🛰 Satélite (ESRI)</option>
         <option value="topo">⛰ OpenTopoMap</option>
       </optgroup>
@@ -13896,20 +13898,22 @@ let _mlLotCoord  = null;
 let _mlHoverFid  = null;
 
 // ── Basemaps disponíveis ──────────────────────────────────────────────
+// 2026-10: os tiles raster do CARTO (basemaps.cartocdn.com) passaram a exigir chave e devolvem
+// só a marca "API KEY REQUIRED" — trocados por equivalentes sem chave (Esri Canvas / Street /
+// OSM). As CHAVES (positron, voyager, dark…) ficam iguais: projetos salvos continuam válidos.
+// `ref` = camada de rótulos sobreposta à base (raster transparente).
+const _ESRI = s => [`https://server.arcgisonline.com/ArcGIS/rest/services/${s}/MapServer/tile/{z}/{y}/{x}`];
 const ML_BASEMAPS = {
   // ── Leves (ideais para overlay de shapefiles) ──────────────────────
   positron_nl: {
-    label:'☁ Positron sem rótulos (melhor para overlay)',
-    tiles:['https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-           'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-           'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'],
-    attribution:'© CartoDB © OpenStreetMap contributors'
+    label:'☁ Cinza claro sem rótulos (melhor para overlay)',
+    tiles:_ESRI('Canvas/World_Light_Gray_Base'),
+    attribution:'© Esri, HERE, Garmin, © OpenStreetMap contributors', maxzoom:16
   },
   positron: {
-    label:'☁ Positron com rótulos',
-    tiles:['https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-           'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'],
-    attribution:'© CartoDB © OpenStreetMap contributors'
+    label:'☁ Cinza claro com rótulos',
+    tiles:_ESRI('Canvas/World_Light_Gray_Base'), ref:_ESRI('Canvas/World_Light_Gray_Reference'),
+    attribution:'© Esri, HERE, Garmin, © OpenStreetMap contributors', maxzoom:16
   },
   branco: {
     label:'⬜ Fundo branco (sem tiles)',
@@ -13917,10 +13921,9 @@ const ML_BASEMAPS = {
   },
   // ── Padrão ─────────────────────────────────────────────────────────
   voyager: {
-    label:'🗺 Voyager (CARTO)',
-    tiles:['https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-           'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
-    attribution:'© CartoDB © OpenStreetMap contributors'
+    label:'🗺 Ruas (Esri)',
+    tiles:_ESRI('World_Street_Map'),
+    attribution:'© Esri, HERE, Garmin, © OpenStreetMap contributors'
   },
   osm: {
     label:'🗺 OpenStreetMap',
@@ -13929,14 +13932,14 @@ const ML_BASEMAPS = {
   },
   // ── Especializado ──────────────────────────────────────────────────
   dark: {
-    label:'🌑 Dark Matter (CARTO)',
-    tiles:['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
-    attribution:'© CartoDB © OpenStreetMap contributors'
+    label:'🌑 Escuro com rótulos',
+    tiles:_ESRI('Canvas/World_Dark_Gray_Base'), ref:_ESRI('Canvas/World_Dark_Gray_Reference'),
+    attribution:'© Esri, HERE, Garmin, © OpenStreetMap contributors', maxzoom:16
   },
   dark_nl: {
-    label:'🌑 Dark sem rótulos',
-    tiles:['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
-    attribution:'© CartoDB © OpenStreetMap contributors'
+    label:'🌑 Escuro sem rótulos',
+    tiles:_ESRI('Canvas/World_Dark_Gray_Base'),
+    attribution:'© Esri, HERE, Garmin, © OpenStreetMap contributors', maxzoom:16
   },
   satellite: {
     label:'🛰 Satélite (ESRI)',
@@ -14253,6 +14256,9 @@ function _toggleMapaExpandido(map, btn){
   // painel (e o conteúdo da aba aparecia por cima, com a barra de comandos inacessível).
   const ph = document.createComment('mapa-exp-ph');
   if(c.parentNode){ c.parentNode.insertBefore(ph, c); c.__ph = ph; }
+  // barra de desenho do block-map mora logo acima do mapa: vai junto, por dentro dele
+  const bar = c.previousElementSibling;
+  if(bar && bar.classList.contains('block-map-draw-ctrl')){ c.__drawBar = bar; c.appendChild(bar); }
   document.body.appendChild(c);
   c.classList.add('mapa-expandido');
   document.body.classList.add('tem-mapa-expandido');
@@ -14266,6 +14272,7 @@ function _restaurarMapaExpandido(){
   document.body.classList.remove('tem-mapa-expandido');
   // devolve o mapa ao lugar original (marcado pelo placeholder)
   if(c.__ph && c.__ph.parentNode){ c.__ph.parentNode.insertBefore(c, c.__ph); c.__ph.parentNode.removeChild(c.__ph); c.__ph = null; }
+  if(c.__drawBar){ if(c.parentNode) c.parentNode.insertBefore(c.__drawBar, c); c.__drawBar = null; }
   if(c.__expandBtn){ c.__expandBtn.innerHTML=_EXP_HTML; c.__expandBtn.title='Abrir maior / restaurar'; }
   const m = c.__expandMap; setTimeout(()=>{ try{ m && m.resize(); }catch(e){} }, 60);
   return true;
@@ -16285,8 +16292,7 @@ function mlSetBasemap(key) {
   const bm = ML_BASEMAPS[key];
   if (!bm) return;
   // Remover basemap anterior
-  if (_mlMap.getLayer('basemap-layer')) _mlMap.removeLayer('basemap-layer');
-  if (_mlMap.getSource('basemap-src'))   _mlMap.removeSource('basemap-src');
+  _mlRemoveBasemapLayers(_mlMap);
   // Fundo branco
   if (key === 'branco') {
     if (_mlMap.getLayer('background')) _mlMap.setPaintProperty('background','background-color','#ffffff');
@@ -16294,12 +16300,25 @@ function mlSetBasemap(key) {
   }
   if (_mlMap.getLayer('background')) _mlMap.setPaintProperty('background','background-color','#f0eeeb');
   if (!bm.tiles||!bm.tiles.length) return;
-  _mlMap.addSource('basemap-src', {
-    type:'raster', tiles:bm.tiles, tileSize:256,
-    attribution:bm.attribution||'', maxzoom:bm.maxzoom||19
-  });
-  const firstData = _mlMap.getStyle().layers.find(l=>l.id!=='background'&&l.id!=='basemap-layer');
-  _mlMap.addLayer({ id:'basemap-layer', type:'raster', source:'basemap-src' }, firstData?.id);
+  _mlAddBasemapLayers(_mlMap, bm);
+}
+
+// Basemap = raster base + (opcional) raster de rótulos `ref` logo acima; ambos abaixo dos dados.
+function _mlRemoveBasemapLayers(map){
+  ['basemap-ref-layer','basemap-layer'].forEach(id => { if (map.getLayer(id)) map.removeLayer(id); });
+  ['basemap-ref-src','basemap-src'].forEach(id => { if (map.getSource(id)) map.removeSource(id); });
+}
+function _mlAddBasemapLayers(map, bm){
+  const src = tiles => ({ type:'raster', tiles, tileSize:256, attribution:bm.attribution||'', maxzoom:bm.maxzoom||19 });
+  // Filtrar por TIPO background (não pelo id 'background'): o Mapa Anotado usa id 'bg', e
+  // procurar por id deixava o basemap sob o fundo opaco (mapa "vazio").
+  const first = map.getStyle().layers.find(l => l.type!=='background' && !/^basemap-/.test(l.id));
+  map.addSource('basemap-src', src(bm.tiles));
+  map.addLayer({ id:'basemap-layer', type:'raster', source:'basemap-src' }, first?.id);
+  if (bm.ref && bm.ref.length) {
+    map.addSource('basemap-ref-src', Object.assign(src(bm.ref), { attribution:'' }));
+    map.addLayer({ id:'basemap-ref-layer', type:'raster', source:'basemap-ref-src' }, first?.id);
+  }
 }
 
 // ── Geocodificação ────────────────────────────────────────────────────
@@ -17591,22 +17610,18 @@ function mlSetBasemapOnMap(map, key) {
   const bm = ML_BASEMAPS[key];
   if (!bm || !bm.tiles || !bm.tiles.length) return;
   try {
-    if (map.getLayer('basemap-layer')) map.removeLayer('basemap-layer');
-    if (map.getSource('basemap-src'))  map.removeSource('basemap-src');
-    map.addSource('basemap-src', {
-      type:'raster', tiles:bm.tiles, tileSize:256,
-      attribution:bm.attribution||'', maxzoom:bm.maxzoom||19
-    });
-    // Inserir o basemap logo ACIMA da camada de fundo e abaixo das camadas de
-    // dados. Filtrar por TIPO background (não pelo id 'background'): o Mapa
-    // Anotado usa id 'bg', e procurar por id deixava o basemap sob o fundo
-    // opaco (mapa "vazio").
-    const first = map.getStyle().layers.find(l=>l.type!=='background' && l.id!=='basemap-layer');
-    map.addLayer({id:'basemap-layer',type:'raster',source:'basemap-src'}, first?.id);
+    _mlRemoveBasemapLayers(map);
+    // logo ACIMA da camada de fundo e abaixo das camadas de dados
+    _mlAddBasemapLayers(map, bm);
   } catch(e) { console.warn('basemap error:', e.message); }
 }
 
 // ── Helper: adicionar sources/layers de dados em qualquer instância ────
+// Padrões de traço por feição (props.lineDash) — ver os layers dash-* em mlAddSourcesOnMap
+const ML_DASH_PADROES = { dashed:[4,2], dotted:[0.5,2], dashdot:[6,2,0.5,2] };
+const ML_SEM_TRACEJADO = ['!', ['in', ['coalesce', ['get','lineDash'], 'solid'], ['literal', Object.keys(ML_DASH_PADROES)]]];
+function _mlDashLayerId(layerId, dash){ return `dash-${dash}-${layerId}`; }
+
 function mlAddSourcesOnMap(map, _retry, onReady) {
   if (!map) return;
   if (!map.isStyleLoaded()) {
@@ -17633,7 +17648,7 @@ function mlAddSourcesOnMap(map, _retry, onReady) {
         }
       });
       map.addLayer({id:`line-${l.id}`,type:'line',source:`src-${l.id}`,
-        filter:['==','$type','Polygon'],
+        filter:['all', ['==', ['geometry-type'], 'Polygon'], ML_SEM_TRACEJADO],
         paint:{
           'line-color': ['case', ['has','corOverride'], ['get','corOverride'],
                          (l.id==='uso'||l.id==='cobertura'||l.id==='uc')?['get','cor']:(l.color||'#888')],
@@ -17645,33 +17660,32 @@ function mlAddSourcesOnMap(map, _retry, onReady) {
     }
     if (l.geom.includes('polyline'))
       map.addLayer({id:`polyline-${l.id}`,type:'line',source:`src-${l.id}`,
-        filter:['==','$type','LineString'],
+        filter:['all', ['==', ['geometry-type'], 'LineString'], ML_SEM_TRACEJADO],
         paint:{
           'line-color': ['case', ['has','corOverride'], ['get','corOverride'], l.color||'#888'],
           'line-width': ['case', ['has','lineWidth'], ['get','lineWidth'], 2.5],
           'line-opacity': ['case', ['has','opacity'], ['get','opacity'], 1]
         }
       });
-    // Layer adicional para tracejados (dasharray data-driven via expression)
+    // Tracejados por feição (lineDash do editor). O MapLibre 4.x NÃO aceita expressão por
+    // feição em line-dasharray ("data expressions not supported" — o layer único antigo nunca
+    // era criado e a linha ficava sólida): um layer por padrão, com dasharray constante.
+    // As feições tracejadas saem dos layers sólidos (filtros acima), senão o sólido as cobre.
     if (l.geom.includes('polyline') || l.geom.includes('polygon')) {
-      try {
-        map.addLayer({id:`dash-${l.id}`,type:'line',source:`src-${l.id}`,
-          filter:['all', ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'Polygon']],
-                  ['has', 'lineDash'],
-                  ['!=', ['get', 'lineDash'], 'solid']],
-          paint:{
-            'line-color': ['case', ['has','corOverride'], ['get','corOverride'], l.color||'#888'],
-            'line-width': ['case', ['has','lineWidth'], ['get','lineWidth'], 2.5],
-            'line-opacity': ['case', ['has','opacity'], ['get','opacity'], 1],
-            'line-dasharray': ['case',
-              ['==', ['get','lineDash'], 'dashed'], ['literal', [4, 2]],
-              ['==', ['get','lineDash'], 'dotted'], ['literal', [0.5, 2]],
-              ['==', ['get','lineDash'], 'dashdot'], ['literal', [6, 2, 0.5, 2]],
-              ['literal', [1, 0]]
-            ]
-          }
-        });
-      } catch(e){ try{ if(typeof diag==='function') diag('dash layer falhou para '+l.id+': '+e.message, 'AVISO'); }catch(_){} }
+      Object.entries(ML_DASH_PADROES).forEach(([dash, arr]) => {
+        try {
+          map.addLayer({id:_mlDashLayerId(l.id, dash),type:'line',source:`src-${l.id}`,
+            filter:['all', ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'Polygon']],
+                    ['==', ['get', 'lineDash'], dash]],
+            paint:{
+              'line-color': ['case', ['has','corOverride'], ['get','corOverride'], l.color||'#888'],
+              'line-width': ['case', ['has','lineWidth'], ['get','lineWidth'], 2.5],
+              'line-opacity': ['case', ['has','opacity'], ['get','opacity'], 1],
+              'line-dasharray': arr
+            }
+          });
+        } catch(e){ try{ if(typeof diag==='function') diag('dash layer falhou para '+l.id+': '+e.message, 'AVISO'); }catch(_){} }
+      });
     }
     if (l.geom.includes('point'))
       map.addLayer({id:`circle-${l.id}`,type:'circle',source:`src-${l.id}`,
@@ -17679,8 +17693,8 @@ function mlAddSourcesOnMap(map, _retry, onReady) {
         paint:{
           'circle-color': ['case', ['has','corOverride'], ['get','corOverride'],
                            l.id==='equip'?['get','cor']:(l.color||'#888')],
-          'circle-radius': ['case', ['has','lineWidth'],
-                            ['+', 4, ['get','lineWidth']], 6],
+          'circle-radius': ['case', ['has','raioOverride'], ['get','raioOverride'],
+                            ['has','lineWidth'], ['+', 4, ['get','lineWidth']], 6],
           'circle-opacity': ['case', ['has','opacity'], ['get','opacity'], 1],
           'circle-stroke-width':2,
           'circle-stroke-color':'#fff'
@@ -17984,7 +17998,8 @@ function mlSelectTheme(themeId) {
   if (_mlThemeMap && _mlThemeMap.isStyleLoaded()) {
     ML_LAYERS.forEach(l=>{
       const vis = theme.layers.includes(l.id) ? 'visible' : 'none';
-      [`fill-${l.id}`,`line-${l.id}`,`polyline-${l.id}`,`circle-${l.id}`].forEach(id=>{
+      [`fill-${l.id}`,`line-${l.id}`,`polyline-${l.id}`,`circle-${l.id}`]
+        .concat(Object.keys(ML_DASH_PADROES).map(d => _mlDashLayerId(l.id, d))).forEach(id=>{
         if (_mlThemeMap.getLayer(id)) _mlThemeMap.setLayoutProperty(id,'visibility',vis);
       });
     });
@@ -18598,6 +18613,8 @@ function initBlockMap(wrap) {
     // Padronização: seta de norte (escala já existe; "Camadas" faz de legenda;
     // "💾 Salvar vista" fica na barra de desenho, via _injectBlockMapDrawTools)
     addNorthArrow(map, mapEl);
+    // o canto sup.-esq. do block-map é do seletor de basemap: a seta desce para baixo dele
+    const _na = mapEl.querySelector('.map-north-arrow'); if(_na) _na.style.top = '42px';
   });
 
   // Handler de clique para desenho dentro do block-map
@@ -18611,10 +18628,11 @@ function initBlockMap(wrap) {
 // Mostra/oculta TODAS as sub-camadas (geometrias) de uma camada num block-map
 function _blockMapSetLayerVis(map, layerId, on){
   const vis = on ? 'visible' : 'none';
-  ['fill-','line-','polyline-','dash-','circle-','label-'].forEach(p=>{
-    const id = p + layerId;
-    try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); } catch(e){}
-  });
+  ['fill-','line-','polyline-','circle-','label-'].map(p => p + layerId)
+    .concat(Object.keys(ML_DASH_PADROES).map(d => _mlDashLayerId(layerId, d)))
+    .forEach(id=>{
+      try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); } catch(e){}
+    });
 }
 
 // Whitelist do tema: por padrão mostra SÓ as camadas do tema; o resto começa
@@ -18695,7 +18713,10 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
   // === Barra de ferramentas no TOPO ===
   const ctrl = document.createElement('div');
   ctrl.className = 'block-map-draw-ctrl';
-  ctrl.style.cssText = 'position:absolute;top:8px;left:8px;right:60px;z-index:5;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.96);padding:7px 10px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.18);font-size:.62rem;border:1px solid var(--line2)';
+  // Fica ACIMA do mapa (no fluxo), não por cima: sobreposta ela cobria ~1/3 dos 240px do
+  // block-map (e a seta de norte) e engolia os cliques do desenho. No "abrir maior" o
+  // _toggleMapaExpandido a leva para dentro do mapa (CSS .mapa-expandido > .block-map-draw-ctrl).
+  ctrl.style.cssText = 'margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.96);padding:7px 10px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.18);font-size:.62rem;border:1px solid var(--line2)';
 
   // Dropdown de camada destino
   const layerOpts = layersTema.map(lid => {
@@ -18765,7 +18786,7 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
   const mapContainer = wrap.querySelector('.block-map');
   if(!mapContainer) return;
   mapContainer.style.position = 'relative';
-  mapContainer.appendChild(ctrl);
+  mapContainer.parentNode.insertBefore(ctrl, mapContainer);
   mapContainer.appendChild(hint);
   mapContainer.appendChild(active);
   // O painel de estilo vai no WRAP (não no .block-map, que tem overflow:hidden),
@@ -18812,6 +18833,8 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
     e.stopPropagation();
     const aberto = stylePanel.style.display === 'block';
     stylePanel.style.display = aberto ? 'none' : 'block';
+    // abre logo abaixo da barra (a barra quebra em 1-3 linhas conforme a largura)
+    if(!aberto && ctrl.parentNode === wrap) stylePanel.style.top = (ctrl.offsetTop + ctrl.offsetHeight + 6) + 'px';
     styleBtn.style.background = aberto ? 'rgba(201,146,59,.08)' : 'var(--gold)';
     styleBtn.style.color = aberto ? '#9a6b1e' : 'white';
     if(!aberto){
@@ -19131,9 +19154,12 @@ function _blockMapOnDblClick(wrap, map, themeId, e) {
   const props = { criado_em: new Date().toISOString(), origem: 'block-map' };
   if(estilo){
     if(estilo.cor) props.corOverride = estilo.cor;
-    if(estilo.opacidade !== undefined && estilo.opacidade !== 0.35) props.opacidadeOverride = estilo.opacidade;
-    if(estilo.larguraLinha && estilo.larguraLinha !== 2.5) props.larguraOverride = estilo.larguraLinha;
-    if(estilo.tipoLinha && estilo.tipoLinha !== 'solido') props.tipoLinhaOverride = estilo.tipoLinha;
+    // grava nas MESMAS chaves que os layers leem (opacity/lineWidth/lineDash) e que o editor
+    // de feição usa — as antigas *Override eram gravadas mas nenhum layer as lia.
+    if(estilo.opacidade !== undefined && estilo.opacidade !== 0.35) props.opacity = estilo.opacidade;
+    if(estilo.larguraLinha && estilo.larguraLinha !== 2.5) props.lineWidth = estilo.larguraLinha;
+    const _dash = { tracejado:'dashed', pontilhado:'dotted' }[estilo.tipoLinha];
+    if(_dash) props.lineDash = _dash;
   }
   _mlFeatures[st.layerId].push({ id, geom, props });
   _blockMapRefreshSource(map, st.layerId);
@@ -19216,9 +19242,9 @@ function _injectBlockMapBasemapControl(wrap, map, themeId) {
   ctrl.style.cssText = 'position:absolute;top:8px;left:8px;z-index:5;display:flex;gap:3px;background:rgba(255,255,255,.92);padding:3px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.18);font-size:.56rem';
   // botões com 4 opções principais (cobrem 95% dos casos)
   const opts = [
-    {id:'positron',    lbl:'🏷 Rótulos',  hint:'Positron com nomes de ruas (padrão)'},
-    {id:'positron_nl', lbl:'⬜ Limpo',    hint:'Positron sem rótulos (melhor para overlay)'},
-    {id:'voyager',     lbl:'🗺 Voyager',  hint:'Mapa colorido com mais detalhes'},
+    {id:'positron',    lbl:'🏷 Rótulos',  hint:'Cinza claro com nomes de ruas (padrão)'},
+    {id:'positron_nl', lbl:'⬜ Limpo',    hint:'Cinza claro sem rótulos (melhor para overlay)'},
+    {id:'voyager',     lbl:'🗺 Ruas',     hint:'Mapa de ruas colorido com mais detalhes'},
     {id:'satellite',   lbl:'🛰 Satélite', hint:'Imagem de satélite (ESRI)'}
   ];
   const cur = (state.block_map_basemap && state.block_map_basemap[themeId]) || 'positron';
