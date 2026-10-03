@@ -83,7 +83,7 @@ test.describe('P1.7 — sidebar com barra de desenho contextual', () => {
     const estado = await page.evaluate(() => ({
       drawMode: _mlDraw && _mlDraw.mode,
       drawLayer: _mlDraw && _mlDraw.layerId,
-      hint: getComputedStyle(document.getElementById('ml-draw-hint')).display !== 'none',
+      hint: getComputedStyle(document.getElementById('ml-draw-hint')).display !== 'none' && !document.getElementById('ml-draw-hint').dataset.ocioso,
       btnAtivo: document.querySelectorAll('.ml-draw-btn.active').length,
     }));
     expect(estado.drawMode).toBe('drawing');
@@ -91,6 +91,7 @@ test.describe('P1.7 — sidebar com barra de desenho contextual', () => {
     expect(estado.hint).toBe(true);
     expect(estado.btnAtivo).toBe(1);
 
+    await page.locator('#ml-map').scrollIntoViewIfNeeded(); // a faixa de estado do desenho fica fixa acima do mapa
     const box = await page.locator('#ml-map').boundingBox();
     const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
     const antes = await page.evaluate(() => (_mlFeatures.viario || []).length);

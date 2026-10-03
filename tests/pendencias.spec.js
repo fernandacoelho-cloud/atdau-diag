@@ -41,6 +41,7 @@ async function injetarPoligono(page, fid) {
 
 // Clica no centro do mapa (onde está o polígono injetado)
 async function clicarNoCentroDoMapa(page) {
+  await page.locator('#ml-map').scrollIntoViewIfNeeded(); // a faixa de estado do desenho fica fixa acima do mapa
   const box = await page.locator('#ml-map').boundingBox();
   const pt = await page.evaluate(() => { const p = _mlMap.project(_mlMap.getCenter()); return { x: p.x, y: p.y }; });
   await page.mouse.click(box.x + pt.x, box.y + pt.y);

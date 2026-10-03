@@ -143,6 +143,7 @@ test.describe('P0 — legibilidade, legenda de usos e camadas importadas', () =>
     expect(listagem.legenda.length).toBe(2);
 
     // 4) clique na feição importada → popup da camada; renomear e recolorir
+    await page.locator('#ml-map').scrollIntoViewIfNeeded(); // a faixa de estado do desenho fica fixa acima do mapa
     const box = await page.locator('#ml-map').boundingBox();
     await page.evaluate((c) => { _mlMap.jumpTo({ center: c, zoom: 14 }); }, centro);
     await page.waitForTimeout(800);

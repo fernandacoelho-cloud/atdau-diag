@@ -5617,7 +5617,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
     <!-- MAPA -->
     <div style="flex:1;min-width:0">
-      <div id="ml-draw-hint" style="display:none;background:rgba(30,207,164,.1);border:1px solid rgba(30,207,164,.3);border-radius:6px;padding:7px 12px;font-size:.67rem;color:var(--teal);margin-bottom:6px"></div>
+      <!-- Faixa de estado do desenho: SEMPRE visível e com 1 linha (antes aparecia/sumia acima do
+           mapa e o mapa "pulava" ~37px ao começar/terminar cada desenho). Texto longo → reticências + title. -->
+      <div id="ml-draw-hint" data-ocioso="1" style="display:block;background:rgba(30,207,164,.1);border:1px solid rgba(30,207,164,.3);border-radius:6px;padding:7px 12px;font-size:.67rem;color:var(--teal);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
       <div id="ml-map" style="height:520px;border-radius:8px;overflow:hidden;border:1px solid var(--line2)"></div>
       <div id="ml-legenda-dock"></div>
       <!-- Info área terreno -->
@@ -14660,8 +14662,8 @@ function _gabSetMode(on){
   if(_mlMap){ try{ _mlMap.getCanvas().style.cursor = _gabMode?'pointer':''; }catch(e){} }
   const hint=document.getElementById('ml-draw-hint');
   if(hint){
-    if(_gabMode){ hint.style.display='block'; hint.textContent='🖱 Editar prédios: clique num prédio real (ligue Open Buildings ou OSM acima) para definir pavimentos/uso — ele vira feição sua na camada "Edificações (gabarito)". Shift+clique acumula seleção; clique num prédio já adotado para reeditar.'; }
-    else if((hint.textContent||'').startsWith('🖱')){ hint.style.display='none'; hint.textContent=''; }
+    if(_gabMode){ hint.style.display='block'; hint.style.color='var(--teal)'; delete hint.dataset.ocioso; hint.textContent='🖱 Editar prédios: clique num prédio real (ligue Open Buildings ou OSM acima) para definir pavimentos/uso — ele vira feição sua na camada "Edificações (gabarito)". Shift+clique acumula seleção; clique num prédio já adotado para reeditar.'; hint.title=hint.textContent; }
+    else if((hint.textContent||'').startsWith('🖱')){ _mlHintOcioso(); }
   }
   // linha de seleção múltipla (Shift+clique / retângulo / aplicar em grupo)
   const multi=document.querySelector('.edif-box .gab-multi');
@@ -14931,6 +14933,8 @@ function mlInit() {
     preserveDrawingBuffer: true
   });
 
+  _picRegistrarNoMapa(_mlMap);   // pictogramas → ícones gerados sob demanda
+  _mlHintOcioso();
   _mlMap.addControl(new maplibregl.NavigationControl(), 'top-right');
   _mlMap.addControl(_criarControleExpandir(), 'top-right');   // abrir maior (tela cheia)
   _mlMap.addControl(new maplibregl.ScaleControl({ unit:'metric' }), 'bottom-right');
@@ -15017,16 +15021,14 @@ function mlAddSources() {
           'circle-radius': 7, 'circle-stroke-width':2, 'circle-stroke-color':'#fff'
         }
       });
-      // Layer adicional para pictograma + rótulo (texto sobre pontos)
+      // Pictograma como ÍCONE (ver _picRegistrarNoMapa) + rótulo em texto abaixo
+      _mlMap.addLayer(_picLayerDef(l, pointFilter));
       _mlMap.addLayer({ id:`label-${l.id}`, type:'symbol', source:`src-${l.id}`,
         filter:pointFilter,
         layout: {
-          'text-field': ['case',
-            ['has','pictograma'],
-              ['concat', ['get','pictograma'], ' ', ['coalesce', ['get','rotulo'], ['get','nome'], '']],
-            ['coalesce', ['get','rotulo'], ['get','nome'], '']
-          ],
-          'text-size': 11, 'text-anchor':'top', 'text-offset':[0, 0.9],
+          'text-field': ['coalesce', ['get','rotulo'], ['get','nome'], ''],
+          'text-size': 11, 'text-anchor':'top',
+          'text-offset': ['case', ['has','pictograma'], ['literal',[0, 1.5]], ['literal',[0, 0.9]]],
           'text-allow-overlap': false, 'text-optional': true,
           'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular']
         },
@@ -15487,7 +15489,27 @@ function mlRenderDrawBar() {
     <div class="ml-drawbar-geoms">
       ${l.geom.map(g=>`<button class="ml-draw-btn" id="btn-draw-${l.id}-${g}" onclick="mlSelectDraw('${l.id}','${g}')" title="Desenhar ${g==='polygon'?'polígono':g==='polyline'?'linha':'ponto'}">${geomLabel[g]}</button>`).join('')}
       <button class="ml-draw-btn" onclick="mlUndoLastDraw()" title="Remover a última feição desenhada nesta camada">↶ Desfazer</button>
-    </div>${l.id==='rota'?`<div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;border-top:1px solid var(--line2);padding-top:6px"><span style="font-size:.62rem;color:var(--t2)">Buffer do percurso:</span><select id="rota-buffer-km" style="font-size:.62rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 5px"><option value="1">1 km</option><option value="3">3 km</option><option value="5">5 km</option></select><button class="ml-draw-btn" onclick="rotaGerarBuffer()" title="Gera a área de estudo do percurso (turf.js — precisa de internet)">⭕ Gerar buffer</button></div>`:''}${extra}${catSel}`;
+    </div>${l.geom.includes('point') && !['equip','swot'].includes(l.id) ? `
+    <div class="ml-drawbar-extra">
+      <button class="ml-draw-btn" id="ml-picto-btn" onclick="mlTogglePictoSel()" title="Escolher o pictograma (ícone) que o próximo PONTO vai receber — lista pronta ou os seus próprios" style="width:100%;text-align:left">${_mlPictoBtnHtml()}</button>
+      <div id="ml-picto-sel" style="display:none;margin-top:5px;background:white;border:1px solid var(--line2);border-radius:6px;padding:8px 9px;max-height:300px;overflow-y:auto"></div>
+    </div>` : ''}${l.id==='rota'?`<div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;border-top:1px solid var(--line2);padding-top:6px"><span style="font-size:.62rem;color:var(--t2)">Buffer do percurso:</span><select id="rota-buffer-km" style="font-size:.62rem;background:var(--bg3);border:1px solid var(--line2);color:var(--t1);border-radius:4px;padding:3px 5px"><option value="1">1 km</option><option value="3">3 km</option><option value="5">5 km</option></select><button class="ml-draw-btn" onclick="rotaGerarBuffer()" title="Gera a área de estudo do percurso (turf.js — precisa de internet)">⭕ Gerar buffer</button></div>`:''}${extra}${catSel}`;
+}
+
+// "🙂 Pictograma" da barra do Mapa de Análise: pictograma do próximo ponto (_mlSelPicto)
+let _mlSelPicto = '';
+function _mlPictoBtnHtml(){ return _mlSelPicto ? `${_picHtml(_mlSelPicto, 14)} Pictograma do ponto` : '🙂 Pictograma do ponto'; }
+function mlTogglePictoSel(){
+  const box = document.getElementById('ml-picto-sel'); if(!box) return;
+  const abrir = box.style.display === 'none';
+  box.style.display = abrir ? 'block' : 'none';
+  if(!abrir) return;
+  _picMontarSeletor(box, () => _mlSelPicto, v => {
+    _mlSelPicto = v;
+    const b = document.getElementById('ml-picto-btn'); if(b) b.innerHTML = _mlPictoBtnHtml();
+    // escolher o pictograma já arma o desenho de PONTO nesta camada
+    if(!(_mlDraw.mode && _mlDraw.geomType === 'point' && _mlDraw.layerId === _mlSelLayer)) mlSelectDraw(_mlSelLayer, 'point');
+  });
 }
 
 // Desfazer: remove a feição mais recente da camada ativa (maior id)
@@ -15524,6 +15546,7 @@ function mlToggleLayer(layerId, visible) {
   if (l.geom.includes('point')) {
     _mlMap.setLayoutProperty(`circle-${layerId}`, 'visibility', vis);
     try { _mlMap.setLayoutProperty(`label-${layerId}`, 'visibility', vis); } catch(e){}
+    try { _mlMap.setLayoutProperty(`picto-${layerId}`, 'visibility', vis); } catch(e){}
   }
 }
 
@@ -15553,16 +15576,24 @@ function mlSelectDraw(layerId, geomType) {
   const hint = document.getElementById('ml-draw-hint');
   const l = ML_LAYERS.find(x=>x.id===layerId);
   const geomLabel = geomType==='polygon'?'polígono (duplo-clique para fechar)':geomType==='polyline'?'linha (duplo-clique para fechar)':'ponto (cada clique cria um)';
-  hint.innerHTML = `✦ Desenhando ${l.icon} ${escHtml(l.name)} — ${geomLabel}. <a onclick="mlCancelDraw()" style="color:var(--teal);cursor:pointer;text-decoration:underline;font-weight:700;margin-left:6px">✕ parar de desenhar</a> <span style="color:var(--t3)">(ou clique no mesmo botão / botão direito do mouse)</span>`;
-  hint.style.display = 'block';
+  hint.innerHTML = `<a onclick="mlCancelDraw()" style="color:var(--teal);cursor:pointer;text-decoration:underline;font-weight:700;margin-right:8px">✕ parar de desenhar</a>✦ Desenhando ${l.icon} ${escHtml(l.name)} — ${geomLabel}${(geomType==='point' && _mlSelPicto) ? ' · pictograma ' + _picHtml(_mlSelPicto, 14) : ''}`;
+  hint.title = 'Para parar: "✕ parar de desenhar", clique de novo no mesmo botão ou use o botão direito do mouse.';
+  hint.style.display = 'block'; hint.style.color = 'var(--teal)'; delete hint.dataset.ocioso;
 }
 
+// Faixa de estado em repouso (não some: manter a altura evita o mapa "pular")
+function _mlHintOcioso(){
+  const hint = document.getElementById('ml-draw-hint'); if(!hint) return;
+  if (typeof _gabMode !== 'undefined' && _gabMode) return; // modo prédios tem o próprio texto
+  hint.style.display = 'block'; hint.style.color = 'var(--t3)'; hint.dataset.ocioso = '1';
+  hint.textContent = '✏️ Para desenhar: escolha uma camada na lista e clique em Ponto, Linha ou Polígono. Clique numa feição para editá-la (rótulo, cor, pictograma).';
+  hint.title = hint.textContent;
+}
 function mlCancelDraw() {
   _mlDraw = { mode:null, layerId:null, geomType:null, pts:[] };
   if (_mlMap) _mlMap.getCanvas().style.cursor = '';
   document.querySelectorAll('.ml-draw-btn').forEach(b=>b.classList.remove('active'));
-  const hint = document.getElementById('ml-draw-hint');
-  if (hint) hint.style.display = 'none';
+  _mlHintOcioso();
   // Limpar previews
   if (_mlMap && _mlMap.isStyleLoaded()) {
     ML_LAYERS.forEach(l => {
@@ -15664,6 +15695,7 @@ function mlFinishFeature(pts) {
     return;
   }
 
+  if (geomType === 'point' && _mlSelPicto) props.pictograma = _mlSelPicto;   // "🙂 Pictograma do ponto"
   const f = { id: Date.now(), geom, props };
   if (!_mlFeatures[layerId]) _mlFeatures[layerId] = [];
   _mlFeatures[layerId].push(f);
@@ -15782,6 +15814,132 @@ const ML_PICTOGRAMAS = [
   ]},
 ];
 
+// ── Pictogramas no MAPA = ÍCONES (imagem), não texto ─────────────────
+// Os glifos do MapLibre (demotiles) não têm emoji: o pictograma no text-field saía VAZIO.
+// Cada valor de props.pictograma vira a imagem 'pic|<valor>', gerada sob demanda no evento
+// styleimagemissing: emoji/caractere desenhado com a fonte de emoji do sistema sobre um disco
+// branco, ou a imagem enviada pelo usuário ('img:<id>').
+// Biblioteca própria: state.ml_pictos = [{id,label,tipo:'texto'|'img',valor}] — vai no projeto salvo.
+const PIC_PX = 64; // desenhado em 64px, exibido a 32px (pixelRatio 2)
+function _picLib(){ if(!Array.isArray(state.ml_pictos)) state.ml_pictos = []; return state.ml_pictos; }
+function _picCustomImg(val){ return /^img:/.test(val||'') ? _picLib().find(p => 'img:'+p.id === val) || null : null; }
+function _picValor(p){ return p.tipo === 'img' ? 'img:'+p.id : p.valor; }
+// HTML do pictograma para botões/legendas (imagem própria vira <img>)
+function _picHtml(val, px){
+  const c = _picCustomImg(val);
+  if(c) return `<img src="${c.valor}" alt="${escHtml(c.label||'')}" style="width:${px}px;height:${px}px;object-fit:contain;vertical-align:middle">`;
+  return escHtml(val || '');
+}
+function _picRender(val, cb){
+  const cv = document.createElement('canvas'); cv.width = cv.height = PIC_PX;
+  const ctx = cv.getContext('2d'), h = PIC_PX/2;
+  ctx.beginPath(); ctx.arc(h, h, h-3, 0, Math.PI*2);
+  ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.stroke();
+  const fim = () => cb(ctx.getImageData(0, 0, PIC_PX, PIC_PX));
+  const c = _picCustomImg(val);
+  if(c){
+    const im = new Image();
+    im.onload = () => { const s = 40; ctx.drawImage(im, (PIC_PX-s)/2, (PIC_PX-s)/2, s, s); fim(); };
+    im.onerror = fim; im.src = c.valor; return;
+  }
+  ctx.font = '36px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Segoe UI Symbol",sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#222';
+  ctx.fillText(String(val).slice(0, 4), h, h+2); fim();
+}
+function _picRegistrarNoMapa(map){
+  if(!map || map.__picOk) return; map.__picOk = true;
+  map.on('styleimagemissing', e => {
+    const id = e && e.id; if(!id || id.indexOf('pic|') !== 0) return;
+    // addImage SÍNCRONO (vazio) e updateImage quando o desenho fica pronto (imagem própria é async)
+    try { if(!map.hasImage(id)) map.addImage(id, new ImageData(PIC_PX, PIC_PX), { pixelRatio:2 }); } catch(_){ return; }
+    _picRender(id.slice(4), data => { try { if(map.hasImage(id)) map.updateImage(id, data); } catch(_){} });
+  });
+}
+// depois de editar/remover um pictograma próprio: redesenhar em todos os mapas abertos
+function _picInvalidar(val){
+  const id = 'pic|' + val;
+  [typeof _mlMap!=='undefined' ? _mlMap : null, typeof _mlThemeMap!=='undefined' ? _mlThemeMap : null,
+   ...Object.values(typeof _blockMaps!=='undefined' ? _blockMaps : {})].forEach(m => {
+    try { if(m && m.hasImage && m.hasImage(id)) _picRender(val, d => { try { m.updateImage(id, d); } catch(_){} }); } catch(_){}
+  });
+}
+// layer de ícones de pictograma de uma camada (pontos com props.pictograma)
+function _picLayerDef(l, pointFilterLegacy){
+  return { id:`picto-${l.id}`, type:'symbol', source:`src-${l.id}`,
+    filter: ['all'].concat(pointFilterLegacy[0]==='all' ? pointFilterLegacy.slice(1) : [pointFilterLegacy], [['has','pictograma']]),
+    layout:{ 'icon-image':['concat','pic|',['get','pictograma']], 'icon-size':1,
+             'icon-allow-overlap':true, 'icon-ignore-placement':true } };
+}
+// "Meus pictogramas": adicionar emoji/caractere ou imagem (reduzida a 64px p/ caber no projeto)
+function picAdicionarTexto(valor, label){
+  valor = (valor||'').trim(); if(!valor) return null;
+  const lib = _picLib();
+  const ja = lib.find(p => p.tipo==='texto' && p.valor===valor); if(ja) return ja;
+  const p = { id:'u'+Date.now().toString(36), label:(label||'').trim() || valor, tipo:'texto', valor:valor.slice(0,4) };
+  lib.push(p); autoSave(); return p;
+}
+function picAdicionarImagem(file, label, cb){
+  if(!file || !/^image\//.test(file.type)) { alert('Escolha um arquivo de imagem (PNG, JPG ou SVG).'); return; }
+  const fr = new FileReader();
+  fr.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const cv = document.createElement('canvas'); cv.width = cv.height = PIC_PX;
+      const k = Math.min(PIC_PX/im.width, PIC_PX/im.height) || 1, w = im.width*k, hh = im.height*k;
+      cv.getContext('2d').drawImage(im, (PIC_PX-w)/2, (PIC_PX-hh)/2, w, hh);
+      const p = { id:'u'+Date.now().toString(36), label:(label||'').trim() || file.name.replace(/\.[^.]+$/,''), tipo:'img', valor:cv.toDataURL('image/png') };
+      _picLib().push(p); autoSave(); cb && cb(p);
+    };
+    im.onerror = () => alert('Não foi possível ler essa imagem.');
+    im.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+function picRemover(id){
+  const lib = _picLib(), i = lib.findIndex(p => p.id===id); if(i<0) return;
+  const val = _picValor(lib[i]);
+  lib.splice(i, 1); autoSave(); _picInvalidar(val);
+}
+
+// Seletor de pictograma para as BARRAS DE DESENHO ("pictograma do próximo ponto"): lista padrão +
+// Meus pictogramas + adicionar (emoji/símbolo ou imagem). onPick(valor) recebe '' para "sem".
+function _picMontarSeletor(box, getSel, onPick){
+  const btn = (v, html, title) => `<button type="button" class="pic-sel-btn" data-pic="${escHtml(v)}" title="${escHtml(title)}"
+      style="padding:3px 6px;border:1px solid ${getSel()===v?'var(--teal)':'var(--line2)'};background:${getSel()===v?'rgba(31,111,92,.15)':'white'};border-radius:3px;cursor:pointer;font-size:.85rem;line-height:1;min-width:26px">${html}</button>`;
+  const render = () => {
+    const lib = _picLib();
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <strong style="font-size:.6rem;color:var(--t1)">Pictograma do próximo ponto</strong>
+        ${btn('', '<span style="font-size:.55rem;color:var(--t3)">— sem —</span>', 'Sem pictograma')}
+      </div>
+      ${ML_PICTOGRAMAS.map(g => `<div style="font-size:.5rem;color:var(--t3);font-weight:600;margin-top:5px">${escHtml(g.cat)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px">${g.items.map(p => btn(p.ic, p.ic, p.label)).join('')}</div>`).join('')}
+      <div style="font-size:.5rem;color:var(--t3);font-weight:600;margin-top:7px">MEUS PICTOGRAMAS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px">${lib.length ? lib.map(p => btn(_picValor(p), _picHtml(_picValor(p), 16), p.label)).join('')
+        : '<span style="font-size:.52rem;color:var(--t3)">Nenhum ainda — adicione abaixo.</span>'}</div>
+      <div style="display:flex;gap:4px;align-items:center;margin-top:6px;flex-wrap:wrap">
+        <input class="pic-sel-txt" maxlength="4" placeholder="ex.: 🐕 ★" title="Cole um emoji (no Windows: tecla Win + .) ou digite um símbolo/letra" style="width:70px;padding:4px 6px;font-size:.7rem;border:1px solid var(--line2);border-radius:3px">
+        <input class="pic-sel-nome" placeholder="nome (opcional)" style="flex:1;min-width:70px;padding:4px 6px;font-size:.6rem;border:1px solid var(--line2);border-radius:3px">
+        <button type="button" class="pic-sel-add" style="padding:4px 8px;font-size:.58rem;border:1px solid var(--teal);background:var(--teal);color:white;border-radius:3px;cursor:pointer">+ Adicionar</button>
+      </div>
+      <button type="button" class="pic-sel-img" style="margin-top:5px;padding:4px 8px;font-size:.58rem;border:1px solid var(--gold);background:rgba(201,146,59,.08);color:#9a6b1e;border-radius:3px;cursor:pointer">🖼 Enviar imagem (PNG, JPG, SVG)</button>
+      <input type="file" class="pic-sel-file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" style="display:none">
+      <div style="margin-top:5px;color:var(--t3);font-size:.5rem;line-height:1.35">Para trocar o pictograma de um ponto já desenhado, clique nele no mapa. Os seus ficam no projeto e valem em todos os mapas.</div>`;
+    box.querySelectorAll('.pic-sel-btn').forEach(b => b.onclick = e => { e.stopPropagation(); onPick(b.dataset.pic); render(); });
+    const txt = box.querySelector('.pic-sel-txt'), nome = box.querySelector('.pic-sel-nome');
+    box.querySelector('.pic-sel-add').onclick = e => {
+      e.stopPropagation();
+      const p = picAdicionarTexto(txt.value, nome.value); if(!p){ txt.focus(); return; }
+      onPick(_picValor(p)); render();
+    };
+    const file = box.querySelector('.pic-sel-file');
+    box.querySelector('.pic-sel-img').onclick = e => { e.stopPropagation(); file.click(); };
+    file.onchange = () => { const f = file.files[0]; file.value = ''; picAdicionarImagem(f, nome.value, p => { onPick(_picValor(p)); render(); }); };
+  };
+  render();
+}
+
 function mlHandleFeatureClick(e) {
   // Cluster/ponto de patrimônio sob o cursor? Os handlers dedicados cuidam —
   // evita popup duplo quando um bem tombado fica sobre um polígono desenhado.
@@ -15884,7 +16042,22 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
        <button class="ml-picto-btn" data-pic="" title="Sem pictograma"
          style="padding:3px 6px;border:1px solid var(--line2);background:white;border-radius:3px;cursor:pointer;font-size:.55rem;color:var(--t3)">— sem —</button>
      </div>`
-  ).join('');
+  ).join('') + `
+     <div style="margin-top:8px;font-size:.5rem;color:var(--t3);font-weight:600">MEUS PICTOGRAMAS</div>
+     <div id="popup-picto-meus" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px"></div>
+     <details id="popup-picto-add" style="margin-top:4px;font-size:.55rem">
+       <summary style="cursor:pointer;color:var(--teal);font-weight:600">+ Adicionar pictograma</summary>
+       <div style="display:flex;gap:4px;align-items:center;margin-top:5px;flex-wrap:wrap">
+         <input id="popup-picto-txt" maxlength="4" placeholder="ex.: 🐕 ★" title="Cole um emoji (no Windows: tecla Win + .) ou digite um símbolo/letra" style="width:70px;padding:4px 6px;font-size:.7rem;border:1px solid var(--line2);border-radius:3px">
+         <input id="popup-picto-nome" placeholder="nome (opcional)" style="flex:1;min-width:80px;padding:4px 6px;font-size:.6rem;border:1px solid var(--line2);border-radius:3px">
+         <button type="button" id="popup-picto-add-txt" style="padding:4px 8px;font-size:.58rem;border:1px solid var(--teal);background:var(--teal);color:white;border-radius:3px;cursor:pointer">Adicionar</button>
+       </div>
+       <div style="display:flex;gap:4px;align-items:center;margin-top:5px">
+         <button type="button" id="popup-picto-add-img" style="padding:4px 8px;font-size:.58rem;border:1px solid var(--gold);background:rgba(201,146,59,.08);color:#9a6b1e;border-radius:3px;cursor:pointer">🖼 Enviar imagem (PNG, JPG, SVG)</button>
+         <input type="file" id="popup-picto-file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" style="display:none">
+       </div>
+       <div style="margin-top:4px;color:var(--t3);font-size:.5rem;line-height:1.35">Fica na sua biblioteca deste projeto (vai junto no "Salvar projeto") e serve para qualquer ponto, em todos os mapas.</div>
+     </details>`;
 
   const distExtra = props.distRoute != null ? `<small style="color:var(--t3)">🚶 ${props.distRoute}m caminhada</small><br>` : '';
   const raioExtra = props.raio ? `<small style="color:var(--t3)">Raio ref: ${props.raio}m</small><br>` : '';
@@ -15901,7 +16074,7 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
   const content = `
     <div style="min-width:260px;max-width:300px">
       <div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px">
-        <span style="font-size:1rem">${pictograma || layerDef.icon}</span>
+        <span style="font-size:1rem">${pictograma ? _picHtml(pictograma, 18) : layerDef.icon}</span>
         <div>
           <strong style="font-size:.72rem">${rotulo || layerDef.name}</strong><br>
           <small style="color:var(--t3);font-size:.55rem">${layerDef.name}</small>
@@ -16003,14 +16176,49 @@ function mlOpenFeaturePopup(lid, fid, props, lngLat, layerDef, map) {
     // Verbos operativos (typology-aware): renderiza os grupos relevantes à tipologia
     _popupRenderVerbos(popupEl, props);
 
-    popupEl.querySelectorAll('.ml-picto-btn').forEach(b => {
+    const _ligarPictoBtns = () => popupEl.querySelectorAll('.ml-picto-btn').forEach(b => {
+      b.style.background = (b.dataset.pic === picSel && picSel) ? 'rgba(31,111,92,.15)' : 'white';
       b.onclick = () => {
         picSel = b.dataset.pic;
         popupEl.querySelectorAll('.ml-picto-btn').forEach(bb =>
-          bb.style.background = bb.dataset.pic === picSel ? 'rgba(31,111,92,.15)' : 'white'
+          bb.style.background = (bb.dataset.pic === picSel && picSel) ? 'rgba(31,111,92,.15)' : 'white'
         );
       };
     });
+    // "Meus pictogramas": biblioteca do projeto (emoji/símbolo digitado ou imagem enviada)
+    const meusBox = popupEl.querySelector('#popup-picto-meus');
+    const _renderMeus = () => {
+      if(!meusBox) return;
+      const lib = _picLib();
+      meusBox.innerHTML = lib.length ? lib.map(p => {
+        const v = _picValor(p);
+        return `<span style="display:inline-flex;align-items:center"><button type="button" class="ml-picto-btn" data-pic="${escHtml(v)}" title="${escHtml(p.label||'')}"
+          style="padding:3px 6px;border:1px solid var(--line2);background:white;border-radius:3px 0 0 3px;cursor:pointer;font-size:.85rem;line-height:1">${_picHtml(v, 16)}</button><button type="button" class="ml-picto-del" data-id="${p.id}" title="Remover da biblioteca"
+          style="padding:3px 4px;border:1px solid var(--line2);border-left:none;background:white;border-radius:0 3px 3px 0;cursor:pointer;font-size:.5rem;color:var(--t3);line-height:1.6">✕</button></span>`;
+      }).join('') : `<span style="font-size:.52rem;color:var(--t3)">Nenhum ainda — adicione abaixo.</span>`;
+      meusBox.querySelectorAll('.ml-picto-del').forEach(d => d.onclick = () => {
+        const p = _picLib().find(x => x.id === d.dataset.id); if(!p) return;
+        if(!confirm(`Remover "${p.label}" da biblioteca? Pontos que já o usam ficam sem o desenho.`)) return;
+        if(picSel === _picValor(p)) picSel = '';
+        picRemover(p.id); _renderMeus();
+      });
+      _ligarPictoBtns();
+    };
+    _renderMeus();
+    const _usarNovo = p => { if(!p) return; picSel = _picValor(p); _renderMeus(); };
+    const txtIn = popupEl.querySelector('#popup-picto-txt'), nomeIn = popupEl.querySelector('#popup-picto-nome');
+    const addTxt = popupEl.querySelector('#popup-picto-add-txt');
+    if(addTxt) addTxt.onclick = () => {
+      const p = picAdicionarTexto(txtIn.value, nomeIn.value);
+      if(!p){ txtIn.focus(); return; }
+      txtIn.value = ''; nomeIn.value = ''; _usarNovo(p);
+    };
+    const fileIn = popupEl.querySelector('#popup-picto-file');
+    const addImg = popupEl.querySelector('#popup-picto-add-img');
+    if(addImg && fileIn){
+      addImg.onclick = () => fileIn.click();
+      fileIn.onchange = () => { const f = fileIn.files[0]; fileIn.value = ''; picAdicionarImagem(f, nomeIn.value, p => { nomeIn.value = ''; _usarNovo(p); }); };
+    }
 
     const corClearBtn = popupEl.querySelector('#popup-cor-clear');
     if (corClearBtn) corClearBtn.onclick = () => {
@@ -17700,7 +17908,11 @@ function mlAddSourcesOnMap(map, _retry, onReady) {
           'circle-stroke-color':'#fff'
         }
       });
+    if (l.geom.includes('point')) {
+      try { map.addLayer(_picLayerDef(l, ['==','$type','Point'])); } catch(e){}
+    }
   });
+  _picRegistrarNoMapa(map);
   // Preview layer
   if (!map.getSource('preview-theme')) {
     map.addSource('preview-theme',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
@@ -17998,7 +18210,7 @@ function mlSelectTheme(themeId) {
   if (_mlThemeMap && _mlThemeMap.isStyleLoaded()) {
     ML_LAYERS.forEach(l=>{
       const vis = theme.layers.includes(l.id) ? 'visible' : 'none';
-      [`fill-${l.id}`,`line-${l.id}`,`polyline-${l.id}`,`circle-${l.id}`]
+      [`fill-${l.id}`,`line-${l.id}`,`polyline-${l.id}`,`circle-${l.id}`,`picto-${l.id}`]
         .concat(Object.keys(ML_DASH_PADROES).map(d => _mlDashLayerId(l.id, d))).forEach(id=>{
         if (_mlThemeMap.getLayer(id)) _mlThemeMap.setLayoutProperty(id,'visibility',vis);
       });
@@ -18628,7 +18840,7 @@ function initBlockMap(wrap) {
 // Mostra/oculta TODAS as sub-camadas (geometrias) de uma camada num block-map
 function _blockMapSetLayerVis(map, layerId, on){
   const vis = on ? 'visible' : 'none';
-  ['fill-','line-','polyline-','circle-','label-'].map(p => p + layerId)
+  ['fill-','line-','polyline-','circle-','picto-','label-'].map(p => p + layerId)
     .concat(Object.keys(ML_DASH_PADROES).map(d => _mlDashLayerId(layerId, d)))
     .forEach(id=>{
       try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); } catch(e){}
@@ -18729,6 +18941,7 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
     <span style="color:var(--t1);font-weight:700;align-self:center;font-size:.62rem">✏️ Camada:</span>
     <select class="bm-layer-select" style="padding:5px 8px;border:1px solid var(--line2);background:white;border-radius:4px;font-size:.62rem;cursor:pointer;max-width:170px">${layerOpts}</select>
     <span class="bm-geom-btns" style="display:inline-flex;gap:4px"></span>
+    <button class="bm-picto-btn" title="Escolher o pictograma (ícone) que o próximo PONTO vai receber — lista pronta ou os seus próprios" style="padding:6px 11px;border:1.5px solid var(--teal);background:rgba(31,111,92,.06);color:var(--teal);border-radius:4px;cursor:pointer;font-size:.65rem;font-weight:600">🙂 Pictograma</button>
     <button class="bm-style-btn" style="padding:6px 11px;border:1.5px solid var(--gold);background:rgba(201,146,59,.08);color:#9a6b1e;border-radius:4px;cursor:pointer;font-size:.65rem;font-weight:600" title="Configurar estilo do próximo desenho">🎨 Estilo</button>
     <button class="bm-import-btn" title="Importe camadas: Shapefile (.zip — pacote .shp/.shx/.dbf zipado), GeoJSON (.geojson/.json) ou KML. Cada arquivo vira uma camada própria, visível aqui e no Mapa de Análise. Onde baixar: portal da prefeitura / IDE municipal / IBGE." style="padding:5px 10px;border:1px solid var(--gold);background:rgba(201,146,59,.1);color:#9a6b1e;border-radius:4px;cursor:pointer;font-size:.6rem">⬆ Importar shape/GeoJSON/KML</button>
     <button class="bm-save-btn" title="Salva a vista atual deste mapa (com norte, escala e legenda) no Relatório" style="padding:5px 10px;border:1px solid rgba(34,196,116,.4);background:rgba(34,196,116,.1);color:#1f8d49;border-radius:4px;cursor:pointer;font-size:.6rem">💾 Salvar vista</button>
@@ -18794,6 +19007,35 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
   wrap.style.position = 'relative';
   wrap.appendChild(stylePanel);
 
+  // === Painel "Pictograma do próximo ponto" (popover no wrap, abaixo da barra) ===
+  const picPanel = document.createElement('div');
+  picPanel.className = 'block-map-picto-panel';
+  picPanel.style.cssText = 'position:absolute;left:8px;z-index:9;background:white;border:1px solid var(--line2);border-radius:6px;padding:10px 12px;box-shadow:0 4px 12px rgba(0,0,0,.18);display:none;width:300px;max-height:330px;overflow-y:auto';
+  wrap.appendChild(picPanel);
+  const picBtn = ctrl.querySelector('.bm-picto-btn');
+  const _picBtnLabel = () => {
+    const v = ws.estilo.pictograma;
+    picBtn.innerHTML = v ? `${_picHtml(v, 14)} Pictograma` : '🙂 Pictograma';
+    picBtn.style.background = v ? 'rgba(31,111,92,.15)' : 'rgba(31,111,92,.06)';
+  };
+  picBtn.onclick = (e) => {
+    e.stopPropagation();
+    const abrir = picPanel.style.display !== 'block';
+    stylePanel.style.display = 'none';
+    picPanel.style.display = abrir ? 'block' : 'none';
+    if(!abrir) return;
+    picPanel.style.top = (ctrl.offsetTop + ctrl.offsetHeight + 6) + 'px';
+    _picMontarSeletor(picPanel, () => ws.estilo.pictograma || '', v => {
+      ws.estilo.pictograma = v; _picBtnLabel();
+      // escolher pictograma já prepara o desenho de PONTO (o caminho mais curto até o mapa)
+      const bp = ctrl.querySelector('.bm-draw-btn[data-geom="point"]');
+      const st = _blockMapDrawState.get(wrap);
+      if(bp && !(st && st.mode==='drawing' && st.geomType==='point')) bp.click();
+      else if(bp) _bmAtualizaHintAtivo('point');
+    });
+  };
+  document.addEventListener('click', e => { if(picPanel.style.display==='block' && !picPanel.contains(e.target) && e.target!==picBtn) picPanel.style.display='none'; });
+
   setTimeout(() => { if(hint) hint.style.opacity = '0.5'; }, 6000);
 
   // Função que renderiza/refaz os botões de geometria conforme a camada selecionada
@@ -18810,13 +19052,23 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
         e.stopPropagation();
         _blockMapStartDraw(wrap, map, ws.layerId, btn.dataset.geom, ctrl);
         hint.style.display = 'none';
-        const gl = btn.dataset.geom === 'polygon' ? 'polígono (duplo-clique para fechar)'
-                : btn.dataset.geom === 'polyline' ? 'linha (duplo-clique para fechar)'
-                : 'ponto';
-        active.innerHTML = `✦ Desenhando <strong>${gl}</strong> em ${layer.icon} ${layer.name} · botão direito cancela`;
-        active.style.display = 'block';
+        _bmAtualizaHintAtivo(btn.dataset.geom);
       };
     });
+    // pictograma só faz sentido para pontos
+    const pb = ctrl.querySelector('.bm-picto-btn');
+    if(pb) pb.style.display = (layer.geom || []).includes('point') ? '' : 'none';
+  }
+  function _bmAtualizaHintAtivo(geom){
+    const layer = ML_LAYERS.find(l => l.id === ws.layerId); if(!layer) return;
+    const st = _blockMapDrawState.get(wrap);
+    if(!(st && st.mode === 'drawing')){ active.style.display = 'none'; return; }
+    const gl = geom === 'polygon' ? 'polígono (duplo-clique para fechar)'
+            : geom === 'polyline' ? 'linha (duplo-clique para fechar)'
+            : 'ponto';
+    const pic = (geom === 'point' && ws.estilo.pictograma) ? ` com ${_picHtml(ws.estilo.pictograma, 14)}` : '';
+    active.innerHTML = `✦ Desenhando <strong>${gl}</strong>${pic} em ${layer.icon} ${layer.name} · botão direito cancela`;
+    active.style.display = 'block';
   }
   refreshGeomBtns();
 
@@ -18936,7 +19188,8 @@ function _injectBlockMapTerrainControl(wrap, map, themeId) {
   
   const ctrl = document.createElement('div');
   ctrl.className = 'block-map-terrain-ctrl';
-  ctrl.style.cssText = 'position:absolute;top:8px;right:8px;z-index:5;display:flex;flex-direction:column;gap:3px;background:rgba(255,255,255,.94);padding:5px;border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.18);font-size:.56rem';
+  // right:50px = à esquerda do zoom/"maior" (em right:8px cobria os botões +/−)
+  ctrl.style.cssText = 'position:absolute;top:8px;right:50px;z-index:5;display:flex;flex-direction:column;gap:3px;background:rgba(255,255,255,.94);padding:5px;border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.18);font-size:.56rem';
   ctrl.innerHTML = `
     <button class="bm-hillshade-btn" style="padding:4px 9px;border:1px solid var(--line2);background:white;border-radius:3px;cursor:pointer;font-size:.55rem;text-align:left" title="Sombreamento de relevo (hillshade) — indica visualmente as declividades">⛰️ Relevo sombreado</button>
     <button class="bm-3d-btn" style="padding:4px 9px;border:1px solid var(--line2);background:white;border-radius:3px;cursor:pointer;font-size:.55rem;text-align:left" title="Inclinar mapa em 3D para ver o relevo em perspectiva">📐 Inclinação 3D</button>
@@ -19092,6 +19345,7 @@ function _blockMapOnClick(wrap, map, themeId, e) {
     if(estilo){
       if(estilo.cor) props.corOverride = estilo.cor;
       if(estilo.raioPonto && estilo.raioPonto !== 7) props.raioOverride = estilo.raioPonto;
+      if(estilo.pictograma) props.pictograma = estilo.pictograma;   // "🙂 Pictograma" da barra
     }
     _mlFeatures[st.layerId].push({
       id, geom: { type:'Point', coordinates: coord }, props

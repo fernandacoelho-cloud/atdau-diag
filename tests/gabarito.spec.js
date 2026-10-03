@@ -76,16 +76,17 @@ test('Gabarito: adotar prédio real por clique, classificar por faixa, ocultar o
   expect(r2.legenda).toBe(true);
   expect(r2.persistiu).toBe(1);
 
-  // 3D: extrusão do gabarito entra junto com o Volume 3D
-  await page.evaluate(() => { const cb = document.querySelector('.edif-box .edif-3d'); cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); });
-  await page.waitForFunction(() => !!_mlMap.getLayer('gab-3d'), null, { timeout: 8000 });
-
-  // clicar de novo no mesmo prédio REEDITA (não duplica)
+  // clicar de novo no mesmo prédio REEDITA (não duplica). Antes do 3D: o 3D inclina o mapa
+  // (pitch) e o pixel salvo em `hit` passaria a apontar para outro prédio (teste intermitente).
   const r3 = await page.evaluate((p) => {
     _gabHandleClick({ point: { x: p.x, y: p.y }, lngLat: _mlMap.unproject([p.x, p.y]) });
     return { n: _mlFeatures['gabarito'].length, popup: !!document.getElementById('gab-pav') };
   }, { x: hit.x, y: hit.y });
   expect(r3).toEqual({ n: 1, popup: true });
+
+  // 3D: extrusão do gabarito entra junto com o Volume 3D
+  await page.evaluate(() => { const cb = document.querySelector('.edif-box .edif-3d'); cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); });
+  await page.waitForFunction(() => !!_mlMap.getLayer('gab-3d'), null, { timeout: 8000 });
 
   // remover devolve o original (feature-state limpo)
   const r4 = await page.evaluate(() => {

@@ -90,6 +90,7 @@ test.describe('P1 — clustering de patrimônio', () => {
 
     // cluster → zoom sobe (a partir de zoom baixo, delta de expansão é claro)
     await jumpEIdle(page, 10);
+    await page.locator('#ml-map').scrollIntoViewIfNeeded(); // a faixa de estado do desenho fica fixa acima do mapa
     const box = await page.locator('#ml-map').boundingBox();
     const cl = await page.evaluate(() => {
       // mirar o cluster de maior contagem (mais denso = expande bem acima de 10)
