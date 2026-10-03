@@ -77,32 +77,26 @@ test.describe('ATDAU DIAG — regressão das pendências', () => {
     expect(restantes).toBe(0);
   });
 
-  test('Mostrar mapa expande bloco recolhido e o canvas renderiza', async ({ page }) => {
+  // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap): o botão do bloco mostra o tema no mapa único (o canvas fica na coluna do mapa)
+  test('Ver no mapa (lente) mostra o tema no mapa único e o canvas renderiza', async ({ page }) => {
     await page.goto(DIAG_URL);
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1500);
     await page.locator('#nav-1').click();
     await page.waitForTimeout(700);
 
-    // O 2º bloco com mapa começa recolhido (só o 1º de cada painel abre sozinho)
-    const btn = page.locator('.block-map-toggle').nth(1);
-    const recolhidoAntes = await btn.evaluate(b => !b.closest('.block').classList.contains('block-open'));
-    expect(recolhidoAntes).toBe(true);
-
+    const btn = page.locator('#panel-1 .lente-btn').nth(1);
+    const tema = await btn.getAttribute('data-lente');
     await btn.scrollIntoViewIfNeeded();
     await btn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForFunction(t => { const w = document.getElementById('lente-wrap'); return w.dataset.theme === t && w.dataset.ready === '1'; }, tema, { timeout: 25000 });
     const estado = await btn.evaluate(b => {
-      const block = b.closest('.block');
-      const c = block.querySelector('.block-map canvas');
+      const c = document.querySelector('#lente-wrap .block-map canvas');
       const r = c ? c.getBoundingClientRect() : null;
-      return {
-        blocoAberto: block.classList.contains('block-open'),
-        canvasLargura: r ? Math.round(r.width) : 0,
-      };
+      return { foco: b.closest('.block').classList.contains('lente-foco'), ativo: b.classList.contains('ativa'), canvasLargura: r ? Math.round(r.width) : 0 };
     });
-    console.log('estado após Mostrar mapa:', estado);
-    expect(estado.blocoAberto).toBe(true);
+    expect(estado.foco).toBe(true);
+    expect(estado.ativo).toBe(true);
     expect(estado.canvasLargura).toBeGreaterThan(100);
   });
 
@@ -129,20 +123,19 @@ test.describe('ATDAU DIAG — regressão das pendências', () => {
     expect(depois.botao).toBe(false);
   });
 
-  test('Todo botão de mapa tem exatamente um wrap no bloco (sem órfãos)', async ({ page }) => {
+  // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap)
+  test('Todo botão de lente aponta para um tema válido e há um único mapa', async ({ page }) => {
     await page.goto(DIAG_URL);
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1500);
     const r = await page.evaluate(() => {
       const wraps = document.querySelectorAll('.block-map-wrap').length;
-      const botoes = document.querySelectorAll('.block-map-toggle').length;
-      const multi = [...document.querySelectorAll('.block')]
-        .filter(b => b.querySelectorAll('.block-map-wrap').length > 1)
-        .map(b => b.querySelector('.block-title')?.textContent?.trim());
-      return { wraps, botoes, multi };
+      const botoes = [...document.querySelectorAll('.block-map-toggle')];
+      const invalidos = botoes.filter(b => !b.dataset.lente || !ML_THEMES[b.dataset.lente]).map(b => b.closest('.block')?.querySelector('.block-title')?.textContent?.trim());
+      return { wraps, botoes: botoes.length, invalidos };
     });
-    console.log('wraps/botões:', r);
-    expect(r.wraps).toBe(r.botoes);
-    expect(r.multi).toEqual([]);
+    expect(r.wraps).toBe(1);
+    expect(r.botoes).toBe(27);
+    expect(r.invalidos).toEqual([]);
   });
 });

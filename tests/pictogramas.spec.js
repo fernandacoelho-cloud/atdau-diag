@@ -97,7 +97,7 @@ test('Pictogramas: escolher na BARRA de desenho (block-map e Mapa de Análise) e
   const btn = page.locator('#panel-1 .block-map-toggle').first();
   await btn.scrollIntoViewIfNeeded();
   await btn.click();
-  const wrap = page.locator('#panel-1 .block-map-wrap').first();
+  const wrap = page.locator('#lente-wrap');
   await wrap.locator('.bm-draw-btn').first().waitFor({ timeout: 25000 });
   await page.waitForTimeout(800);
   const lid = await wrap.evaluate(w => {
@@ -151,11 +151,11 @@ test('Pictogramas: ponto com pictograma aparece como ícone também no block-map
   const btn = page.locator('#panel-1 .block-map-toggle').first();
   await btn.scrollIntoViewIfNeeded();
   await btn.click();
-  const wrap = page.locator('#panel-1 .block-map-wrap').first();
+  const wrap = page.locator('#lente-wrap');
   await wrap.locator('.bm-draw-btn[data-geom="point"]').waitFor({ timeout: 25000 });
   await page.waitForTimeout(800);
   const ok = await page.evaluate(async () => {
-    const w = document.querySelector('#panel-1 .block-map-wrap');
+    const w = document.getElementById('lente-wrap');
     const lid = w.querySelector('.bm-layer-select').value;
     const m = Object.values(_blockMaps).find(m => m.getContainer().offsetWidth > 0);
     const c = m.getCenter();

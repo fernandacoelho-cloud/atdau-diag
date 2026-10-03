@@ -18,14 +18,15 @@ test('F2: Paisagem (panel-5, fundida com a antiga 04) tem o mapa de imageabilida
   await page.waitForTimeout(700);
 
   // o block-map de imageabilidade existe no painel Paisagem
-  const wrap = page.locator('#panel-5 .block-map-wrap[data-theme="lynch"]');
-  expect(await wrap.count()).toBe(1);
+  // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap): o bloco tem o botão da lente lynch
+  const wrap = page.locator('#lente-wrap');
+  expect(await page.locator('#panel-5 .lente-btn[data-lente="lynch"]').count()).toBe(1);
 
   // abrir o mapa pelo toggle do mesmo bloco ("Leitura da imagem urbana")
-  const toggle = page.locator('#panel-5 .block:has(.block-map-wrap[data-theme="lynch"]) .block-map-toggle');
+  const toggle = page.locator('#panel-5 .lente-btn[data-lente="lynch"]');
   expect(await toggle.count()).toBe(1);
   // na aba fundida o bloco fica no grupo "Paisagem e imagem urbana" (recolhido por padrão)
-  const grupo = page.locator('#panel-5 .cat-group:has(.block-map-wrap[data-theme="lynch"])');
+  const grupo = page.locator('#panel-5 .cat-group:has(.lente-btn[data-lente="lynch"])');
   await expect(grupo.locator('.cat-title')).toHaveText('Paisagem e imagem urbana');
   await grupo.locator(':scope > .cat-header').click();
   await toggle.scrollIntoViewIfNeeded();
@@ -33,11 +34,11 @@ test('F2: Paisagem (panel-5, fundida com a antiga 04) tem o mapa de imageabilida
 
   // o mapa inicializa (canvas do MapLibre) + ganha o botão "abrir maior" (F1)
   await page.waitForFunction(
-    () => { const w = document.querySelector('#panel-5 .block-map-wrap[data-theme="lynch"]'); return w && w.querySelector('.maplibregl-canvas'); },
+    () => { const w = document.getElementById('lente-wrap'); return w && w.querySelector('.maplibregl-canvas'); },
     null, { timeout: 25000 }
   );
   const info = await page.evaluate(() => {
-    const w = document.querySelector('#panel-5 .block-map-wrap[data-theme="lynch"]');
+    const w = document.getElementById('lente-wrap');
     return {
       temCanvas: !!w.querySelector('.maplibregl-canvas'),
       temExpand: !!w.querySelector('.ml-expand-btn'),

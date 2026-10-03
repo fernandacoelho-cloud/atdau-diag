@@ -35,7 +35,8 @@ async function abrirBlockMapMobil(page) {
   const btn = page.locator('.block-map-toggle').nth(idx);
   await btn.scrollIntoViewIfNeeded();
   await btn.click();
-  await page.waitForFunction((i) => { const w = document.querySelectorAll('.block-map-toggle')[i].closest('.block').querySelector('.block-map-wrap'); return w && w.querySelector('.bm-layers-ctrl'); }, idx, { timeout: 25000 });
+  // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap)
+  await page.waitForFunction(() => { const w = document.getElementById('lente-wrap'); return w && w.dataset.theme === 'mobil' && w.dataset.ready === '1' && w.querySelector('.bm-layers-ctrl'); }, null, { timeout: 25000 });
   await page.waitForTimeout(1500);
 }
 

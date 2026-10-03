@@ -45,7 +45,7 @@ test.describe('ATDAU DIAG — sistema básico', () => {
 
     console.log('Botoes/wraps:', stats);
     expect(stats.botoes).toBeGreaterThanOrEqual(20);
-    expect(stats.wraps).toBeGreaterThanOrEqual(stats.botoes);
+    expect(stats.wraps).toBe(1);   // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap)
   });
 
   test('Todas as camadas aceitam poligono', async ({ page }) => {

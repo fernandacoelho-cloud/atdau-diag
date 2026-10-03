@@ -56,7 +56,7 @@ test('Onda A: ordem nav, salvar vista, achados, zoneamento, link IDE', async ({ 
   // (4) tema 'zona' existe e a Legislacao tem um block-map de zoneamento
   const zona = await page.evaluate(() => ({
     tema: !!(typeof ML_THEMES !== 'undefined' && ML_THEMES.zona && ML_THEMES.zona.defaultLayer === 'zona'),
-    blockMap: !!document.querySelector('#panel-2 .block-map-wrap[data-theme="zona"]'),
+    blockMap: !!document.querySelector('#panel-2 .lente-btn[data-lente="zona"]'),   // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap)
   }));
   expect(zona.tema).toBe(true);
   expect(zona.blockMap).toBe(true);

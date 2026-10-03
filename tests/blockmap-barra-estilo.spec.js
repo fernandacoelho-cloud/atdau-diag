@@ -21,7 +21,7 @@ test('Block-map: barra fora do mapa, estilo tracejado/espessura aplicado ao pol�
   const btn = page.locator('#panel-1 .block-map-toggle').first();
   await btn.scrollIntoViewIfNeeded();
   await btn.click();
-  const wrap = page.locator('#panel-1 .block-map-wrap').first();
+  const wrap = page.locator('#lente-wrap');   // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap)
   await wrap.locator('.bm-draw-btn[data-geom="polygon"]').waitFor({ timeout: 25000 });
   await page.waitForTimeout(1000);
 
@@ -53,11 +53,12 @@ test('Block-map: barra fora do mapa, estilo tracejado/espessura aplicado ao pol�
   await page.waitForTimeout(400);
   const box = await canvas.boundingBox();
   const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
-  // inclui um vértice no terço superior do mapa (a faixa que a barra antiga cobria)
+  // inclui um vértice no terço superior do mapa (a faixa que a barra antiga cobria), abaixo dos controles
+  const yTopo = box.y + box.height * 0.3;
   await page.mouse.click(cx - 60, cy + 40);
   await page.mouse.click(cx + 60, cy + 40);
-  await page.mouse.click(cx, box.y + 30);
-  await page.mouse.dblclick(cx, box.y + 30);
+  await page.mouse.click(cx, yTopo);
+  await page.mouse.dblclick(cx, yTopo);
   await page.waitForFunction(({ l, a }) => (_mlFeatures[l] || []).length > a, { l: lid, a: antes }, { timeout: 8000 });
 
   const r = await page.evaluate(l => {

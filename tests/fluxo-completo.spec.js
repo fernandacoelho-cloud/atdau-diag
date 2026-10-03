@@ -137,7 +137,7 @@ test('C. Block-map: desenhar ponto/linha/polígono com o mouse e pôr pictograma
   const btn = page.locator('#panel-1 .block-map-toggle').first();
   await btn.scrollIntoViewIfNeeded();
   await btn.click();
-  const wrap = page.locator('#panel-1 .block-map-wrap').first();
+  const wrap = page.locator('#lente-wrap');   // 2026-10: os mini-mapas por bloco viraram lentes do mapa único (#lente-wrap)
   await wrap.locator('.bm-draw-btn').first().waitFor({ timeout: 25000 });
   await page.waitForTimeout(1000);
 
@@ -152,29 +152,30 @@ test('C. Block-map: desenhar ponto/linha/polígono com o mouse e pôr pictograma
   await canvas.evaluate(el => el.scrollIntoView({ block: 'center' }));
   await page.waitForTimeout(400);
   const box = await canvas.boundingBox();
-  const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+  // pontos em proporções do mapa (o mapa único é mais estreito que os antigos mini-mapas; evita os controles dos cantos)
+  const P = (fx, fy) => [box.x + box.width * fx, box.y + box.height * fy];
   const n0 = await page.evaluate(l => (_mlFeatures[l] || []).length, lid);
 
   await wrap.locator('.bm-draw-btn[data-geom="point"]').click();
-  await page.mouse.click(cx - 150, cy - 40);
+  await page.mouse.click(...P(0.25, 0.45));
   await pularVinculo(page);
   await wrap.locator('.bm-draw-btn[data-geom="polyline"]').click();
-  await page.mouse.click(cx - 60, cy + 50);
-  await page.mouse.click(cx + 40, cy + 50);
-  await page.mouse.dblclick(cx + 40, cy + 50);
+  await page.mouse.click(...P(0.3, 0.7));
+  await page.mouse.click(...P(0.55, 0.7));
+  await page.mouse.dblclick(...P(0.55, 0.7));
   await pularVinculo(page);
   await wrap.locator('.bm-draw-btn[data-geom="polygon"]').click();
-  await page.mouse.click(cx + 100, cy - 60);
-  await page.mouse.click(cx + 190, cy - 60);
-  await page.mouse.click(cx + 150, cy + 10);
-  await page.mouse.dblclick(cx + 150, cy + 10);
+  await page.mouse.click(...P(0.55, 0.35));
+  await page.mouse.click(...P(0.75, 0.35));
+  await page.mouse.click(...P(0.65, 0.5));
+  await page.mouse.dblclick(...P(0.65, 0.5));
   await pularVinculo(page);
   const tipos = await page.evaluate(l => _mlFeatures[l].slice(-3).map(f => f.geom.type), lid);
   expect(tipos).toEqual(['Point', 'LineString', 'Polygon']);
   expect(await page.evaluate(l => _mlFeatures[l].length, lid)).toBe(n0 + 3);
 
-  // editar o ponto no próprio block-map → pictograma ⚠️
-  await page.mouse.click(cx - 150, cy - 40);
+  // editar o ponto no próprio mapa → pictograma ⚠️
+  await page.mouse.click(...P(0.25, 0.45));
   const pop = page.locator('.maplibregl-popup.ml-popup');
   await pop.waitFor({ timeout: 5000 });
   await page.waitForTimeout(300); // wire-up dos botões do editor roda num setTimeout(50)

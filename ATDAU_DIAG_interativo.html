@@ -1060,6 +1060,29 @@ select option{background:var(--bg3)}
 }
 .block-map-toggle:hover { background:rgba(30,207,164,.16); border-color:rgba(30,207,164,.4) }
 .block-map-toggle.open { background:rgba(30,207,164,.18); border-color:var(--teal) }
+/* ─ Mapa do diagnóstico (lentes) ─ coluna fixa à direita nas abas de levantamento ─ */
+:root{--lente-w:clamp(380px,34vw,560px)}
+#lente-dock{display:none;position:fixed;top:50px;right:0;bottom:0;width:var(--lente-w);background:var(--bg1,#fff);border-left:1px solid var(--line2);box-shadow:-6px 0 18px rgba(0,0,0,.06);z-index:140;flex-direction:column}
+body.com-lente #lente-dock{display:flex}
+body.com-lente .main{padding-right:calc(var(--lente-w) + 28px)}
+.lente-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px 6px;border-bottom:1px solid var(--line)}
+.lente-tit{font-weight:800;font-size:.72rem;color:var(--t1);margin-right:auto}
+.lente-sel-lbl{display:flex;align-items:center;gap:5px;font-size:.6rem;color:var(--t3);font-weight:600}
+#lente-tema{font-size:.64rem;padding:4px 6px;border:1px solid var(--line2);border-radius:5px;background:#fff;max-width:200px}
+.lente-seguir{display:flex;align-items:center;gap:4px;font-size:.58rem;color:var(--t2);cursor:pointer}
+.lente-recolher{font-size:.58rem;padding:4px 8px;border:1px solid var(--line2);background:#fff;border-radius:5px;cursor:pointer;color:var(--t2)}
+.lente-bloco{font-size:.6rem;color:var(--t3);padding:5px 12px 0;min-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lente-wrap{display:flex;flex-direction:column;flex:1;min-height:0;margin:0;padding:8px 10px 10px;border-top:none}
+#lente-wrap .block-map{height:auto;flex:1;min-height:260px}
+#lente-aba{display:none;position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:140;writing-mode:vertical-rl;padding:12px 7px;border:1px solid var(--line2);border-right:none;border-radius:8px 0 0 8px;background:var(--bg1,#fff);color:var(--teal);font-weight:700;font-size:.64rem;cursor:pointer;box-shadow:-3px 0 10px rgba(0,0,0,.08)}
+body.lente-recolhida #lente-aba{display:block}
+.lente-btn.ativa{background:var(--teal)!important;color:#fff!important;border-color:var(--teal)!important}
+.block.lente-foco{box-shadow:0 0 0 2px rgba(31,111,92,.35)}
+@media (max-width:1100px){
+  #lente-dock{top:auto;left:0;width:auto;height:56vh;border-left:none;border-top:1px solid var(--line2);box-shadow:0 -6px 18px rgba(0,0,0,.08)}
+  body.com-lente .main{padding-right:16px;padding-bottom:calc(56vh + 40px)}
+  #lente-aba{top:auto;bottom:0;right:16px;transform:none;writing-mode:horizontal-tb;border:1px solid var(--line2);border-bottom:none;border-radius:8px 8px 0 0}
+}
 .block-map-wrap { 
   display:none; margin-top:14px; padding-top:12px; 
   border-top:1px dashed var(--line2)
@@ -1214,6 +1237,7 @@ body.tem-mapa-expandido { overflow:hidden; }
 .sec-nav-group:first-of-type{margin-top:0}
 .sec-nav-group::after{content:'';flex:1;height:1px;background:var(--line)}
 .sec-nav-item{flex-wrap:wrap}
+.nav-lbl{flex:1;min-width:0;white-space:normal;line-height:1.25}   /* rótulo longo quebra dentro de si, sem empurrar ponto e % para outra linha */
 /* barra de completude por aba (sob o rótulo) */
 .nav-prog{
   flex-basis:100%;height:3px;border-radius:2px;background:var(--line2);
@@ -1338,59 +1362,84 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 <div class="sec-nav">
   <div class="sec-nav-group">Preparação</div>
   <div class="sec-nav-item active" onclick="irPara(0,this)" id="nav-0">
-    <div class="dot"></div>Identificação<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">Identificação</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(11,this)" id="nav-11">
-    <div class="dot"></div>Viabilidade preliminar<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">Viabilidade preliminar</span><div class="nav-prog"><i></i></div>
   </div>
 
   <div class="sec-nav-group">Levantamento documental</div>
   <div class="sec-nav-item" onclick="irPara(14,this)" id="nav-14">
-    <div class="dot"></div>01 · Dinâmica Territorial<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">01 · Dinâmica Territorial</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(1,this)" id="nav-1">
-    <div class="dot"></div>02 · Contexto Urbano<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">02 · Contexto Urbano</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(2,this)" id="nav-2">
-    <div class="dot"></div>03 · Legislação<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">03 · Legislação</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(3,this)" id="nav-3">
-    <div class="dot"></div>04 · Condicionantes Ambientais<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">04 · Condicionantes Ambientais</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(5,this)" id="nav-5">
-    <div class="dot"></div>05 · Uso, Ocupação e Morfologia<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">05 · Uso, Ocupação e Morfologia</span><div class="nav-prog"><i></i></div>
   </div>
 
   <div class="sec-nav-group">Levantamento de campo</div>
   <div class="sec-nav-item" onclick="irPara(9,this)" id="nav-9">
-    <div class="dot"></div>06 · Instrumentos de Coleta<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">06 · Instrumentos de Coleta</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(15,this)" id="nav-15">
-    <div class="dot"></div>07 · Governança e Participação<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">07 · Governança e Participação</span><div class="nav-prog"><i></i></div>
   </div>
 
   <div class="sec-nav-group">Análise &amp; Síntese</div>
   <div class="sec-nav-item" onclick="irPara(6,this)" id="nav-6">
-    <div class="dot"></div>08 · Mapa de Análise<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">08 · Mapa de Análise</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(12,this)" id="nav-12">
-    <div class="dot"></div>09 · Obras Análogas<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">09 · Obras Análogas</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(7,this)" id="nav-7">
-    <div class="dot"></div>10 · Síntese SWOT<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">10 · Síntese SWOT</span><div class="nav-prog"><i></i></div>
   </div>
 
   <div class="sec-nav-group">Proposição &amp; Entrega</div>
   <div class="sec-nav-item" onclick="irPara(8,this)" id="nav-8">
-    <div class="dot"></div>11 · Diretrizes<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">11 · Diretrizes</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(13,this)" id="nav-13">
-    <div class="dot"></div>12 · Programação Arquitetônica<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">12 · Programação Arquitetônica</span><div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(10,this)" id="nav-10">
-    <div class="dot"></div>13 · Mapa-Síntese (Partido)<div class="nav-prog"><i></i></div>
+    <div class="dot"></div><span class="nav-lbl">13 · Mapa-Síntese (Partido)</span><div class="nav-prog"><i></i></div>
   </div>
 </div>
+
+
+<!-- ════════ MAPA DO DIAGNÓSTICO — mapa único com LENTES (Fase 3, 2026-10) ════════
+     Um mapa só para as abas de levantamento: cada tema é uma LENTE (camadas visíveis + camada de
+     desenho). Substitui os 27 mini-mapas por bloco e o "Mapeamento temático" — os desenhos sempre
+     foram os mesmos do Mapa de Análise; agora o cruzamento entre temas fica a um clique. -->
+<div id="lente-dock" aria-label="Mapa do diagnóstico">
+  <div class="lente-head">
+    <div class="lente-tit">🗺️ Mapa do diagnóstico</div>
+    <label class="lente-sel-lbl">Lente
+      <select id="lente-tema" onchange="lenteAplicar(this.value, null, true)" title="Tema mostrado no mapa: liga as camadas do tema e prepara o desenho nelas"></select>
+    </label>
+    <label class="lente-seguir" title="Ao rolar a aba, a lente acompanha o bloco que você está lendo (nunca durante um desenho)"><input type="checkbox" id="lente-seguir" onchange="lenteSeguir(this.checked)"> seguir a rolagem</label>
+    <button class="lente-recolher" onclick="lenteRecolher(true)" title="Recolher o mapa (reabre pela aba à direita)">⇥ recolher</button>
+  </div>
+  <div class="lente-bloco" id="lente-bloco"></div>
+  <div class="block-map-wrap open" id="lente-wrap" data-theme="">
+    <div class="block-map"></div>
+    <div class="block-map-info">
+      <span>Mesmos desenhos do Mapa de Análise · troque a lente para cruzar temas</span>
+      <a class="block-map-link" onclick="goToFullMap(document.getElementById('lente-wrap').dataset.theme)">✏️ Abrir no Mapa de Análise →</a>
+    </div>
+  </div>
+</div>
+<button id="lente-aba" onclick="lenteRecolher(false)" title="Abrir o mapa do diagnóstico">🗺️ Mapa do diagnóstico</button>
 
 <div class="main">
 
@@ -1997,7 +2046,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Localização -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">📍</span><span class="block-title">Localização e inserção urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-localizacao-e-insercao-urbana" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">📍</span><span class="block-title">Localização e inserção urbana</span><button class="block-map-toggle lente-btn" data-lente="viario" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-localizacao-e-insercao-urbana" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -2023,19 +2072,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </div>
 
     
-      <div class="block-map-wrap" data-theme="viario">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-          <a class="block-map-link" onclick="goToFullMap('viario')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Sistema Viário -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🛣️</span><span class="block-title">Sistema viário e mobilidade</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-sistema-viario-e-mobilidade" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🛣️</span><span class="block-title">Sistema viário e mobilidade</span><button class="block-map-toggle lente-btn" data-lente="viario" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-sistema-viario-e-mobilidade" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -2066,13 +2108,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="c-mob" placeholder="Pontos de ônibus, ciclovias, travessias seguras, barreiras físicas..."></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="viario">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🛣️ Visualização da hierarquia viária e mobilidade</span>
-          <a class="block-map-link" onclick="goToFullMap('viario')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-sistema-viario-e-mobilidade">
         <div class="photos-header">
@@ -2088,7 +2123,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Infraestrutura -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">⚡</span><span class="block-title">Infraestrutura urbana disponível</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-infraestrutura-urbana-disponivel" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">⚡</span><span class="block-title">Infraestrutura urbana disponível</span><button class="block-map-toggle lente-btn" data-lente="infra" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-infraestrutura-urbana-disponivel" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -2130,19 +2165,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </div>
 
     
-      <div class="block-map-wrap" data-theme="infra">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-          <a class="block-map-link" onclick="goToFullMap('infra')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Hidrografia e Vegetação -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🌿</span><span class="block-title">Hidrografia e vegetação</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-hidrografia-e-vegetacao" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🌿</span><span class="block-title">Hidrografia e vegetação</span><button class="block-map-toggle lente-btn" data-lente="app" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-hidrografia-e-vegetacao" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -2179,13 +2207,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="c-veg-obs" placeholder="Massas vegetadas no entorno, parques, praças com vegetação, espécies nativas..."></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="app">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>💧 Cursos d\'água, APPs e massas vegetais</span>
-          <a class="block-map-link" onclick="goToFullMap('app')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-hidrografia-e-vegetacao">
         <div class="photos-header">
@@ -2201,7 +2222,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Topografia - Escala do Entorno -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">⛰️</span><span class="block-title">Topografia — escala do entorno</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-topografia-escala-do-entorno" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">⛰️</span><span class="block-title">Topografia — escala do entorno</span><button class="block-map-toggle lente-btn" data-lente="topo" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-topografia-escala-do-entorno" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
         Morfologia regional que condiciona o microclima, a drenagem urbana, os eixos visuais e as relações de vizinhança.
@@ -2316,13 +2337,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <input type="text" id="a-topo-fonte-ent" placeholder="ex: SRTM 30m (INPE), TOPODATA (INPE), Google Earth, carta 1:50.000">
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="topo">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🌳 Praças, parques e equipamentos públicos</span>
-          <a class="block-map-link" onclick="goToFullMap('equip')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-topografia-escala-do-entorno">
         <div class="photos-header">
@@ -2338,7 +2352,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Acessibilidade urbana -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">♿</span><span class="block-title">Acessibilidade urbana (NBR 9050)</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-acessibilidade-urbana-nbr-9050" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">♿</span><span class="block-title">Acessibilidade urbana (NBR 9050)</span><button class="block-map-toggle lente-btn" data-lente="acess" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-acessibilidade-urbana-nbr-9050" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -2392,19 +2406,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </div>
 
     
-      <div class="block-map-wrap" data-theme="acess">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-          <a class="block-map-link" onclick="goToFullMap('acess')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Mobiliário urbano -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🪑</span><span class="block-title">Mobiliário urbano e infraestrutura de permanência</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-mobiliario-urbano-e-infraestrutura-de-pe" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🪑</span><span class="block-title">Mobiliário urbano e infraestrutura de permanência</span><button class="block-map-toggle lente-btn" data-lente="mobil" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-mobiliario-urbano-e-infraestrutura-de-pe" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -2457,19 +2464,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       </div>
 
     
-      <div class="block-map-wrap" data-theme="mobil">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-          <a class="block-map-link" onclick="goToFullMap('mobil')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Áreas livres e equipamentos públicos -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🏞️</span><span class="block-title">Áreas livres, verdes e equipamentos públicos</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-areas-livres-verdes-e-equipamentos-publi" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🏞️</span><span class="block-title">Áreas livres, verdes e equipamentos públicos</span><button class="block-map-toggle lente-btn" data-lente="livres" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-areas-livres-verdes-e-equipamentos-publi" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -2509,13 +2509,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="c-equip-obs" placeholder="Lacunas de equipamentos, qualidade dos espaços livres, distâncias relevantes, projetos previstos pela prefeitura..."></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="livres">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🏘️ Manchas de uso do solo no entorno</span>
-          <a class="block-map-link" onclick="goToFullMap('uso')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-areas-livres-verdes-e-equipamentos-publi">
         <div class="photos-header">
@@ -2532,7 +2525,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Áreas de Risco -->
   <div class="block" style="border-left:3px solid var(--red)">
-    <div class="block-header" style="background:rgba(224,80,106,.06)"><span class="block-icon">⚠️</span><span class="block-title" style="color:var(--red)">Áreas de risco — Inundação e Geológico</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header" style="background:rgba(224,80,106,.06)"><span class="block-icon">⚠️</span><span class="block-title" style="color:var(--red)">Áreas de risco — Inundação e Geológico</span><button class="block-map-toggle lente-btn" data-lente="risco" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
     <div class="block-body">
       <div class="info-box" style="border-color:rgba(224,80,106,.2);background:rgba(224,80,106,.04)">
         <strong style="color:var(--red)">Fontes oficiais de dados de risco</strong> — todas com download em shapefile/GeoJSON para abrir no QGIS ou importar no Pré-Projeto (botão "⬆ Importar shape" no mapa do bloco):
@@ -2628,19 +2621,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         </div>
       </div>
     
-      <div class="block-map-wrap" data-theme="risco">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-          <a class="block-map-link" onclick="goToFullMap('risco')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Histórico e Formação do Lugar -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">📜</span><span class="block-title">Histórico e formação do lugar</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-historico-e-formacao-do-lugar" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">📜</span><span class="block-title">Histórico e formação do lugar</span><button class="block-map-toggle lente-btn" data-lente="uso" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-historico-e-formacao-do-lugar" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">
         <strong>Referências:</strong> IBGE Cidades · Arquivo Público Municipal · IPEADATA · Registros IPHAN ·
@@ -2682,13 +2668,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="c-hist-narrativa" placeholder="Como a história do lugar condiciona o presente? Que memórias e significados o bairro carrega? Quais conflitos e continuidades históricas são relevantes para o projeto?"></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="uso">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🏙️ Tecido urbano — grain, cheios/vazios, articulações</span>
-          <a class="block-map-link" onclick="goToFullMap('uso')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-historico-e-formacao-do-lugar">
         <div class="photos-header">
@@ -2704,7 +2683,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Patrimônio Cultural -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Patrimônio cultural — material e imaterial</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-patrimonio-cultural-material-e-imaterial" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Patrimônio cultural — material e imaterial</span><button class="block-map-toggle lente-btn" data-lente="patrim" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-patrimonio-cultural-material-e-imaterial" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">
         <strong>Patrimônio cultural — dados georreferenciados oficiais para download.</strong> Use as fontes abaixo (verificadas em jun/2026) para baixar shapes/KML dos bens tombados e cruzá-los com o seu recorte no QGIS. O ideal é sobrepor as três esferas (federal, estadual, municipal) sobre a malha urbana do recorte.
@@ -2890,13 +2869,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         </div>
       </div>
 
-      <div class="block-map-wrap" data-theme="patrim">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🔄 Áreas degradadas, ZEIS, vazios e oportunidades de regeneração</span>
-          <a class="block-map-link" onclick="goToFullMap('risco')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-patrimonio-cultural-material-e-imaterial">
         <div class="photos-header">
@@ -2914,7 +2886,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Segurança Urbana -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🔒</span><span class="block-title">Segurança urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-seguranca-urbana-cpted-jacobs" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🔒</span><span class="block-title">Segurança urbana</span><button class="block-map-toggle lente-btn" data-lente="segur" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-seguranca-urbana-cpted-jacobs" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">
         Observe condições do ambiente físico associadas à sensação de segurança: vigilância natural (presença de pessoas e usos ativos no térreo), iluminação, manutenção, visibilidade e permeabilidade das fachadas para a rua.
@@ -2987,13 +2959,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="c-seg-obs" placeholder="Aspectos de design que comprometem a segurança: muros altos, fachadas cegas, iluminação deficiente, espaços confinados. Estratégias de mitigação identificadas..."></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="segur">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🌿 Vegetação, áreas verdes e conectividade ecológica</span>
-          <a class="block-map-link" onclick="goToFullMap('app')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-seguranca-urbana-cpted-jacobs">
         <div class="photos-header">
@@ -3014,7 +2979,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- MÓDULO: Requalificação Urbana -->
   <div class="block module-block" data-modules="requalif_urbana">
-    <div class="block-header"><span class="block-icon">🔄</span><span class="block-title">Diagnóstico de degradação e potencial de regeneração urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-diagnostico-de-degradacao-e-potencial-de" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🔄</span><span class="block-title">Diagnóstico de degradação e potencial de regeneração urbana</span><button class="block-map-toggle lente-btn" data-lente="app" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-diagnostico-de-degradacao-e-potencial-de" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">
         <strong>Ref.:</strong> Estatuto da Cidade (Lei 10.257/2001) — PEUC, Consórcio Imobiliário, OUC ·
@@ -3072,13 +3037,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="mod-req-estrategia" placeholder="Manutenção / remoção parcial / remoção total do existente? Habitação de interesse social? Misto (habitação + comércio + espaço público)? Phasing da intervenção? Qual o grau de participação comunitária previsto?"></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="app">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>💧 Cursos d\'água, drenagem e infraestrutura verde</span>
-          <a class="block-map-link" onclick="goToFullMap('app')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-diagnostico-de-degradacao-e-potencial-de">
         <div class="photos-header">
@@ -3094,7 +3052,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- MÓDULO: Parcelamento do Solo -->
   <div class="block module-block" data-modules="parcelamento">
-    <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Análise da gleba — parcelamento do solo urbano</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-analise-da-gleba-parcelamento-do-solo-ur" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Análise da gleba — parcelamento do solo urbano</span><button class="block-map-toggle lente-btn" data-lente="morfo" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-analise-da-gleba-parcelamento-do-solo-ur" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">
         <strong>Ref.:</strong> Lei 6.766/1979 (Parcelamento do Solo Urbano) ·
@@ -3182,13 +3140,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div class="form-field span2">
           <label>Órgãos de aprovação identificados e pendências</label>
           <textarea id="mod-parc-aprovacao" placeholder="ex: Prefeitura Municipal (PMA), COPAM/SEMAD (licença ambiental), IGAM (recursos hídricos), FUNAI/IPHAN (se aplicável), concessionárias (CEMIG, COPASA). Documentos preliminares necessários: matrícula atualizada, planta topográfica, consulta prévia de viabilidade urbanística."></textarea>
-        </div>
-      </div>
-      <div class="block-map-wrap" data-theme="morfo">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · análise do parcelamento e morfologia da gleba</span>
-          <a class="block-map-link" onclick="goToFullMap('morfo')">✏️ Abrir no Mapa de Análise →</a>
         </div>
       </div>
       <div class="block-photos-wrap" data-block-id="b-analise-da-gleba-parcelamento-do-solo-ur">
@@ -3432,29 +3383,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
   </div>
 
-  <!-- MAPA TEMÁTICO DO CONTEXTO -->
-  <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Mapeamento temático do entorno</span></div>
-    <div class="block-body">
-      <div class="info-box" style="margin-bottom:10px">
-        Mapeie cada dimensão do diagnóstico diretamente na base cartográfica. Dados compartilhados com o <strong>08 · Mapa de Análise</strong> — o que você desenhar aqui aparece lá, e vice-versa.
-      </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-        <button class="theme-tab active" id="ttab-viario"  onclick="mlSelectTheme('viario')">🛣️ Viário</button>
-        <button class="theme-tab"        id="ttab-uso"     onclick="mlSelectTheme('uso')">🏘️ Usos do Solo</button>
-        <button class="theme-tab"        id="ttab-equip"   onclick="mlSelectTheme('equip')">📍 Equipamentos</button>
-        <button class="theme-tab"        id="ttab-risco"   onclick="mlSelectTheme('risco')">⚠️ Risco</button>
-        <button class="theme-tab"        id="ttab-app"     onclick="mlSelectTheme('app')">🌿 Verde/APP</button>
-        <button class="theme-tab"        id="ttab-lynch"   onclick="mlSelectTheme('lynch')">👁️ Imageabilidade</button>
-      </div>
-      <div id="theme-desc" style="font-size:.67rem;color:var(--t2);margin-bottom:8px;padding:6px 10px;background:var(--bg4);border-radius:5px;border-left:3px solid var(--teal)">
-        Selecione um tema para ativar o modo de desenho correspondente.
-      </div>
-      <div id="theme-draw-ctrls" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;align-items:center"></div>
-      <div id="theme-map-hint" style="display:none;background:rgba(30,207,164,.1);border:1px solid rgba(30,207,164,.3);border-radius:6px;padding:6px 12px;font-size:.67rem;color:var(--teal);margin-bottom:6px"></div>
-      <div id="ml-theme-map" style="height:350px;border-radius:8px;overflow:hidden;border:1px solid var(--line2);background:var(--bg4)"></div>
-    </div>
-  </div>
 
   <!-- Achados -->
   <div class="block">
@@ -3894,16 +3822,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Mapa de zoneamento</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Mapa de zoneamento</span><button class="block-map-toggle lente-btn" data-lente="zona" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
     <div class="block-body">
       <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Importe o <strong>shape oficial do zoneamento</strong> (Plano Diretor / Lei de Uso e Ocupação) ou desenhe as zonas. Cada arquivo importado vira uma <strong>camada própria</strong> — ative/desative camadas, salve a vista como imagem (com norte, escala e legenda) e leve-a ao relatório. Fontes: portal da prefeitura (busque "geoprocessamento", "dados abertos" ou "IDE municipal") e o <a href="https://visualizador.idesisema.meioambiente.mg.gov.br/" target="_blank" rel="noopener" style="color:var(--teal)">Geovisualizador IDE-Sisema (MG)</a>.</div>
-      <div class="block-map-wrap" data-theme="zona">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa de zoneamento · use os botões de desenho ou <strong>⬆ Importar</strong> para carregar o shape</span>
-          <a class="block-map-link" onclick="goToFullMap('zona')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -4566,7 +4487,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- MÓDULO: Projeto Paisagístico — Inventário de Vegetação -->
   <div class="block module-block" data-modules="paisagistico urbano">
-    <div class="block-header"><span class="block-icon">🌿</span><span class="block-title">Inventário de vegetação e ecologia</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header"><span class="block-icon">🌿</span><span class="block-title">Inventário de vegetação e ecologia</span><button class="block-map-toggle lente-btn" data-lente="app" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
     <div class="block-body">
       <div class="info-box">Ref: Lei 12.651/2012 (Código Florestal) · SNUC (Lei 9.985/2000) · NBR 9992 (transplante de árvores) · Conselho Nacional do Meio Ambiente (CONAMA Res. 369).</div>
       <div class="form-grid">
@@ -4606,19 +4527,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="mod-veg-manejo" placeholder="Quais espécimes serão preservados in situ? Quais podem ser transplantados? Quais necessitam de laudo técnico para retirada? Qual o protocolo de compensação florestal exigido?"></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="app">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · vegetação, arborização, APP</span>
-          <a class="block-map-link" onclick="goToFullMap('app')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- MÓDULO: Paisagístico — Sistema de Águas -->
   <div class="block module-block" data-modules="paisagistico urbano plano_urbano">
-    <div class="block-header"><span class="block-icon">💧</span><span class="block-title">Sistema hídrico e ciclo da água</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header"><span class="block-icon">💧</span><span class="block-title">Sistema hídrico e ciclo da água</span><button class="block-map-toggle lente-btn" data-lente="agua" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
     <div class="block-body">
       <div class="info-box">Ref: PNRH (Lei 9.433/1997) · Drenagem urbana sustentável (SMAC) · NBR 10844 (instalações pluviais) · Infraestrutura verde e LID (Low Impact Development).</div>
       <div class="form-grid">
@@ -4649,13 +4563,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <div class="form-field span2">
           <label>Estratégias de infraestrutura verde propostas</label>
           <textarea id="mod-agua-estrategia" placeholder="ex: jardim de chuva, biovaletas, teto verde, pavimento permeável, trincheira de infiltração, wetland construído, cisterna subterrânea, redesenho de calha pluvial..."></textarea>
-        </div>
-      </div>
-      <div class="block-map-wrap" data-theme="agua">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · drenagem, cursos d'água, infraestrutura azul</span>
-          <a class="block-map-link" onclick="goToFullMap('agua')">✏️ Abrir no Mapa de Análise →</a>
         </div>
       </div>
     </div>
@@ -4703,7 +4610,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Uso e Ocupação do Solo -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Uso e ocupação do solo no entorno</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-uso-e-ocupacao-do-solo-no-entorno" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Uso e ocupação do solo no entorno</span><button class="block-map-toggle lente-btn" data-lente="uso" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-uso-e-ocupacao-do-solo-no-entorno" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -4736,13 +4643,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="c-usos-geral" placeholder="Tendências de transformação de uso, retrofit, gentrificação, pressão de adensamento..."></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="uso">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🔒 Pontos de iluminação, atividade noturna, conflitos</span>
-          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-uso-e-ocupacao-do-solo-no-entorno">
         <div class="photos-header">
@@ -4757,7 +4657,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Levantamento de usos do solo</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Levantamento de usos do solo</span><button class="block-map-toggle lente-btn" data-lente="uso" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
         <strong>Diagnóstico do mais amplo ao mais específico.</strong> Use o seletor de raio para definir a escala da análise. Recomendação: comece em <strong>1.000m</strong> (vizinhança ampliada), refine em <strong>500m</strong> (vizinhança próxima) e detalhe em <strong>200m</strong> (entorno imediato).
@@ -4787,13 +4687,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div class="form-field" style="margin-top:12px">
         <label>Observações sobre usos do solo e serviços</label>
         <textarea id="o-usos-obs" placeholder="Lacunas de serviços identificadas, usos conflitantes, mix interessante, equipamentos distantes..."></textarea>
-      </div>
-      <div class="block-map-wrap" data-theme="uso">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · usos do solo no entorno</span>
-          <a class="block-map-link" onclick="goToFullMap('uso')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
       </div>
     </div>
   </div>
@@ -4832,7 +4725,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Grandes Equipamentos e Empreendimentos de Impacto -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🏭</span><span class="block-title">Grandes equipamentos urbanos e empreendimentos de impacto</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-grandes-equipamentos-urbanos-e-empreendi" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🏭</span><span class="block-title">Grandes equipamentos urbanos e empreendimentos de impacto</span><button class="block-map-toggle lente-btn" data-lente="impacto" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-grandes-equipamentos-urbanos-e-empreendi" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">
         <strong>Referências:</strong> EIV — Estudo de Impacto de Vizinhança (Estatuto da Cidade, arts. 36–37) ·
@@ -4962,13 +4855,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="c-impacto-obs" placeholder="Descreva as relações de impacto identificadas: fluxos de veículos pesados, odores, ruídos, vibrações, riscos ambientais, externalidades econômicas (valorização/desvalorização). Indicar se o projeto exige EIV pelo Plano Diretor municipal."></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="impacto">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>📐 Gleba, vias projetadas, APP e áreas públicas</span>
-          <a class="block-map-link" onclick="goToFullMap('uso')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
 
       <div class="block-photos-wrap" data-block-id="b-grandes-equipamentos-urbanos-e-empreendi">
         <div class="photos-header">
@@ -4983,7 +4869,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
   <div class="block">
-    <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Análise de Morfologia Urbana — 6 dimensões</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header"><span class="block-icon">🏛️</span><span class="block-title">Análise de Morfologia Urbana — 6 dimensões</span><button class="block-map-toggle lente-btn" data-lente="morfo" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
     <div class="block-body">
       <div class="info-box" style="margin-bottom:12px">
         <strong>Análise morfológica do tecido urbano</strong> baseada em Costa & Netto (2017), Lamas (2017) e Conzen (1960). A morfologia urbana é o estudo da <strong>forma física</strong> da cidade — articulando traçado, parcelamento, edificações e usos. Aqui você caracteriza o tecido em 6 dimensões fundamentais; cada uma alimenta o Mapa de Análise (aba 08) com sua camada própria.
@@ -5279,19 +5165,12 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
       <div class="info-box" style="font-size:.6rem;background:rgba(31,111,92,.05)">
         💡 <strong>Próximo passo:</strong> as 6 dimensões alimentam o <strong>Mapa de Análise (aba 08)</strong>, onde você poderá desenhar shapes, importar camadas e filtrar quais dimensões habilitar na composição final.
       </div>
-      <div class="block-map-wrap" data-theme="morfo">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · 6 dimensões da morfologia urbana</span>
-          <a class="block-map-link" onclick="goToFullMap('morfo')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- MÓDULO: Projeto Urbano / Plano Urbano -->
   <div class="block module-block" data-modules="urbano plano_urbano">
-    <div class="block-header"><span class="block-icon">🏙️</span><span class="block-title">Morfologia e estrutura urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-morfologia-e-estrutura-urbana" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-header"><span class="block-icon">🏙️</span><span class="block-title">Morfologia e estrutura urbana</span><button class="block-map-toggle lente-btn" data-lente="morfo" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button><button class="block-photos-toggle" data-block-id="b-morfologia-e-estrutura-urbana" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="info-box">Análise do <strong>tecido urbano</strong> na escala de quadras e setores.
       </div>
@@ -5317,13 +5196,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="mod-urb-desc" placeholder="Grain do tecido, hierarquia de espaços, pontos de ruptura, vazios ativadores, barreiras físicas/psicológicas ao uso, eixos de animação..."></textarea>
         </div>
       </div>
-      <div class="block-map-wrap" data-theme="morfo">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · tecido urbano, quadras e setores</span>
-          <a class="block-map-link" onclick="goToFullMap('morfo')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
       <div class="block-photos-wrap" data-block-id="b-morfologia-e-estrutura-urbana">
         <div class="photos-header">
           <button class="add-photo-btn" onclick="triggerPhotoInput('b-morfologia-e-estrutura-urbana')">+ Adicionar fotos</button>
@@ -5342,7 +5214,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <!-- Imageabilidade -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Leitura da imagem urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Leitura da imagem urbana</span><button class="block-map-toggle lente-btn" data-lente="lynch" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
@@ -5367,13 +5239,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         </div>
       </div>
       <div class="info-box" style="margin:10px 0 8px;font-size:.62rem">Além de descrever acima, <strong>espacialize</strong> a imagem urbana no mapa — marcos, nós, caminhos, bordas e bairros (Lynch). As feições aparecem no <strong>Mapa de Análise (aba 08)</strong>.</div>
-      <div class="block-map-wrap" data-theme="lynch">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · pontos (marcos/nós), linhas (caminhos/bordas) e polígonos (bairros)</span>
-          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -6472,16 +6337,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <div class="subpanel" id="sp-9-abertos">
 <div class="block">
-  <div class="block-header"><span class="block-icon">🌳</span><span class="block-title">Mapa da escala — Áreas livres</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+  <div class="block-header"><span class="block-icon">🌳</span><span class="block-title">Mapa da escala — Áreas livres</span><button class="block-map-toggle lente-btn" data-lente="livres" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
   <div class="block-body">
     <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize os instrumentos da escala de espaços abertos (parques, praças, áreas verdes). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
-    <div class="block-map-wrap" data-theme="livres">
-      <div class="block-map"></div>
-      <div class="block-map-info">
-        <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-        <a class="block-map-link" onclick="goToFullMap('livres')">✏️ Abrir no Mapa de Análise →</a>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -6738,16 +6596,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <div class="subpanel" id="sp-9-lote">
 <div class="block">
-  <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Mapa da escala — Lote/Terreno</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+  <div class="block-header"><span class="block-icon">📐</span><span class="block-title">Mapa da escala — Lote/Terreno</span><button class="block-map-toggle lente-btn" data-lente="morfo" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
   <div class="block-body">
     <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize os achados da escala do lote (visita técnica, dimensões, recuos). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
-    <div class="block-map-wrap" data-theme="morfo">
-      <div class="block-map"></div>
-      <div class="block-map-info">
-        <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-        <a class="block-map-link" onclick="goToFullMap('morfo')">✏️ Abrir no Mapa de Análise →</a>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -7138,16 +6989,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <div class="subpanel" id="sp-9-transv">
 <div class="block">
-  <div class="block-header"><span class="block-icon">👁️</span><span class="block-title">Mapa da escala — Transversais</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+  <div class="block-header"><span class="block-icon">👁️</span><span class="block-title">Mapa da escala — Transversais</span><button class="block-map-toggle lente-btn" data-lente="lynch" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
   <div class="block-body">
     <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Espacialize instrumentos transversais (Lynch, Gehl, mapa mental, observação sistemática). As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
-    <div class="block-map-wrap" data-theme="lynch">
-      <div class="block-map"></div>
-      <div class="block-map-info">
-        <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-        <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Abrir no Mapa de Análise →</a>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -7536,16 +7380,9 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
   <div class="subpanel" id="sp-9-sintese">
 <div class="block">
-  <div class="block-header"><span class="block-icon">✏️</span><span class="block-title">Mapa da escala — Síntese</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+  <div class="block-header"><span class="block-icon">✏️</span><span class="block-title">Mapa da escala — Síntese</span><button class="block-map-toggle lente-btn" data-lente="notas" onclick="lenteVer(this)" title="Mostra este tema no mapa do diagnóstico (coluna à direita): liga as camadas do tema e prepara o desenho nelas">🗺️ Ver no mapa</button></div>
   <div class="block-body">
     <div class="info-box" style="margin-bottom:8px;font-size:.62rem">Mapa síntese da matriz de descoberta — cruzamentos qualitativos. As feições desenhadas aqui aparecem no <strong>Mapa de Análise (aba 08)</strong> para composição final.</div>
-    <div class="block-map-wrap" data-theme="notas">
-      <div class="block-map"></div>
-      <div class="block-map-info">
-        <span>Mapa temático · clique nos botões de desenho para adicionar pontos/linhas/polígonos</span>
-        <a class="block-map-link" onclick="goToFullMap('notas')">✏️ Abrir no Mapa de Análise →</a>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -8920,7 +8757,6 @@ function setupCategorias(){
     {id:'insercao', icon:'📍', title:'Inserção e Infraestrutura', match:['localização e inserção','sistema viário','infraestrutura urbana','análise da gleba','levantamento da edificação'], open:true},
     {id:'fisico', icon:'🌿', title:'Meio Físico e Ambiente', match:['hidrografia','topografia','áreas de risco']},
     {id:'publico', icon:'♿', title:'Qualidade do Espaço Público', match:['acessibilidade urbana','mobiliário urbano','áreas livres','segurança urbana']},
-    {id:'uso', icon:'🗺️', title:'Mapeamento temático do entorno', match:['mapeamento temático']},   // uso/morfologia/GEU foram para a aba 05
     {id:'historia', icon:'📜', title:'História e Patrimônio', match:['histórico e formação','patrimônio cultural','pesquisa histórica','mapeamento de patologias']},
     {id:'sintese', icon:'📌', title:'Síntese do Levantamento', match:['achados do levantamento','diagnóstico de degradação']},
   ], 'insercao');
@@ -9001,6 +8837,7 @@ function irPara(n, el){
   if(n===0 && typeof renderValores==='function') renderValores();
   if(typeof renderFluxoTrilho==='function') renderFluxoTrilho(n);
   _persistRestaurar();   // campos gerados depois do carregamento
+  if(typeof _lenteAtualizarPainel==='function') _lenteAtualizarPainel(n);
   if(typeof atualizarCompletude==='function') atualizarCompletude();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -18399,7 +18236,8 @@ const ML_THEMES = {
 function mlInitThemeMap() {
   if (_mlThemeMap) return;
   const el = document.getElementById('ml-theme-map');
-  if (!el || typeof maplibregl === 'undefined') { setTimeout(mlInitThemeMap, 500); return; }
+  if (!el) return;   // bloco removido em 2026-10 (substituído pelo mapa do diagnóstico com lentes)
+  if (typeof maplibregl === 'undefined') { setTimeout(mlInitThemeMap, 500); return; }
 
   _mlThemeMap = new maplibregl.Map({
     container:'ml-theme-map',
@@ -19014,7 +18852,106 @@ function restoreModule() {
 
 const _blockMaps = {}; // wrapId → MapLibre instance
 
+
+// ══════════════════════════════════════════════════
+// MAPA DO DIAGNÓSTICO — mapa único com LENTES (Fase 3 · fatia 2, 2026-10)
+// Uma lente = um tema de ML_THEMES (camadas visíveis + camada de desenho). O mapa é um só
+// (#lente-wrap, criado por initBlockMap na 1ª vez); trocar de lente refaz só os controles.
+// ══════════════════════════════════════════════════
+const LENTE_PANEIS = [1,2,3,5,9];
+let _lentePinY = null;   // posição de rolagem da última escolha manual de lente
+function _lenteEstado(){ if(!state.lente || typeof state.lente!=='object') state.lente={tema:'viario', seguir:true, recolhida:false}; return state.lente; }
+function _lenteWrap(){ return document.getElementById('lente-wrap'); }
+function _lenteMapa(){ return (typeof _blockMaps!=='undefined') ? _blockMaps['lente-wrap'] : null; }
+function _lenteDesenhando(){ const w=_lenteWrap(); const st=w&&_blockMapDrawState.get(w); return !!(st && st.mode==='drawing'); }
+function _lentePainelAtivo(){ const p=document.querySelector('.panel.active'); const m=p&&/^panel-(\d+)$/.exec(p.id); return m?+m[1]:-1; }
+function _lenteMontarSelect(){
+  const sel=document.getElementById('lente-tema'); if(!sel || sel.options.length) return;
+  sel.innerHTML=Object.entries(ML_THEMES).map(([id,t])=>`<option value="${id}">${escHtml(t.label||t.name||id)}</option>`).join('');
+}
+// botão "🗺️ Ver no mapa" de um bloco
+function lenteVer(btn){
+  const t=btn && btn.dataset.lente; if(!t) return;
+  const L=_lenteEstado();
+  if(L.recolhida){ L.recolhida=false; _lenteAtualizarPainel(); }
+  lenteAplicar(t, btn.closest('.block'), true);
+}
+function lenteAplicar(tema, bloco, manual){
+  const w=_lenteWrap(); if(!w || !ML_THEMES[tema]) return;
+  const L=_lenteEstado();
+  if(manual && _lenteDesenhando()) _blockMapCancelDraw(w, _lenteMapa());
+  if(manual) _lentePinY = window.scrollY;   // escolha explícita: "seguir a rolagem" respeita até a pessoa se afastar
+  L.tema=tema;
+  _lenteMontarSelect();
+  const sel=document.getElementById('lente-tema'); if(sel) sel.value=tema;
+  const b=bloco || [...document.querySelectorAll('.panel.active .lente-btn')].map(x=>x.closest('.block')).find(x=>x && x.querySelector('.lente-btn').dataset.lente===tema);
+  const lb=document.getElementById('lente-bloco');
+  if(lb) lb.textContent = b ? ('↳ '+(b.querySelector('.block-title')?.textContent||'').trim()) : '';
+  document.querySelectorAll('.lente-btn').forEach(x=>x.classList.toggle('ativa', x.dataset.lente===tema && (!b || x.closest('.block')===b)));
+  document.querySelectorAll('.block.lente-foco').forEach(x=>x.classList.remove('lente-foco'));
+  if(b) b.classList.add('lente-foco');
+  const mudou = w.dataset.theme !== tema;
+  w.dataset.theme = tema;
+  const map=_lenteMapa();
+  if(!map){ initBlockMap(w); w.dataset.init='1'; }
+  else if(mudou) _lenteTrocarControles(map, w, tema);
+  if(manual && typeof autoSave==='function') autoSave();
+}
+function _lenteTrocarControles(map, w, tema){
+  if(!w.dataset.ready) return;   // camadas ainda carregando: o onReady de initBlockMap refaz com a lente atual
+  w.__tCtrl = tema;
+  _blockMapCancelDraw(w, map);
+  ['.block-map-draw-ctrl','.block-map-style-panel','.block-map-picto-panel','.block-map-hint','.block-map-active-hint','.bm-layers-ctrl','.block-map-basemap-ctrl','.block-map-terrain-ctrl']
+    .forEach(sel=>w.querySelectorAll(sel).forEach(el=>el.remove()));
+  _blockMapApplyTheme(map, tema);
+  _injectBlockMapLayerToggle(w, map, tema);
+  _injectBlockMapBasemapControl(w, map, tema);
+  const pref=(state.block_map_basemap && state.block_map_basemap[tema]) || 'positron';
+  mlSetBasemapOnMap(map, pref);
+  _injectBlockMapDrawTools(w, map, tema);
+  if(['topo','risco','agua'].includes(tema)) _injectBlockMapTerrainControl(w, map, tema);
+}
+function lenteRecolher(sim){ _lenteEstado().recolhida=!!sim; _lenteAtualizarPainel(); if(typeof autoSave==='function') autoSave(); }
+function lenteSeguir(sim){ _lenteEstado().seguir=!!sim; if(typeof autoSave==='function') autoSave(); if(sim) _lenteSeguirAgora(); }
+// mostra/esconde o mapa conforme a aba (só nas de levantamento que têm temas mapeáveis)
+function _lenteAtualizarPainel(n){
+  if(n==null) n=_lentePainelAtivo();
+  if(n!==_lenteAtualizarPainel._ultimo){ _lentePinY=null; _lenteAtualizarPainel._ultimo=n; }
+  const L=_lenteEstado();
+  const ativo=LENTE_PANEIS.includes(n);
+  document.body.classList.toggle('com-lente', ativo && !L.recolhida);
+  document.body.classList.toggle('lente-recolhida', ativo && !!L.recolhida);
+  const cb=document.getElementById('lente-seguir'); if(cb) cb.checked=!!L.seguir;
+  if(ativo && !L.recolhida){
+    // 1ª lente da aba: a do bloco seguido (se houver) ou a última usada
+    if(!_lenteSeguirAgora()) lenteAplicar(L.tema);
+    const map=_lenteMapa(); setTimeout(()=>{ try{ map && map.resize(); }catch(e){} }, 80);
+  }
+}
+// lente acompanha o bloco em leitura: o último bloco com "Ver no mapa" cujo topo passou de 40% da tela
+function _lenteSeguirAgora(){
+  const L=_lenteEstado(); if(!L.seguir || L.recolhida || !document.body.classList.contains('com-lente')) return false;
+  if(_lenteDesenhando()) return false;
+  if(_lentePinY!=null){ if(Math.abs(window.scrollY-_lentePinY) < window.innerHeight*0.6) return false; _lentePinY=null; }
+  const dock=document.getElementById('lente-dock'); if(dock && dock.matches(':hover')) return false;
+  const lim=window.innerHeight*0.4;
+  // no fim da página os últimos blocos nunca chegam à linha de leitura: vale o último visível
+  const noFim = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 4);
+  let alvo=null;
+  document.querySelectorAll('.panel.active .lente-btn').forEach(btn=>{
+    const b=btn.closest('.block'); if(!b || b.offsetParent===null) return;
+    const r=b.getBoundingClientRect(); if(r.bottom<80) return;
+    if(r.top<=lim || (noFim && r.top<window.innerHeight-60)) alvo={btn,b}; else if(!alvo) alvo={btn,b};
+  });
+  if(!alvo) return false;
+  if(alvo.btn.dataset.lente!==L.tema || !document.querySelector('.block.lente-foco')) lenteAplicar(alvo.btn.dataset.lente, alvo.b, false);
+  return true;
+}
+let _lenteRaf=0;
+window.addEventListener('scroll', ()=>{ if(_lenteRaf) return; _lenteRaf=requestAnimationFrame(()=>{ _lenteRaf=0; _lenteSeguirAgora(); }); }, {passive:true});
+
 function toggleBlockMap(btn) {
+  if (btn && btn.dataset && btn.dataset.lente) return lenteVer(btn);   // 2026-10: mini-mapas viraram lentes do mapa único
   const block = btn.closest('.block');
   const wrap = block && block.querySelector('.block-map-wrap');
   if (!wrap) return;
@@ -19058,18 +18995,26 @@ function initBlockMap(wrap) {
     // onReady só dispara quando as camadas existem de fato (mlAddSourcesOnMap
     // adia enquanto o style está mutando) — aí aplicamos o whitelist do tema.
     mlAddSourcesOnMap(map, 0, ()=>{
-      _blockMapApplyTheme(map, themeId);
-      _injectBlockMapLayerToggle(wrap, map, themeId);
+      const tAtual = wrap.dataset.theme || themeId;   // a lente pode ter mudado enquanto carregava
+      wrap.dataset.ready = '1';   // camadas criadas: a lente já pode trocar os controles
+      if (wrap.__tCtrl && wrap.__tCtrl !== tAtual && typeof _lenteTrocarControles === 'function') {
+        _lenteTrocarControles(map, wrap, tAtual);   // controles do 'load' ficaram com a lente antiga
+      } else {
+        _blockMapApplyTheme(map, tAtual);
+        _injectBlockMapLayerToggle(wrap, map, tAtual);
+      }
     });
     if (_mlLotCoord) map.setCenter(_mlLotCoord);
     // Controles auxiliares
-    _injectBlockMapBasemapControl(wrap, map, themeId);
-    _injectBlockMapDrawTools(wrap, map, themeId);
+    const tLoad = wrap.dataset.theme || themeId;
+    wrap.__tCtrl = tLoad;       // tema dos controles montados agora
+    _injectBlockMapBasemapControl(wrap, map, tLoad);
+    _injectBlockMapDrawTools(wrap, map, tLoad);
     _injectBlockMapEdifControl(wrap, map);   // prédios reais (OSM + Open Buildings, 2D/3D) tb nos block-maps
 
     // Controle especial para temas que se beneficiam de relevo (topo, risco, agua)
-    if(['topo','risco','agua'].includes(themeId)){
-      _injectBlockMapTerrainControl(wrap, map, themeId);
+    if(['topo','risco','agua'].includes(tLoad)){
+      _injectBlockMapTerrainControl(wrap, map, tLoad);
     }
     // Padronização: seta de norte (escala já existe; "Camadas" faz de legenda;
     // "💾 Salvar vista" fica na barra de desenho, via _injectBlockMapDrawTools)
@@ -19079,8 +19024,8 @@ function initBlockMap(wrap) {
   });
 
   // Handler de clique para desenho dentro do block-map
-  map.on('click', e => _blockMapOnClick(wrap, map, themeId, e));
-  map.on('dblclick', e => _blockMapOnDblClick(wrap, map, themeId, e));
+  map.on('click', e => _blockMapOnClick(wrap, map, wrap.dataset.theme || themeId, e));
+  map.on('dblclick', e => _blockMapOnDblClick(wrap, map, wrap.dataset.theme || themeId, e));
   map.on('contextmenu', e => { e.preventDefault(); _blockMapCancelDraw(wrap, map); });
 
   _blockMaps[wrap.id || ('bm_'+themeId+'_'+Date.now())] = map;
@@ -19276,6 +19221,7 @@ function _injectBlockMapDrawTools(wrap, map, themeId) {
     picPanel.style.top = (ctrl.offsetTop + ctrl.offsetHeight + 6) + 'px';
     _picMontarSeletor(picPanel, () => ws.estilo.pictograma || '', v => {
       ws.estilo.pictograma = v; _picBtnLabel();
+      picPanel.style.display = 'none';   // escolheu: fecha o painel (ele cobria o mapa) — o próximo passo é clicar no mapa
       // escolher pictograma já prepara o desenho de PONTO (o caminho mais curto até o mapa)
       const bp = ctrl.querySelector('.bm-draw-btn[data-geom="point"]');
       const st = _blockMapDrawState.get(wrap);
