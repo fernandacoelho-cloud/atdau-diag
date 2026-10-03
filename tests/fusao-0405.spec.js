@@ -23,7 +23,7 @@ test('Estrutura: aba 05 fundida, sem temas repetidos, menu numerado e selos de f
       p4: !!document.getElementById('panel-4'), nav4: !!document.getElementById('nav-4'),
       p5: titulos('panel-5'), p1: titulos('panel-1'),
       grupos5: [...document.querySelectorAll('#panel-5 .cat-group .cat-title')].map(t => t.textContent),
-      nav: [...document.querySelectorAll('.sec-nav-item')].map(n => n.textContent.trim().replace(/\s*\d+%$/, '')),   // ignora o % de completude
+      nav: [...document.querySelectorAll('.sec-nav-item')].map(n => n.querySelector('.nav-lbl').textContent.trim()),   // só o rótulo (sem o progresso)
       sumiram: todos.filter(t => /^(Morfologia urbana do entorno|Altimetria e densidade construtiva|Achados — Paisagem e Morfologia)/.test(t)),
       selos: [...document.querySelectorAll('#panel-5 .selo-fonte')].map(s => s.textContent),
       seloRisco: document.querySelector('#panel-1 .block-title') && [...document.querySelectorAll('#panel-1 .block')].find(b => /Áreas de risco/.test(b.textContent))?.querySelector('.selo-fonte')?.textContent,

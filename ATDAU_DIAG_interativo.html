@@ -111,7 +111,8 @@ body{
 .sec-nav::-webkit-scrollbar{width:4px}
 .sec-nav::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
 .sec-nav::before{
-  content:'Painéis';
+  content:'Painéis · % = quanto de cada aba já foi feito';
+  white-space:normal;line-height:1.4;text-transform:none;letter-spacing:.02em;
   display:block;
   font-family:var(--mono);
   font-size:.55rem;
@@ -12746,6 +12747,84 @@ function _atribuirComentIds(){ // ids de comentário p/ blocos de conteúdo sem 
   });
 }
 
+// ── O que conta no progresso (2026-10) ─────────────────────────────────
+// Antes, num projeto VAZIO: Diretrizes 50% (seletores de prioridade do "adicionar diretriz"),
+// Governança 60% (formulário de novo ator), Legislação 34% (valores de referência do Código de
+// Obras), Mapa de Análise 33% (seletor de mapa de fundo). Agora:
+//  - controles que não são resposta (mapas, "adicionar item", filtros de download) não contam;
+//  - valor que já vem pronto no HTML só conta se o aluno mexeu no campo (state.campos_tocados).
+const _RX_NAO_RESPOSTA = /^(inp-|pri-dir-|gov-(nome|tipo|interesse|influencia)$|prog-(item|area|obs)$|an-|ref-crit-input$|equipe-novo|v-terr-|ma-edit-|ml-|mlalg-|sidra-(coropleta|uf-download|setores|agregados|busca|limite)|cat-(recorte|uf|ano)$|photo-input-|patrim-csv-|lente-|(stationary-mapping|mapa-comportamental)-(custom-|perfil-count))/;
+function _naoEhResposta(el){ return _RX_NAO_RESPOSTA.test(el.id||'') || !!el.closest('.add-finding'); }
+function _valorPadrao(el){
+  if(el.tagName==='SELECT'){ const o=[...el.options].find(o=>o.defaultSelected) || el.options[0]; return o ? o.value : ''; }
+  return el.defaultValue || '';
+}
+function _campoRespondido(el){
+  const v=String(el.value||'').trim(); if(!v) return false;
+  if(v!==String(_valorPadrao(el)).trim()) return true;
+  return !!(state.campos_tocados && state.campos_tocados[el.id]);   // confirmou o valor que já vinha
+}
+document.addEventListener('change', e=>{
+  const el=e.target; if(!el || !el.id || !el.closest || !el.closest('.panel')) return;
+  if(!/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName) || _naoEhResposta(el)) return;
+  if(!state.campos_tocados || typeof state.campos_tocados!=='object') state.campos_tocados={};
+  if(!state.campos_tocados[el.id]){ state.campos_tocados[el.id]=1; if(typeof autoSave==='function') autoSave(); }
+}, true);
+
+// Abas cujos dados vivem em LISTAS: o progresso é por marcos do método, não por campos soltos.
+function _marcosAba(n){
+  const tem = v => (v||'').toString().trim()!=='';
+  if(n===8){   // Diretrizes: quantas das 10 dimensões têm ao menos uma diretriz
+    const comAuto=new Set();
+    if(typeof getAllFindings==='function' && typeof dirDetectCats==='function')
+      getAllFindings().filter(f=>f.class).forEach(f=>dirDetectCats(f.text).forEach(c=>comAuto.add(c||({F:'conforto',P:'visual',O:'urbana',A:'sustentabilidade'}[f.class]))));
+    const ok=(typeof DIR_CATS!=='undefined'?DIR_CATS:[]).filter(c=>comAuto.has(c.id) || ((state.dir_cats||{})[c.id]||[]).length).length;
+    return {ok, total:10, dica:'dimensões com diretriz'};
+  }
+  if(n===13){  // Programação: 6 etapas do método
+    const pm=state.prog_matriz||{};
+    const m=[(state.programa||[]).length>0, (state.prog_ambientes||[]).some(a=>a&&tem(a.nome)), Object.keys(state.prog_relacoes||{}).length>0,
+             Object.values(pm).some(tem), [state['prog-req-func'],state['prog-req-desemp'],state['prog-req-econ']].some(tem), tem(state['prog-enunciado'])];
+    return {ok:m.filter(Boolean).length, total:6, dica:'etapas: lista, dimensionado, relações, matriz 5×4, requisitos, enunciado'};
+  }
+  if(n===12){  // Obras Análogas: 4 etapas
+    const ob=state.analogas||[];
+    const m=[ob.length>0, ob.some(o=>Object.values(o.analise||{}).some(v=>v&&(tem(v.desc)||v.diagrama||tem(v.esboco)))),
+             (state.ref_criterios||[]).length>0, ((state.findings||{})[12]||[]).length>0];
+    return {ok:m.filter(Boolean).length, total:4, dica:'etapas: obra cadastrada, análise gráfica, critérios, achados'};
+  }
+  if(n===15){  // Governança: atores + campos de participação
+    const p=document.getElementById('panel-15'); const c=p?_contarPreenchimento(p):{ok:0,total:0};
+    return {ok:c.ok+((state.gov_stakeholders||[]).length?1:0), total:c.total+1, dica:'atores mapeados + participação'};
+  }
+  if(n===7){   // Síntese SWOT: 3 marcos (achados classificados, espacialização, leitura interpretativa)
+    const cls=(typeof getAllFindings==='function'?getAllFindings():[]).filter(f=>f.class).length;
+    const esp=((typeof _mlFeatures!=='undefined'&&_mlFeatures.swot)||[]).length;
+    const nar=document.getElementById('swot-narrativa'); const txt=(nar&&nar.value)||state.swot_narrativa||'';
+    const m=[cls>0, esp>0, tem(txt)];
+    return {ok:m.filter(Boolean).length, total:3, dica:'etapas: achados classificados, espacialização no mapa, leitura interpretativa'};
+  }
+  if(n===6){   // Mapa de Análise: quantas feições há nas camadas (não é um formulário)
+    const nf=(typeof _mlFeatures!=='undefined')?Object.values(_mlFeatures).reduce((t,a)=>t+(a||[]).length,0):0;
+    return {ok:0,total:0,texto: nf?(nf+(nf===1?' feição':' feições')):'—', dica:'feições desenhadas ou importadas'};
+  }
+  if(n===9){   // Instrumentos: quantas fichas foram iniciadas (cada uma é opcional)
+    const p=document.getElementById('panel-9'); if(!p) return null;
+    const cards=[...p.querySelectorAll('.instr-card')];
+    const ini=cards.filter(c=>[...c.querySelectorAll('input[id],select[id],textarea[id]')].some(el=>!/^(file|hidden|button|checkbox|radio|range|color)$/.test(el.type) && !_naoEhResposta(el) && _campoRespondido(el))).length;
+    return {ok:ini, total:cards.length, texto: ini ? (ini+(ini===1?' ficha':' fichas')) : '—', dica:'fichas de instrumentos iniciadas (cada uma é opcional)'};
+  }
+  return null;
+}
+// progresso de uma aba: {ok,total,pct,texto?,dica?} — usado no menu e no painel de entrada
+function _progressoAba(n){
+  const mk=_marcosAba(n);
+  if(mk) return Object.assign({pct: mk.total?Math.round(mk.ok/mk.total*100):0}, mk);
+  const panel=document.getElementById('panel-'+n); if(!panel) return {ok:0,total:0,pct:0};
+  const {total,ok}=_contarPreenchimento(panel);
+  return {ok,total,pct: total?Math.round(ok/total*100):0, dica:'campos preenchidos'};
+}
+
 function _contarPreenchimento(scope){
   // Núcleo do diagnóstico = campos estruturados (ratings, selects, inputs, números).
   // Observações/notas (textareas e ids obs/nota/coment) são opcionais: ficam fora
@@ -12767,7 +12846,8 @@ function _contarPreenchimento(scope){
   };
   scope.querySelectorAll('input, select, textarea').forEach(el=>{
     if(!ehCampo(el)) return;
-    const preenchido = String(el.value||'').trim()!=='';
+    if(_naoEhResposta(el)) return;
+    const preenchido = _campoRespondido(el);
     const ehNota = el.tagName==='TEXTAREA' || /obs|nota|coment/i.test(el.id||'');
     if(ehNota){ txtTotal++; if(preenchido) txtOk++; }
     else {
@@ -12862,17 +12942,20 @@ function atualizarCompletude(){
   document.querySelectorAll('.panel').forEach(panel=>{
     const m=/^panel-(\d+)$/.exec(panel.id); if(!m) return;
     const nav=document.getElementById('nav-'+m[1]); if(!nav) return;
-    const {total,ok}=_contarPreenchimento(panel);
+    const pa=_progressoAba(+m[1]);
+    const {total,ok,pct}=pa;
     const prog=nav.querySelector('.nav-prog'); const bar=prog && prog.querySelector('i');
-    const pct = total? Math.round(ok/total*100) : 0;
     if(bar) bar.style.width = pct+'%';
     if(prog) prog.classList.toggle('empty', ok===0);
     let pctEl=nav.querySelector('.nav-pct');
     if(total){
       if(!pctEl){ pctEl=document.createElement('span'); pctEl.className='nav-pct'; if(prog) prog.before(pctEl); else nav.appendChild(pctEl); }
-      pctEl.textContent=pct+'%';
+      pctEl.textContent = pa.texto || (pct+'%');
+    } else if(pa.texto){
+      if(!pctEl){ pctEl=document.createElement('span'); pctEl.className='nav-pct'; if(prog) prog.before(pctEl); else nav.appendChild(pctEl); }
+      pctEl.textContent = pa.texto;
     } else if(pctEl){ pctEl.remove(); }
-    nav.title=`${ok} de ${total} campos preenchidos`;
+    nav.title = total ? `${pa.texto ? pa.texto : pct+'% desta aba'} · ${ok} de ${total} ${pa.dica||'campos preenchidos'}` : (pa.texto ? `${pa.texto} · ${pa.dica||''}` : '');
   });
   // ajuste fino por campo (Fatia 2): injeta os toggles uma vez e reflete o estado
   if(typeof _escopoMarcarCampos==='function'){ _escopoMarcarCampos(); _escopoAplicarCampos(); }
@@ -12907,29 +12990,30 @@ function renderDashboard(){
   const p0=document.getElementById('panel-0');
   if(!p0 || !p0.classList.contains('active')) return;
 
-  let gOk=0, gTot=0;
+  // médias SIMPLES dos % das abas (cada aba pesa igual; abas só informativas — mapa, fichas
+  // opcionais de instrumentos — ficam fora da média)
+  let gOk=0, gTot=0; const gPcts=[];
   const fasesHtml = DASH_FASES.map(f=>{
-    let fOk=0, fTot=0;
+    let fOk=0, fTot=0; const fPcts=[];
     const abas = f.panels.map(n=>{
       if(DASH_MAP_PANELS.has(n)){
         const nf = (typeof _mlFeatures!=='undefined') ? Object.values(_mlFeatures).reduce((s,a)=>s+(a||[]).length,0) : 0;
         const txt = n===6 ? (nf ? nf+' feições' : '🗺 mapa') : '🗺 mapa';
         return `<div class="dash-aba is-map" onclick="irPara(${n},document.getElementById('nav-${n}'))"><span class="dash-aba-nome">${_navLabel(n)}</span><span class="dash-aba-pct">${txt}</span></div>`;
       }
-      const panel=document.getElementById('panel-'+n);
-      const {total,ok}= panel ? _contarPreenchimento(panel) : {total:0,ok:0};
+      const pa=_progressoAba(n); const {total,ok,pct}=pa;
       fOk+=ok; fTot+=total; gOk+=ok; gTot+=total;
-      const pct = total? Math.round(ok/total*100):0;
-      return `<div class="dash-aba" onclick="irPara(${n},document.getElementById('nav-${n}'))" title="${ok} de ${total} campos essenciais">
+      if(total && !pa.texto){ fPcts.push(pct); gPcts.push(pct); }
+      return `<div class="dash-aba" onclick="irPara(${n},document.getElementById('nav-${n}'))" title="${pct}% desta aba (${ok} de ${total})">
         <span class="dash-aba-bar"><i style="width:${pct}%"></i></span>
         <span class="dash-aba-nome">${_navLabel(n)}</span>
-        <span class="dash-aba-pct">${total?pct+'%':'—'}</span></div>`;
+        <span class="dash-aba-pct">${pa.texto || (total?pct+'%':'—')}</span></div>`;
     }).join('');
-    const fpct = fTot? Math.round(fOk/fTot*100):0;
-    return `<div class="dash-phase"><div class="dash-phase-head"><span>${f.nome}</span><span>${fTot?fpct+'%':''}</span></div>${abas}</div>`;
+    const fpct = fPcts.length ? Math.round(fPcts.reduce((a,b)=>a+b,0)/fPcts.length) : 0;
+    return `<div class="dash-phase"><div class="dash-phase-head"><span>${f.nome}</span><span>${fPcts.length?fpct+'%':''}</span></div>${abas}</div>`;
   }).join('');
 
-  const gpct = gTot? Math.round(gOk/gTot*100):0;
+  const gpct = gPcts.length ? Math.round(gPcts.reduce((a,b)=>a+b,0)/gPcts.length) : 0;
   const R=26, C=2*Math.PI*R, off=C*(1-gpct/100);
   host.innerHTML = `
     <div class="dash">
@@ -12942,7 +13026,7 @@ function renderDashboard(){
         </svg>
         <div class="dash-top-txt">
           <div class="dash-title">📊 Progresso do diagnóstico</div>
-          <div class="dash-sub">${gOk} de ${gTot} campos essenciais preenchidos · clique numa etapa para ir até ela</div>
+          <div class="dash-sub">média do que já foi feito em cada aba (${gPcts.length} abas) · clique numa etapa para ir até ela</div>
         </div>
       </div>
       <div class="dash-phases">${fasesHtml}</div>
