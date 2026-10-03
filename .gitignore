@@ -29,3 +29,4 @@ npm-debug.log*
 # Estados temporários do Claude Code
 .claude/
 deploy/
+.netlify/
