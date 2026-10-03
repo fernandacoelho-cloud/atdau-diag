@@ -1376,13 +1376,13 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="sec-nav-item" onclick="irPara(7,this)" id="nav-7">
     <div class="dot"></div>Síntese SWOT<div class="nav-prog"><i></i></div>
   </div>
-  <div class="sec-nav-item" onclick="irPara(13,this)" id="nav-13">
-    <div class="dot"></div>Programação Arquitetônica<div class="nav-prog"><i></i></div>
-  </div>
 
   <div class="sec-nav-group">Proposição &amp; Entrega</div>
   <div class="sec-nav-item" onclick="irPara(8,this)" id="nav-8">
     <div class="dot"></div>Diretrizes<div class="nav-prog"><i></i></div>
+  </div>
+  <div class="sec-nav-item" onclick="irPara(13,this)" id="nav-13">
+    <div class="dot"></div>Programação Arquitetônica<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(10,this)" id="nav-10">
     <div class="dot"></div>Mapa-Síntese<div class="nav-prog"><i></i></div>
@@ -12811,8 +12811,8 @@ const DASH_FASES = [
   { nome:'Preparação',           panels:[0,11] },
   { nome:'Diagnóstico',          panels:[1,2,3,4,5,14] },
   { nome:'Coleta & Referências', panels:[9,12,15] },
-  { nome:'Análise & Síntese',    panels:[6,7,13] },
-  { nome:'Proposição & Entrega', panels:[8,10] },
+  { nome:'Análise & Síntese',    panels:[6,7] },
+  { nome:'Proposição & Entrega', panels:[8,13,10] },
 ];
 const DASH_MAP_PANELS = new Set([6,10]);
 
