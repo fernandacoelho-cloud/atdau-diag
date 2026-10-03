@@ -11,35 +11,31 @@ const DIAG_URL = 'file://' + path.resolve(__dirname, '..', 'ATDAU_DIAG_interativ
 
 const clickFb = async (loc) => { try { await loc.click({ timeout: 4000 }); } catch { await loc.evaluate(el => el.click()); } };
 
-// Abre o primeiro block-map de um panel simples (sem módulos/subabas) e devolve
-// o índice do wrap + a camada destino.
+// Abre a lente do primeiro bloco com "Ver no mapa" de um panel simples (sem módulos/subabas) e devolve
+// o índice do wrap + a camada destino. 2026-10: os mini-mapas viraram lentes do mapa único
+// (#lente-wrap, o único .block-map-wrap da página) — o índice devolvido é sempre 0.
 async function abrirPrimeiroBlockMap(page) {
   const t = (await page.evaluate(() =>
-    [...document.querySelectorAll('.block-map-toggle')].map((b, i) => {
-      const block = b.closest('.block');
-      const wraps = [...block.querySelectorAll('.block-map-wrap')];
-      return {
-        i, panel: (b.closest('.panel') || {}).id || null,
-        primeiroWrapIdx: [...document.querySelectorAll('.block-map-wrap')].indexOf(wraps[0]),
-        modules: (b.closest('.module-block') || { dataset: {} }).dataset.modules || null,
-        subId: (b.closest('.subpanel') || {}).id || null,
-      };
-    }).filter(t => !t.modules && !t.subId && /^panel-(\d+)$/.test(t.panel || ''))
+    [...document.querySelectorAll('.lente-btn')].map((b, i) => ({
+      i, panel: (b.closest('.panel') || {}).id || null,
+      modules: (b.closest('.module-block') || { dataset: {} }).dataset.modules || null,
+      subId: (b.closest('.subpanel') || {}).id || null,
+    })).filter(t => !t.modules && !t.subId && /^panel-(\d+)$/.test(t.panel || ''))
   ))[0];
   const n = /^panel-(\d+)$/.exec(t.panel)[1];
   await page.evaluate(nn => document.querySelector('#nav-' + nn)?.click(), n);
   await page.waitForTimeout(800);
-  const btn = page.locator('.block-map-toggle').nth(t.i);
+  const btn = page.locator('.lente-btn').nth(t.i);
   try { await btn.scrollIntoViewIfNeeded({ timeout: 4000 }); } catch { await btn.evaluate(el => el.scrollIntoView({ block: 'center' })); }
-  const aberto = await page.evaluate(wi => document.querySelectorAll('.block-map-wrap')[wi].classList.contains('open'), t.primeiroWrapIdx);
-  if (!aberto) await clickFb(btn);
-  await page.waitForFunction(wi => {
-    const wr = document.querySelectorAll('.block-map-wrap')[wi];
-    return wr && wr.querySelector('.block-map-draw-ctrl .bm-draw-btn');
-  }, t.primeiroWrapIdx, { timeout: 25000 });
+  await clickFb(btn);
+  const tema = await btn.getAttribute('data-lente');
+  await page.waitForFunction(tema => {
+    const wr = document.getElementById('lente-wrap');
+    return wr && wr.dataset.theme === tema && wr.dataset.ready === '1' && wr.querySelector('.block-map-draw-ctrl .bm-draw-btn');
+  }, tema, { timeout: 25000 });
   await page.waitForTimeout(700);
-  const lid = await page.evaluate(wi => document.querySelectorAll('.block-map-wrap')[wi].querySelector('.bm-layer-select').value, t.primeiroWrapIdx);
-  return { wrapIdx: t.primeiroWrapIdx, lid };
+  const lid = await page.evaluate(() => document.getElementById('lente-wrap').querySelector('.bm-layer-select').value);
+  return { wrapIdx: 0, lid };
 }
 
 test('Block-map: clicar numa feição desenhada abre o editor (cor + excluir) e salva', async ({ page }) => {

@@ -7693,7 +7693,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <strong style="font-size:.72rem;color:var(--gold)">📤 Como abrir no Pré-Projeto</strong>
           <ol style="margin:6px 0 0;padding-left:18px;font-size:.62rem;color:var(--t2);line-height:1.55">
             <li>No Mapa de Análise (aba 08), botão <em>"⬆ Importar"</em> aceita .geojson e .zip (shape)</li>
-            <li>Em cada bloco temático com "📍 Mostrar mapa", a barra inferior tem <em>"⬆ Importar shape/GeoJSON"</em></li>
+            <li>No mapa do diagnóstico (coluna à direita das abas de levantamento — botão "🗺️ Ver no mapa" de cada bloco), a barra de desenho tem <em>"⬆ Importar shape/GeoJSON"</em></li>
             <li>O arquivo importado vira camada no Pré-Projeto e aparece no Mapa-Síntese</li>
           </ol>
         </div>
@@ -8655,7 +8655,7 @@ function renderTutorial(){
     <div style="font-size:.7rem;font-weight:800;color:var(--t1);margin-bottom:8px">⚡ Início rápido — 5 passos</div>
     <ol style="margin:0;padding-left:18px;font-size:.62rem;line-height:1.6;color:var(--t2)">
       <li><strong>Identifique</strong> o projeto e <strong>defina o Escopo</strong> (aba Identificação).</li>
-      <li><strong>Diagnostique</strong> o território, do maior para o menor (Dinâmica Territorial, Contexto, Legislação, Ambientais, Uso/Ocupação/Morfologia) — desenhe nos mini-mapas e registre <strong>achados</strong>.</li>
+      <li><strong>Diagnostique</strong> o território, do maior para o menor (Dinâmica Territorial, Contexto, Legislação, Ambientais, Uso/Ocupação/Morfologia) — desenhe no mapa do diagnóstico ("🗺️ Ver no mapa" em cada bloco) e registre <strong>achados</strong>.</li>
       <li><strong>Colete em campo</strong> (Instrumentos: Gehl, Lynch, Rheingantz…) e reúna <strong>referências</strong>.</li>
       <li><strong>Analise e sintetize</strong>: junte as camadas no <strong>Mapa de Análise</strong> e classifique os achados na <strong>Síntese SWOT</strong>.</li>
       <li><strong>Proponha</strong>: escreva as <strong>Diretrizes</strong>, espacialize no <strong>Mapa-Síntese</strong> e gere o <strong>Relatório PDF</strong>.</li>
@@ -18918,7 +18918,9 @@ function _lenteAtualizarPainel(n){
   if(n==null) n=_lentePainelAtivo();
   if(n!==_lenteAtualizarPainel._ultimo){ _lentePinY=null; _lenteAtualizarPainel._ultimo=n; }
   const L=_lenteEstado();
-  const ativo=LENTE_PANEIS.includes(n);
+  // na aba 06 (Instrumentos) só as subabas "Mapa da escala" têm lentes: nas outras (Mapa Anotado,
+  // fichas) a coluna do mapa só roubaria espaço
+  const ativo = LENTE_PANEIS.includes(n) && (n!==9 || !!document.querySelector('#panel-9 .subpanel.active .lente-btn'));
   document.body.classList.toggle('com-lente', ativo && !L.recolhida);
   document.body.classList.toggle('lente-recolhida', ativo && !!L.recolhida);
   const cb=document.getElementById('lente-seguir'); if(cb) cb.checked=!!L.seguir;
@@ -23263,6 +23265,7 @@ function subTab(panelNum, tabId, btn) {
   btn.classList.add('active');
   const sp = document.getElementById('sp-' + panelNum + '-' + tabId);
   if (sp) sp.classList.add('active');
+  if (typeof _lenteAtualizarPainel === 'function') _lenteAtualizarPainel(panelNum);   // coluna do mapa só em subaba com lentes
   // Reiniciar mapa anotado se entrou em Urbana
   if (panelNum === 9 && tabId === 'urbana') {
     setTimeout(() => {
