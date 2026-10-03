@@ -37,7 +37,7 @@ test('A. Percorre todas as abas na ordem do menu sem erro de JS', async ({ page 
   const erros = vigiarErros(page);
   await abrir(page);
   const ids = await page.evaluate(() => [...document.querySelectorAll('.sec-nav-item')].map(n => n.id));
-  expect(ids.length).toBeGreaterThanOrEqual(16);
+  expect(ids.length).toBeGreaterThanOrEqual(15);   // 04 fundida na 05 (2026-10)
   const vazios = [];
   for (const id of ids) {
     await page.locator('#' + id).click();

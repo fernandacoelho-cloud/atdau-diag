@@ -9,31 +9,35 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIAG_URL = 'file://' + path.resolve(__dirname, '..', 'ATDAU_DIAG_interativo.html').replace(/\\/g, '/');
 
-test('F2: Paisagem (panel-4) tem o mapa de imageabilidade (tema lynch) e ele inicializa', async ({ page }) => {
+test('F2: Paisagem (panel-5, fundida com a antiga 04) tem o mapa de imageabilidade (tema lynch) e ele inicializa', async ({ page }) => {
   await page.goto(DIAG_URL);
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(1200);
 
-  await page.locator('#nav-4').click();
+  await page.locator('#nav-5').click();
   await page.waitForTimeout(700);
 
   // o block-map de imageabilidade existe no painel Paisagem
-  const wrap = page.locator('#panel-4 .block-map-wrap[data-theme="lynch"]');
+  const wrap = page.locator('#panel-5 .block-map-wrap[data-theme="lynch"]');
   expect(await wrap.count()).toBe(1);
 
   // abrir o mapa pelo toggle do mesmo bloco ("Leitura da imagem urbana")
-  const toggle = page.locator('#panel-4 .block:has(.block-map-wrap[data-theme="lynch"]) .block-map-toggle');
+  const toggle = page.locator('#panel-5 .block:has(.block-map-wrap[data-theme="lynch"]) .block-map-toggle');
   expect(await toggle.count()).toBe(1);
+  // na aba fundida o bloco fica no grupo "Paisagem e imagem urbana" (recolhido por padrão)
+  const grupo = page.locator('#panel-5 .cat-group:has(.block-map-wrap[data-theme="lynch"])');
+  await expect(grupo.locator('.cat-title')).toHaveText('Paisagem e imagem urbana');
+  await grupo.locator(':scope > .cat-header').click();
   await toggle.scrollIntoViewIfNeeded();
   await toggle.click();
 
   // o mapa inicializa (canvas do MapLibre) + ganha o botão "abrir maior" (F1)
   await page.waitForFunction(
-    () => { const w = document.querySelector('#panel-4 .block-map-wrap[data-theme="lynch"]'); return w && w.querySelector('.maplibregl-canvas'); },
+    () => { const w = document.querySelector('#panel-5 .block-map-wrap[data-theme="lynch"]'); return w && w.querySelector('.maplibregl-canvas'); },
     null, { timeout: 25000 }
   );
   const info = await page.evaluate(() => {
-    const w = document.querySelector('#panel-4 .block-map-wrap[data-theme="lynch"]');
+    const w = document.querySelector('#panel-5 .block-map-wrap[data-theme="lynch"]');
     return {
       temCanvas: !!w.querySelector('.maplibregl-canvas'),
       temExpand: !!w.querySelector('.ml-expand-btn'),

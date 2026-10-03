@@ -19,12 +19,13 @@ test.describe('P1 — navegação agrupada e completude', () => {
   test('Nav tem 5 grupos de fase e mantém a ordem/ids dos itens', async ({ page }) => {
     await abrir(page);
     const grupos = await page.evaluate(() => [...document.querySelectorAll('.sec-nav-group')].map(g => g.textContent.trim()));
-    expect(grupos).toEqual(['Preparação', 'Diagnóstico', 'Coleta & Referências', 'Análise & Síntese', 'Proposição & Entrega']);
+    expect(grupos).toEqual(['Preparação', 'Levantamento documental', 'Levantamento de campo', 'Análise & Síntese', 'Proposição & Entrega']);
 
     // ids preservados (testes e navegação dependem deles) e na ordem do fluxo
-    // (Mapa-Síntese nav-10 movido para o FINAL, depois das Diretrizes nav-8)
+    // 2026-10 (Fase 3): aba 04 fundida na 05; Dinâmica (nav-14) abre o levantamento documental;
+    // Mapa de Análise (nav-6) antes das Obras Análogas (nav-12); Mapa-Síntese (nav-10) no final
     const ids = await page.evaluate(() => [...document.querySelectorAll('.sec-nav-item')].map(n => n.id));
-    expect(ids).toEqual(['nav-0','nav-11','nav-1','nav-2','nav-3','nav-4','nav-5','nav-14','nav-9','nav-12','nav-15','nav-6','nav-7','nav-8','nav-13','nav-10']);
+    expect(ids).toEqual(['nav-0','nav-11','nav-14','nav-1','nav-2','nav-3','nav-5','nav-9','nav-15','nav-6','nav-12','nav-7','nav-8','nav-13','nav-10']);
 
     // cada item ainda navega para o painel certo (amostra)
     await page.locator('#nav-1').click();

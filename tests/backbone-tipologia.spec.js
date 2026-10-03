@@ -33,7 +33,7 @@ test('Backbone: tipologia "rota" mostra percurso e aplica ao Escopo os painéis 
   expect(card.temCAU).toBe(true);
   expect(card.temBotao).toBe(true);
 
-  // aplicar o percurso → rota prioriza os painéis [1,4,9,12,14]; os demais saem do escopo
+  // aplicar o percurso → rota prioriza os painéis [1,5,9,12,14] (a 04 foi fundida na 05); os demais saem do escopo
   const esc = await page.evaluate(() => {
     aplicarPercursoTipologia();
     _escopoAtribuirIds();
@@ -41,17 +41,16 @@ test('Backbone: tipologia "rota" mostra percurso e aplica ao Escopo os painéis 
       const bl = document.querySelector('#panel-' + n + ' .block[data-escopo-id]');
       return bl ? escopoBlocoAtivo(bl.getAttribute('data-escopo-id')) : null;
     };
-    return { p1: at(1), p4: at(4), p9: at(9), p12: at(12), p14: at(14), p2: at(2), p3: at(3), p5: at(5), p11: at(11) };
+    return { p1: at(1), p5: at(5), p9: at(9), p12: at(12), p14: at(14), p2: at(2), p3: at(3), p11: at(11) };
   });
   // dentro do percurso
   expect(esc.p1).toBe(true);
-  expect(esc.p4).toBe(true);
+  expect(esc.p5).toBe(true);
   expect(esc.p9).toBe(true);
   expect(esc.p12).toBe(true);
   expect(esc.p14).toBe(true);
   // fora do percurso
   expect(esc.p2).toBe(false);
   expect(esc.p3).toBe(false);
-  expect(esc.p5).toBe(false);
   expect(esc.p11).toBe(false);
 });

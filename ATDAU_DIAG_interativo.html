@@ -236,6 +236,10 @@ body{
 .block-body{padding:14px 16px;display:none}
 .block.block-open > .block-body{display:block}
 /* ── Categorias colapsáveis (agrupam blocos) ── */
+.selo-fonte{font-size:.5rem;font-weight:600;margin-left:8px;padding:1px 6px;border-radius:8px;white-space:nowrap;vertical-align:middle;letter-spacing:.01em}
+.selo-doc{background:rgba(79,155,248,.1);color:#2f6fbf}
+.selo-campo{background:rgba(34,196,116,.12);color:#1f8d49}
+.selo-ambos{background:rgba(201,146,59,.12);color:#9a6b1e}
 .cat-group{margin:0 0 14px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line)}
 .cat-header{display:flex;align-items:center;gap:9px;padding:12px 16px;cursor:pointer;background:linear-gradient(90deg,var(--bg3),var(--bg2));user-select:none;transition:background .15s}
 .cat-header:hover{background:var(--bg3)}
@@ -1340,54 +1344,51 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="dot"></div>Viabilidade preliminar<div class="nav-prog"><i></i></div>
   </div>
 
-  <div class="sec-nav-group">Diagnóstico</div>
+  <div class="sec-nav-group">Levantamento documental</div>
+  <div class="sec-nav-item" onclick="irPara(14,this)" id="nav-14">
+    <div class="dot"></div>01 · Dinâmica Territorial<div class="nav-prog"><i></i></div>
+  </div>
   <div class="sec-nav-item" onclick="irPara(1,this)" id="nav-1">
-    <div class="dot"></div>01 · Contexto Urbano<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>02 · Contexto Urbano<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(2,this)" id="nav-2">
-    <div class="dot"></div>02 · Legislação<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>03 · Legislação<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(3,this)" id="nav-3">
-    <div class="dot"></div>03 · Condicionantes Ambientais<div class="nav-prog"><i></i></div>
-  </div>
-  <div class="sec-nav-item" onclick="irPara(4,this)" id="nav-4">
-    <div class="dot"></div>04 · Paisagem e Morfologia<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>04 · Condicionantes Ambientais<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(5,this)" id="nav-5">
-    <div class="dot"></div>05 · Ocupação e Usos<div class="nav-prog"><i></i></div>
-  </div>
-  <div class="sec-nav-item" onclick="irPara(14,this)" id="nav-14">
-    <div class="dot"></div>🛰️ Dinâmica Territorial<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>05 · Uso, Ocupação e Morfologia<div class="nav-prog"><i></i></div>
   </div>
 
-  <div class="sec-nav-group">Coleta &amp; Referências</div>
+  <div class="sec-nav-group">Levantamento de campo</div>
   <div class="sec-nav-item" onclick="irPara(9,this)" id="nav-9">
     <div class="dot"></div>06 · Instrumentos de Coleta<div class="nav-prog"><i></i></div>
   </div>
-  <div class="sec-nav-item" onclick="irPara(12,this)" id="nav-12">
-    <div class="dot"></div>07 · Obras Análogas<div class="nav-prog"><i></i></div>
-  </div>
   <div class="sec-nav-item" onclick="irPara(15,this)" id="nav-15">
-    <div class="dot"></div>👥 Governança e Participação<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>07 · Governança e Participação<div class="nav-prog"><i></i></div>
   </div>
 
   <div class="sec-nav-group">Análise &amp; Síntese</div>
   <div class="sec-nav-item" onclick="irPara(6,this)" id="nav-6">
     <div class="dot"></div>08 · Mapa de Análise<div class="nav-prog"><i></i></div>
   </div>
+  <div class="sec-nav-item" onclick="irPara(12,this)" id="nav-12">
+    <div class="dot"></div>09 · Obras Análogas<div class="nav-prog"><i></i></div>
+  </div>
   <div class="sec-nav-item" onclick="irPara(7,this)" id="nav-7">
-    <div class="dot"></div>Síntese SWOT<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>10 · Síntese SWOT<div class="nav-prog"><i></i></div>
   </div>
 
   <div class="sec-nav-group">Proposição &amp; Entrega</div>
   <div class="sec-nav-item" onclick="irPara(8,this)" id="nav-8">
-    <div class="dot"></div>Diretrizes<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>11 · Diretrizes<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(13,this)" id="nav-13">
-    <div class="dot"></div>Programação Arquitetônica<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>12 · Programação Arquitetônica<div class="nav-prog"><i></i></div>
   </div>
   <div class="sec-nav-item" onclick="irPara(10,this)" id="nav-10">
-    <div class="dot"></div>Mapa-Síntese<div class="nav-prog"><i></i></div>
+    <div class="dot"></div>13 · Mapa-Síntese (Partido)<div class="nav-prog"><i></i></div>
   </div>
 </div>
 
@@ -1968,7 +1969,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 1: CONTEXTO URBANO ════════════════════ -->
 <div class="panel" id="panel-1">
-  <div class="sec-title">01 · Contexto Urbano <div class="sec-line"></div>
+  <div class="sec-title">02 · Contexto Urbano <div class="sec-line"></div>
     <span class="sec-ref">Levantamento in loco + GeoPin Santa Luzia MG</span>
   </div>
 
@@ -2204,7 +2205,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     <div class="block-body">
       <div class="info-box" style="margin-bottom:10px">
         Morfologia regional que condiciona o microclima, a drenagem urbana, os eixos visuais e as relações de vizinhança.
-        <br><strong>Divisão de escalas:</strong> aqui fica <strong>toda a topografia do entorno</strong> — a leitura qualitativa (morfologia, microclima, alagamento) e os <strong>dados quantitativos</strong> (cota, variação altimétrica, escoamento). A <strong>escala do lote</strong> (para a implantação) está em <strong>03 · Condicionantes Ambientais → Topografia do lote</strong>.
+        <br><strong>Divisão de escalas:</strong> aqui fica <strong>toda a topografia do entorno</strong> — a leitura qualitativa (morfologia, microclima, alagamento) e os <strong>dados quantitativos</strong> (cota, variação altimétrica, escoamento). A <strong>escala do lote</strong> (para a implantação) está em <strong>04 · Condicionantes Ambientais → Topografia do lote</strong>.
       </div>
       <div class="form-grid">
         <div class="form-field">
@@ -2528,60 +2529,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
   </div>
 
-  <!-- Uso e Ocupação do Solo -->
-  <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Uso e ocupação do solo no entorno</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-uso-e-ocupacao-do-solo-no-entorno" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
-    <div class="block-body">
-      <div class="form-grid">
-        <div class="form-field">
-          <label>Uso predominante (raio 200m)</label>
-          <select id="c-uso-pred">
-            <option value="">Selecione…</option>
-            <option>Estritamente residencial</option>
-            <option>Residencial com comércio local</option>
-            <option>Misto (residencial + comércio + serviços)</option>
-            <option>Comercial / serviços predominante</option>
-            <option>Industrial</option>
-            <option>Institucional / equipamentos</option>
-            <option>Uso em transição</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Diversidade de usos no entorno</label>
-          <div class="rating-group" id="r-mix-usos"></div>
-        </div>
-        <div class="form-field">
-          <label>Usos conflitantes com o projeto previsto</label>
-          <textarea id="c-usos-conf" placeholder="ex: depósito de resíduos próximo, atividade geradora de ruído noturno, uso industrial..."></textarea>
-        </div>
-        <div class="form-field">
-          <label>Usos complementares / sinérgicos ao projeto</label>
-          <textarea id="c-usos-sin" placeholder="ex: escola próxima (bom para equipamento infantil), comércio de alimentação (bom para habitação)..."></textarea>
-        </div>
-        <div class="form-field span2">
-          <label>Observações gerais sobre uso e ocupação</label>
-          <textarea id="c-usos-geral" placeholder="Tendências de transformação de uso, retrofit, gentrificação, pressão de adensamento..."></textarea>
-        </div>
-      </div>
-      <div class="block-map-wrap" data-theme="uso">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>🔒 Pontos de iluminação, atividade noturna, conflitos</span>
-          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
-
-      <div class="block-photos-wrap" data-block-id="b-uso-e-ocupacao-do-solo-no-entorno">
-        <div class="photos-header">
-          <button class="add-photo-btn" onclick="triggerPhotoInput('b-uso-e-ocupacao-do-solo-no-entorno')">+ Adicionar fotos</button>
-          <span class="photos-count-text" id="photos-count-text-b-uso-e-ocupacao-do-solo-no-entorno">JPG/PNG · até 1280px (auto-compactado)</span>
-          <input type="file" id="photo-input-b-uso-e-ocupacao-do-solo-no-entorno" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(this,'b-uso-e-ocupacao-do-solo-no-entorno')">
-        </div>
-        <div class="photos-grid" id="photos-grid-b-uso-e-ocupacao-do-solo-no-entorno"></div>
-      </div>
-
-    </div>
-  </div>
 
   <!-- Áreas de Risco -->
   <div class="block" style="border-left:3px solid var(--red)">
@@ -2963,157 +2910,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
   </div>
 
-  <!-- Grandes Equipamentos e Empreendimentos de Impacto -->
-  <div class="block">
-    <div class="block-header"><span class="block-icon">🏭</span><span class="block-title">Grandes equipamentos urbanos e empreendimentos de impacto</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-grandes-equipamentos-urbanos-e-empreendi" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
-    <div class="block-body">
-      <div class="info-box">
-        <strong>Referências:</strong> EIV — Estudo de Impacto de Vizinhança (Estatuto da Cidade, arts. 36–37) ·
-        CONAMA Res. 01/1986 · ANM/PNSB — Política Nacional de Segurança de Barragens (Lei 12.334/2010) ·
-        Lei Estadual MG 23.291/2019 · SIGBM (Sistema de Gestão de Segurança de Barragens de Mineração).
-      </div>
-
-      <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:8px 0 6px;text-transform:uppercase;letter-spacing:.08em">Grandes Equipamentos Urbanos (GEU)</div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label>Hospital / Complexo de Saúde de grande porte</label>
-          <div class="rating-group" id="r-geu-hospital"></div>
-        </div>
-        <div class="form-field">
-          <label>Universidade / Campus / IFE</label>
-          <div class="rating-group" id="r-geu-univ"></div>
-        </div>
-        <div class="form-field">
-          <label>Shopping / Centro Comercial (> 3.000 m² ABL)</label>
-          <div class="rating-group" id="r-geu-shopping"></div>
-        </div>
-        <div class="form-field">
-          <label>Estádio / Arena / Ginásio de grande porte</label>
-          <div class="rating-group" id="r-geu-estadio"></div>
-        </div>
-        <div class="form-field">
-          <label>Terminal de cargas / Logística / CD</label>
-          <div class="rating-group" id="r-geu-logistica"></div>
-        </div>
-        <div class="form-field">
-          <label>Aeroporto / Ferrovia / Terminal multimodal</label>
-          <div class="rating-group" id="r-geu-infra-transp"></div>
-        </div>
-        <div class="form-field">
-          <label>Presídio / Complexo penal</label>
-          <div class="rating-group" id="r-geu-presidio"></div>
-        </div>
-        <div class="form-field">
-          <label>Cemitério</label>
-          <div class="rating-group" id="r-geu-cemiterio"></div>
-        </div>
-        <div class="form-field">
-          <label>Subestação de energia / LT de alta tensão</label>
-          <div class="rating-group" id="r-geu-energia"></div>
-        </div>
-        <div class="form-field">
-          <label>Hidrelétrica / barragem de geração (UHE, PCH, CGH)</label>
-          <div class="rating-group" id="r-geu-hidreletrica"></div>
-          <small style="color:var(--t3)">Ref: ANEEL, Lei 9.074/95, áreas de reservatório (Lei 12.334/10)</small>
-        </div>
-        <div class="form-field">
-          <label>Termelétrica / refinaria / petroquímica</label>
-          <div class="rating-group" id="r-geu-termeletrica"></div>
-        </div>
-        <div class="form-field">
-          <label>Parque eólico ou solar fotovoltaico</label>
-          <div class="rating-group" id="r-geu-renovavel"></div>
-        </div>
-        <div class="form-field">
-          <label>Porto / terminal portuário / hidroviário</label>
-          <div class="rating-group" id="r-geu-porto"></div>
-        </div>
-        <div class="form-field">
-          <label>Gasoduto / oleoduto / mineroduto</label>
-          <div class="rating-group" id="r-geu-duto"></div>
-          <small style="color:var(--t3)">Faixa de servidão da ANP — restrições a edificações</small>
-        </div>
-        <div class="form-field">
-          <label>Antena de transmissão / torre celular / radar</label>
-          <div class="rating-group" id="r-geu-antena"></div>
-        </div>
-        <div class="form-field">
-          <label>Base militar / aeronaval / Forças Armadas</label>
-          <div class="rating-group" id="r-geu-militar"></div>
-        </div>
-        <div class="form-field span2">
-          <label>Outros GEU / empreendimentos geradores de tráfego ou impacto na vizinhança</label>
-          <input type="text" id="c-geu-outros" placeholder="ex: Frigorífico — 400m (ruído + tráfego pesado), Templo religioso de grande porte — 200m, Feira livre permanente">
-        </div>
-      </div>
-
-      <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.08em">Mineração e Atividades Industriais de Impacto</div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label>Atividade minerária no entorno</label>
-          <div class="rating-group" id="r-mineracao"></div>
-        </div>
-        <div class="form-field">
-          <label>Tipo de minério / atividade</label>
-          <input type="text" id="c-mineracao-tipo" placeholder="ex: extração de ferro, calcário, areia, ouro, granito, bauxita">
-        </div>
-        <div class="form-field">
-          <label>Barragem de rejeito no entorno — SIGBM/ANM</label>
-          <select id="c-mineracao-barragem">
-            <option value="">Não identificada / a verificar</option>
-            <option>Verificar no SIGBM (sigbm.anm.gov.br)</option>
-            <option>Barragem identificada — baixo DPA</option>
-            <option>Barragem identificada — médio DPA</option>
-            <option>Barragem identificada — alto DPA</option>
-            <option>Terreno na ZAS (Zona de Autossalvamento)</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Zona de Autossalvamento (ZAS) — ANM Res. 95/2022</label>
-          <select id="c-mineracao-zas">
-            <option value="">Não se aplica / a verificar</option>
-            <option>Fora da ZAS</option>
-            <option>Na ZSS (Zona de Segurança Secundária)</option>
-            <option>Na ZAS — risco crítico (exige consulta ANM/Defesa Civil)</option>
-          </select>
-          <small style="color:var(--t3)">A Res. ANM 95/2022 proíbe novas comunidades na ZAS</small>
-        </div>
-        <div class="form-field span2">
-          <label>Impactos da mineração identificados na área</label>
-          <input type="text" id="c-mineracao-impactos" placeholder="ex: poeira de minério, ruído de explosões, tráfego de caminhões, vibrações, contaminação hídrica, subsidência">
-        </div>
-        <div class="form-field">
-          <label>Aterro sanitário / lixão</label>
-          <div class="rating-group" id="r-aterro"></div>
-        </div>
-        <div class="form-field">
-          <label>Indústria de grande porte / frigorífico / petroquímica</label>
-          <div class="rating-group" id="r-industria-gde"></div>
-        </div>
-        <div class="form-field span2">
-          <label>Observações sobre empreendimentos de impacto — EIV necessário?</label>
-          <textarea id="c-impacto-obs" placeholder="Descreva as relações de impacto identificadas: fluxos de veículos pesados, odores, ruídos, vibrações, riscos ambientais, externalidades econômicas (valorização/desvalorização). Indicar se o projeto exige EIV pelo Plano Diretor municipal."></textarea>
-        </div>
-      </div>
-      <div class="block-map-wrap" data-theme="impacto">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>📐 Gleba, vias projetadas, APP e áreas públicas</span>
-          <a class="block-map-link" onclick="goToFullMap('uso')">✏️ Editar no mapa completo →</a>
-        </div>
-      </div>
-
-      <div class="block-photos-wrap" data-block-id="b-grandes-equipamentos-urbanos-e-empreendi">
-        <div class="photos-header">
-          <button class="add-photo-btn" onclick="triggerPhotoInput('b-grandes-equipamentos-urbanos-e-empreendi')">+ Adicionar fotos</button>
-          <span class="photos-count-text" id="photos-count-text-b-grandes-equipamentos-urbanos-e-empreendi">JPG/PNG · até 1280px (auto-compactado)</span>
-          <input type="file" id="photo-input-b-grandes-equipamentos-urbanos-e-empreendi" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(this,'b-grandes-equipamentos-urbanos-e-empreendi')">
-        </div>
-        <div class="photos-grid" id="photos-grid-b-grandes-equipamentos-urbanos-e-empreendi"></div>
-      </div>
-
-    </div>
-  </div>
 
 
   <!-- Segurança Urbana -->
@@ -3408,72 +3204,6 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 
 
-  <!-- MÓDULO: Projeto Urbano / Plano Urbano -->
-  <div class="block module-block" data-modules="urbano plano_urbano">
-    <div class="block-header"><span class="block-icon">🏙️</span><span class="block-title">Morfologia e estrutura urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-morfologia-e-estrutura-urbana" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
-    <div class="block-body">
-      <div class="info-box">Análise do <strong>tecido urbano</strong> na escala de quadras e setores.
-      </div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label>Tipologia predominante das quadras</label>
-          <select id="mod-urb-quadra">
-            <option value="">Selecione…</option>
-            <option>Quadra fechada / perímetro construído</option>
-            <option>Quadra aberta / edifícios isolados</option>
-            <option>Misto — quadra aberta e fechada</option>
-            <option>Quadra orgânica / espontânea</option>
-            <option>Superquadra / conjunto habitacional</option>
-            <option>Quarteirão histórico colonial</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Tamanho médio das quadras (m)</label>
-          <input type="text" id="mod-urb-quadra-dim" placeholder="ex: 80×120m / 100×150m">
-        </div>
-        <div class="form-field">
-          <label>Densidade habitacional estimada (hab/ha)</label>
-          <input type="number" id="mod-urb-densidade" placeholder="ex: 120">
-        </div>
-        <div class="form-field">
-          <label>CA médio estimado da área</label>
-          <input type="number" id="mod-urb-ca-med" placeholder="ex: 1.5" step="0.1">
-        </div>
-        <div class="form-field">
-          <label>Proporção cheios/vazios — relação figura-fundo</label>
-          <div class="rating-group" id="r-mod-figura-fundo"></div>
-        </div>
-        <div class="form-field">
-          <label>Permeabilidade visual e física do setor</label>
-          <div class="rating-group" id="r-mod-perm-urb"></div>
-        </div>
-        <div class="form-field span2">
-          <label>Qualidade e ativação do espaço público</label>
-          <div class="rating-group" id="r-mod-esp-pub"></div>
-        </div>
-        <div class="form-field span2">
-          <label>Descrição da estrutura urbana e oportunidades de intervenção</label>
-          <textarea id="mod-urb-desc" placeholder="Grain do tecido, hierarquia de espaços, pontos de ruptura, vazios ativadores, barreiras físicas/psicológicas ao uso, eixos de animação..."></textarea>
-        </div>
-      </div>
-      <div class="block-map-wrap" data-theme="morfo">
-        <div class="block-map"></div>
-        <div class="block-map-info">
-          <span>Mapa temático · tecido urbano, quadras e setores</span>
-          <a class="block-map-link" onclick="goToFullMap('morfo')">✏️ Abrir no Mapa de Análise →</a>
-        </div>
-      </div>
-      <div class="block-photos-wrap" data-block-id="b-morfologia-e-estrutura-urbana">
-        <div class="photos-header">
-          <button class="add-photo-btn" onclick="triggerPhotoInput('b-morfologia-e-estrutura-urbana')">+ Adicionar fotos</button>
-          <span class="photos-count-text" id="photos-count-text-b-morfologia-e-estrutura-urbana">JPG/PNG · até 1280px (auto-compactado)</span>
-          <input type="file" id="photo-input-b-morfologia-e-estrutura-urbana" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(this,'b-morfologia-e-estrutura-urbana')">
-        </div>
-        <div class="photos-grid" id="photos-grid-b-morfologia-e-estrutura-urbana"></div>
-      </div>
-
-    </div>
-  </div>
 
   <!-- MÓDULO: Plano Urbano — Análise Socioeconômica -->
   <div class="block module-block" data-modules="plano_urbano his">
@@ -4132,7 +3862,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 2: LEGISLAÇÃO ════════════════════ -->
 <div class="panel" id="panel-2">
-  <div class="sec-title">02 · Legislação Urbanística <div class="sec-line"></div>
+  <div class="sec-title">03 · Legislação Urbanística <div class="sec-line"></div>
     <span class="sec-ref">Plano Diretor · Lei de Uso e Ocupação · Código de Obras · Normas Ambientais</span>
   </div>
 
@@ -4524,7 +4254,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 3: CONDICIONANTES AMBIENTAIS ════════════════════ -->
 <div class="panel" id="panel-3">
-  <div class="sec-title">03 · Condicionantes Ambientais e Climáticos <div class="sec-line"></div>
+  <div class="sec-title">04 · Condicionantes Ambientais e Climáticos <div class="sec-line"></div>
     <span class="sec-ref">INMET · NBR 15575 · Zona Bioclimática (ABNT)</span>
   </div>
 
@@ -4698,10 +4428,10 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
         <strong>acessibilidade</strong> (rampas e degraus — NBR 9050), <strong>sistema construtivo</strong>
         (corte/aterro, arrimos, fundações) e <strong>custos de obra</strong>.
         Fonte para curvas de nível: SRTM 30m · IBGE TOPODATA · levantamento planialtimétrico local.
-        <br><strong>Divisão de escalas:</strong> toda a topografia do <strong>entorno</strong> (qualitativa e quantitativa — morfologia, declividade, microclima, cota, variação altimétrica, escoamento) está em <strong>01 · Contexto Urbano → Topografia — escala do entorno</strong>. Aqui ficam <strong>apenas os dados do LOTE</strong> (para a implantação).
+        <br><strong>Divisão de escalas:</strong> toda a topografia do <strong>entorno</strong> (qualitativa e quantitativa — morfologia, declividade, microclima, cota, variação altimétrica, escoamento) está em <strong>02 · Contexto Urbano → Topografia — escala do entorno</strong>. Aqui ficam <strong>apenas os dados do LOTE</strong> (para a implantação).
       </div>
 
-      <!-- Escala do Lote (a topografia de ENTORNO foi consolidada em 01 · Contexto Urbano → Topografia — escala do entorno) -->
+      <!-- Escala do Lote (a topografia de ENTORNO foi consolidada em 02 · Contexto Urbano → Topografia — escala do entorno) -->
       <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.08em">Escala do Lote — dados para implantação</div>
       <div class="form-grid">
         <div class="form-field">
@@ -4961,159 +4691,68 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   </div>
 </div>
 
-<!-- ════════════════════ PANEL 4: PAISAGEM E MORFOLOGIA ════════════════════ -->
-<div class="panel" id="panel-4">
-  <div class="sec-title">04 · Paisagem e Morfologia Urbana <div class="sec-line"></div>
-    <span class="sec-ref">Leitura da paisagem e da imagem urbana</span>
+<!-- ════════════════════ PANEL 5: USO, OCUPAÇÃO, MORFOLOGIA E PAISAGEM (fundida 04+05 em 2026-10) ════════════════════ -->
+<div class="panel" id="panel-5">
+  <div class="sec-title">05 · Uso, Ocupação, Morfologia e Paisagem <div class="sec-line"></div>
+    <span class="sec-ref">Usos do solo · morfologia urbana (Conzen, Lamas) · imagem urbana (Lynch) · paisagem</span>
   </div>
 
   <div class="info-box">
-    <strong>Nota metodológica:</strong> a leitura da imagem urbana — como as pessoas formam mapas mentais da cidade (marcos, vias, nós, bordas, bairros) — é um sub-item desta análise, não o enquadramento principal. A leitura da paisagem urbana inclui também a morfologia urbana e a paisagem percebida. e percepção ambiental.
+    <strong>Uma aba, um tema por bloco.</strong> Aqui se reúne a leitura do <em>tecido construído</em> do entorno: o que existe (usos, vazios, grandes equipamentos), como se organiza (morfologia em 6 dimensões) e como é percebido (imagem urbana e campos visuais). Antes estes temas se repetiam em três abas (01, 04 e 05); o que você já tinha preenchido foi trazido para cá.
   </div>
 
-  <!-- Imageabilidade -->
+  <!-- Uso e Ocupação do Solo -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Leitura da imagem urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Uso e ocupação do solo no entorno</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-uso-e-ocupacao-do-solo-no-entorno" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
     <div class="block-body">
       <div class="form-grid">
         <div class="form-field">
-          <label>Caminhos (paths) — vias de deslocamento marcantes</label>
-          <textarea id="p-paths" placeholder="Ruas, avenidas, trilhos, caminhos que as pessoas usam para se locomover e que estruturam a leitura do bairro..."></textarea>
+          <label>Uso predominante (raio 200m)</label>
+          <select id="c-uso-pred">
+            <option value="">Selecione…</option>
+            <option>Estritamente residencial</option>
+            <option>Residencial com comércio local</option>
+            <option>Misto (residencial + comércio + serviços)</option>
+            <option>Comercial / serviços predominante</option>
+            <option>Industrial</option>
+            <option>Institucional / equipamentos</option>
+            <option>Uso em transição</option>
+          </select>
         </div>
         <div class="form-field">
-          <label>Marcos (landmarks) — referências visuais externas</label>
-          <textarea id="p-land" placeholder="Edificações notáveis, torres, árvores centenárias, cruzamentos, monumentos..."></textarea>
+          <label>Diversidade de usos no entorno</label>
+          <div class="rating-group" id="r-mix-usos"></div>
         </div>
         <div class="form-field">
-          <label>Limites/Bordas (edges) — transições entre áreas</label>
-          <textarea id="p-edges" placeholder="Cursos d'água, vias expressas, muros, ferrovias, diferenças de relevo que separam áreas..."></textarea>
+          <label>Usos conflitantes com o projeto previsto</label>
+          <textarea id="c-usos-conf" placeholder="ex: depósito de resíduos próximo, atividade geradora de ruído noturno, uso industrial..."></textarea>
         </div>
         <div class="form-field">
-          <label>Nós (nodes) — pontos de convergência e decisão</label>
-          <textarea id="p-nodes" placeholder="Praças, cruzamentos intensos, paradas de ônibus, pontos de encontro..."></textarea>
+          <label>Usos complementares / sinérgicos ao projeto</label>
+          <textarea id="c-usos-sin" placeholder="ex: escola próxima (bom para equipamento infantil), comércio de alimentação (bom para habitação)..."></textarea>
         </div>
         <div class="form-field span2">
-          <label>Bairros/Distritos (districts) — áreas com caráter homogêneo</label>
-          <textarea id="p-districts" placeholder="Áreas residenciais, comerciais, industriais, históricas com identidade própria..."></textarea>
+          <label>Observações gerais sobre uso e ocupação</label>
+          <textarea id="c-usos-geral" placeholder="Tendências de transformação de uso, retrofit, gentrificação, pressão de adensamento..."></textarea>
         </div>
       </div>
-      <div class="info-box" style="margin:10px 0 8px;font-size:.62rem">Além de descrever acima, <strong>espacialize</strong> a imagem urbana no mapa — marcos, nós, caminhos, bordas e bairros (Lynch). As feições aparecem no <strong>Mapa de Análise (aba 08)</strong>.</div>
-      <div class="block-map-wrap" data-theme="lynch">
+      <div class="block-map-wrap" data-theme="uso">
         <div class="block-map"></div>
         <div class="block-map-info">
-          <span>Mapa temático · pontos (marcos/nós), linhas (caminhos/bordas) e polígonos (bairros)</span>
-          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Abrir no Mapa de Análise →</a>
+          <span>🔒 Pontos de iluminação, atividade noturna, conflitos</span>
+          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Editar no mapa completo →</a>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Campos Visuais -->
-  <div class="block">
-    <div class="block-header"><span class="block-icon">👁️</span><span class="block-title">Campos visuais e paisagem</span></div>
-    <div class="block-body">
-      <div class="form-grid">
-        <div class="form-field span2">
-          <label>Eixos visuais do lote (vistas relevantes)</label>
-          <textarea id="p-eixos" placeholder="Para onde o terreno 'olha'? Há vista para Serra? Para praça? Para vale? Para massa arbórea?"></textarea>
+      <div class="block-photos-wrap" data-block-id="b-uso-e-ocupacao-do-solo-no-entorno">
+        <div class="photos-header">
+          <button class="add-photo-btn" onclick="triggerPhotoInput('b-uso-e-ocupacao-do-solo-no-entorno')">+ Adicionar fotos</button>
+          <span class="photos-count-text" id="photos-count-text-b-uso-e-ocupacao-do-solo-no-entorno">JPG/PNG · até 1280px (auto-compactado)</span>
+          <input type="file" id="photo-input-b-uso-e-ocupacao-do-solo-no-entorno" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(this,'b-uso-e-ocupacao-do-solo-no-entorno')">
         </div>
-        <div class="form-field span2">
-          <label>Barreiras visuais (o que bloqueia a vista)</label>
-          <textarea id="p-barreiras" placeholder="Muros, edificações altas, taludes, vegetação densa que bloqueiam visuais..."></textarea>
-        </div>
-        <div class="form-field">
-          <label>Qualidade da paisagem visível do lote</label>
-          <div class="rating-group" id="r-paisagem"></div>
-        </div>
-        <div class="form-field">
-          <label>Visibilidade do lote a partir da rua</label>
-          <div class="rating-group" id="r-visib"></div>
-        </div>
+        <div class="photos-grid" id="photos-grid-b-uso-e-ocupacao-do-solo-no-entorno"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- Morfologia -->
-  <div class="block">
-    <div class="block-header"><span class="block-icon">🏙️</span><span class="block-title">Morfologia urbana do entorno</span></div>
-    <div class="block-body">
-      <div class="form-grid">
-        <div class="form-field">
-          <label>Traçado urbano predominante</label>
-          <select id="m-tracado">
-            <option value="">Selecione…</option>
-            <option>Regular / ortogonal</option>
-            <option>Irregular / orgânico</option>
-            <option>Misto</option>
-            <option>Loteamento recente (traçado planejado)</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Tipologia de lote predominante no entorno</label>
-          <select id="m-lote">
-            <option value="">Selecione…</option>
-            <option>Lotes estreitos e profundos (tipo corredor)</option>
-            <option>Lotes quadrados médios (200–500m²)</option>
-            <option>Lotes grandes</option>
-            <option>Lotes irregulares</option>
-            <option>Mistura de tipos</option>
-          </select>
-        </div>
-        <div class="form-field span2">
-          <label>Relação cheio-vazio predominante no entorno</label>
-          <textarea id="m-cheiovazio" placeholder="As edificações ocupam muito ou pouco do lote? Há afastamentos frontais? Há espaços livres entre casas?"></textarea>
-        </div>
-        <div class="form-field span2">
-          <label>Caráter e identidade do entorno imediato</label>
-          <textarea id="m-carater" placeholder="Como é o 'DNA' urbano do entorno? Bairro residencial tranquilo? Dinâmico e comercial? Em transição? Degradado?"></textarea>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="block-header"><span class="block-icon">📌</span><span class="block-title">Achados — Paisagem e Morfologia</span></div>
-    <div class="block-body">
-      <div class="finding-list" id="findings-4"></div>
-      <div class="add-finding">
-        <input type="text" id="inp-f4" placeholder="Achado de paisagem ou morfologia relevante…" onkeydown="if(event.key==='Enter')addFinding(4)">
-        <button class="add-btn" onclick="addFinding(4)">+ Adicionar achado</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════ PANEL 5: OCUPAÇÃO E USOS ════════════════════ -->
-<div class="panel" id="panel-5">
-  <div class="sec-title">05 · Ocupação Urbana e Usos do Solo <div class="sec-line"></div>
-    <span class="sec-ref">Levantamento in loco + base GeoPin · cartografia de usos</span>
-  </div>
-
-  <div class="block">
-    <div class="block-header"><span class="block-icon">🏗️</span><span class="block-title">Altimetria e densidade construtiva</span></div>
-    <div class="block-body">
-      <div class="form-grid">
-        <div class="form-field">
-          <label>Altura predominante das edificações vizinhas</label>
-          <select id="o-alt">
-            <option value="">Selecione…</option>
-            <option>Térreas (1 pavimento)</option>
-            <option>1–2 pavimentos</option>
-            <option>2–4 pavimentos</option>
-            <option>4–8 pavimentos</option>
-            <option>Acima de 8 pavimentos</option>
-            <option>Mistura</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Densidade construtiva do entorno</label>
-          <div class="rating-group" id="r-dens"></div>
-        </div>
-        <div class="form-field span2">
-          <label>Padrão construtivo predominante</label>
-          <textarea id="o-padrao" placeholder="Popular autoconstruído, popular assistido, médio padrão, alto padrão, misto..."></textarea>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -5188,6 +4827,158 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
           <textarea id="o-transf" placeholder="A área está se adensando? Em consolidação? Em processo de abandono? Há intervenções previstas pela prefeitura?"></textarea>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Grandes Equipamentos e Empreendimentos de Impacto -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">🏭</span><span class="block-title">Grandes equipamentos urbanos e empreendimentos de impacto</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-grandes-equipamentos-urbanos-e-empreendi" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-body">
+      <div class="info-box">
+        <strong>Referências:</strong> EIV — Estudo de Impacto de Vizinhança (Estatuto da Cidade, arts. 36–37) ·
+        CONAMA Res. 01/1986 · ANM/PNSB — Política Nacional de Segurança de Barragens (Lei 12.334/2010) ·
+        Lei Estadual MG 23.291/2019 · SIGBM (Sistema de Gestão de Segurança de Barragens de Mineração).
+      </div>
+
+      <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:8px 0 6px;text-transform:uppercase;letter-spacing:.08em">Grandes Equipamentos Urbanos (GEU)</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Hospital / Complexo de Saúde de grande porte</label>
+          <div class="rating-group" id="r-geu-hospital"></div>
+        </div>
+        <div class="form-field">
+          <label>Universidade / Campus / IFE</label>
+          <div class="rating-group" id="r-geu-univ"></div>
+        </div>
+        <div class="form-field">
+          <label>Shopping / Centro Comercial (> 3.000 m² ABL)</label>
+          <div class="rating-group" id="r-geu-shopping"></div>
+        </div>
+        <div class="form-field">
+          <label>Estádio / Arena / Ginásio de grande porte</label>
+          <div class="rating-group" id="r-geu-estadio"></div>
+        </div>
+        <div class="form-field">
+          <label>Terminal de cargas / Logística / CD</label>
+          <div class="rating-group" id="r-geu-logistica"></div>
+        </div>
+        <div class="form-field">
+          <label>Aeroporto / Ferrovia / Terminal multimodal</label>
+          <div class="rating-group" id="r-geu-infra-transp"></div>
+        </div>
+        <div class="form-field">
+          <label>Presídio / Complexo penal</label>
+          <div class="rating-group" id="r-geu-presidio"></div>
+        </div>
+        <div class="form-field">
+          <label>Cemitério</label>
+          <div class="rating-group" id="r-geu-cemiterio"></div>
+        </div>
+        <div class="form-field">
+          <label>Subestação de energia / LT de alta tensão</label>
+          <div class="rating-group" id="r-geu-energia"></div>
+        </div>
+        <div class="form-field">
+          <label>Hidrelétrica / barragem de geração (UHE, PCH, CGH)</label>
+          <div class="rating-group" id="r-geu-hidreletrica"></div>
+          <small style="color:var(--t3)">Ref: ANEEL, Lei 9.074/95, áreas de reservatório (Lei 12.334/10)</small>
+        </div>
+        <div class="form-field">
+          <label>Termelétrica / refinaria / petroquímica</label>
+          <div class="rating-group" id="r-geu-termeletrica"></div>
+        </div>
+        <div class="form-field">
+          <label>Parque eólico ou solar fotovoltaico</label>
+          <div class="rating-group" id="r-geu-renovavel"></div>
+        </div>
+        <div class="form-field">
+          <label>Porto / terminal portuário / hidroviário</label>
+          <div class="rating-group" id="r-geu-porto"></div>
+        </div>
+        <div class="form-field">
+          <label>Gasoduto / oleoduto / mineroduto</label>
+          <div class="rating-group" id="r-geu-duto"></div>
+          <small style="color:var(--t3)">Faixa de servidão da ANP — restrições a edificações</small>
+        </div>
+        <div class="form-field">
+          <label>Antena de transmissão / torre celular / radar</label>
+          <div class="rating-group" id="r-geu-antena"></div>
+        </div>
+        <div class="form-field">
+          <label>Base militar / aeronaval / Forças Armadas</label>
+          <div class="rating-group" id="r-geu-militar"></div>
+        </div>
+        <div class="form-field span2">
+          <label>Outros GEU / empreendimentos geradores de tráfego ou impacto na vizinhança</label>
+          <input type="text" id="c-geu-outros" placeholder="ex: Frigorífico — 400m (ruído + tráfego pesado), Templo religioso de grande porte — 200m, Feira livre permanente">
+        </div>
+      </div>
+
+      <div style="font-size:.65rem;font-weight:700;color:var(--t2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.08em">Mineração e Atividades Industriais de Impacto</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Atividade minerária no entorno</label>
+          <div class="rating-group" id="r-mineracao"></div>
+        </div>
+        <div class="form-field">
+          <label>Tipo de minério / atividade</label>
+          <input type="text" id="c-mineracao-tipo" placeholder="ex: extração de ferro, calcário, areia, ouro, granito, bauxita">
+        </div>
+        <div class="form-field">
+          <label>Barragem de rejeito no entorno — SIGBM/ANM</label>
+          <select id="c-mineracao-barragem">
+            <option value="">Não identificada / a verificar</option>
+            <option>Verificar no SIGBM (sigbm.anm.gov.br)</option>
+            <option>Barragem identificada — baixo DPA</option>
+            <option>Barragem identificada — médio DPA</option>
+            <option>Barragem identificada — alto DPA</option>
+            <option>Terreno na ZAS (Zona de Autossalvamento)</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Zona de Autossalvamento (ZAS) — ANM Res. 95/2022</label>
+          <select id="c-mineracao-zas">
+            <option value="">Não se aplica / a verificar</option>
+            <option>Fora da ZAS</option>
+            <option>Na ZSS (Zona de Segurança Secundária)</option>
+            <option>Na ZAS — risco crítico (exige consulta ANM/Defesa Civil)</option>
+          </select>
+          <small style="color:var(--t3)">A Res. ANM 95/2022 proíbe novas comunidades na ZAS</small>
+        </div>
+        <div class="form-field span2">
+          <label>Impactos da mineração identificados na área</label>
+          <input type="text" id="c-mineracao-impactos" placeholder="ex: poeira de minério, ruído de explosões, tráfego de caminhões, vibrações, contaminação hídrica, subsidência">
+        </div>
+        <div class="form-field">
+          <label>Aterro sanitário / lixão</label>
+          <div class="rating-group" id="r-aterro"></div>
+        </div>
+        <div class="form-field">
+          <label>Indústria de grande porte / frigorífico / petroquímica</label>
+          <div class="rating-group" id="r-industria-gde"></div>
+        </div>
+        <div class="form-field span2">
+          <label>Observações sobre empreendimentos de impacto — EIV necessário?</label>
+          <textarea id="c-impacto-obs" placeholder="Descreva as relações de impacto identificadas: fluxos de veículos pesados, odores, ruídos, vibrações, riscos ambientais, externalidades econômicas (valorização/desvalorização). Indicar se o projeto exige EIV pelo Plano Diretor municipal."></textarea>
+        </div>
+      </div>
+      <div class="block-map-wrap" data-theme="impacto">
+        <div class="block-map"></div>
+        <div class="block-map-info">
+          <span>📐 Gleba, vias projetadas, APP e áreas públicas</span>
+          <a class="block-map-link" onclick="goToFullMap('uso')">✏️ Editar no mapa completo →</a>
+        </div>
+      </div>
+
+      <div class="block-photos-wrap" data-block-id="b-grandes-equipamentos-urbanos-e-empreendi">
+        <div class="photos-header">
+          <button class="add-photo-btn" onclick="triggerPhotoInput('b-grandes-equipamentos-urbanos-e-empreendi')">+ Adicionar fotos</button>
+          <span class="photos-count-text" id="photos-count-text-b-grandes-equipamentos-urbanos-e-empreendi">JPG/PNG · até 1280px (auto-compactado)</span>
+          <input type="file" id="photo-input-b-grandes-equipamentos-urbanos-e-empreendi" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(this,'b-grandes-equipamentos-urbanos-e-empreendi')">
+        </div>
+        <div class="photos-grid" id="photos-grid-b-grandes-equipamentos-urbanos-e-empreendi"></div>
+      </div>
+
     </div>
   </div>
 
@@ -5498,12 +5289,125 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
     </div>
   </div>
 
+  <!-- MÓDULO: Projeto Urbano / Plano Urbano -->
+  <div class="block module-block" data-modules="urbano plano_urbano">
+    <div class="block-header"><span class="block-icon">🏙️</span><span class="block-title">Morfologia e estrutura urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button><button class="block-photos-toggle" data-block-id="b-morfologia-e-estrutura-urbana" onclick="toggleBlockPhotos(this)">📸 Fotos</button></div>
+    <div class="block-body">
+      <div class="info-box">Análise do <strong>tecido urbano</strong> na escala de quadras e setores.
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Densidade habitacional estimada (hab/ha)</label>
+          <input type="number" id="mod-urb-densidade" placeholder="ex: 120">
+        </div>
+        <div class="form-field">
+          <label>CA médio estimado da área</label>
+          <input type="number" id="mod-urb-ca-med" placeholder="ex: 1.5" step="0.1">
+        </div>
+        <div class="form-field">
+          <label>Permeabilidade visual e física do setor</label>
+          <div class="rating-group" id="r-mod-perm-urb"></div>
+        </div>
+        <div class="form-field span2">
+          <label>Qualidade e ativação do espaço público</label>
+          <div class="rating-group" id="r-mod-esp-pub"></div>
+        </div>
+        <div class="form-field span2">
+          <label>Descrição da estrutura urbana e oportunidades de intervenção</label>
+          <textarea id="mod-urb-desc" placeholder="Grain do tecido, hierarquia de espaços, pontos de ruptura, vazios ativadores, barreiras físicas/psicológicas ao uso, eixos de animação..."></textarea>
+        </div>
+      </div>
+      <div class="block-map-wrap" data-theme="morfo">
+        <div class="block-map"></div>
+        <div class="block-map-info">
+          <span>Mapa temático · tecido urbano, quadras e setores</span>
+          <a class="block-map-link" onclick="goToFullMap('morfo')">✏️ Abrir no Mapa de Análise →</a>
+        </div>
+      </div>
+      <div class="block-photos-wrap" data-block-id="b-morfologia-e-estrutura-urbana">
+        <div class="photos-header">
+          <button class="add-photo-btn" onclick="triggerPhotoInput('b-morfologia-e-estrutura-urbana')">+ Adicionar fotos</button>
+          <span class="photos-count-text" id="photos-count-text-b-morfologia-e-estrutura-urbana">JPG/PNG · até 1280px (auto-compactado)</span>
+          <input type="file" id="photo-input-b-morfologia-e-estrutura-urbana" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(this,'b-morfologia-e-estrutura-urbana')">
+        </div>
+        <div class="photos-grid" id="photos-grid-b-morfologia-e-estrutura-urbana"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Nota metodológica:</strong> a leitura da imagem urbana — como as pessoas formam mapas mentais da cidade (marcos, vias, nós, bordas, bairros) — é um sub-item desta análise, não o enquadramento principal. A leitura da paisagem urbana inclui também a morfologia urbana e a paisagem percebida. e percepção ambiental.
+  </div>
+
+  <!-- Imageabilidade -->
   <div class="block">
-    <div class="block-header"><span class="block-icon">📌</span><span class="block-title">Achados — Ocupação e Usos</span></div>
+    <div class="block-header"><span class="block-icon">🗺️</span><span class="block-title">Leitura da imagem urbana</span><button class="block-map-toggle" onclick="toggleBlockMap(this)">📍 Mostrar mapa</button></div>
+    <div class="block-body">
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Caminhos (paths) — vias de deslocamento marcantes</label>
+          <textarea id="p-paths" placeholder="Ruas, avenidas, trilhos, caminhos que as pessoas usam para se locomover e que estruturam a leitura do bairro..."></textarea>
+        </div>
+        <div class="form-field">
+          <label>Marcos (landmarks) — referências visuais externas</label>
+          <textarea id="p-land" placeholder="Edificações notáveis, torres, árvores centenárias, cruzamentos, monumentos..."></textarea>
+        </div>
+        <div class="form-field">
+          <label>Limites/Bordas (edges) — transições entre áreas</label>
+          <textarea id="p-edges" placeholder="Cursos d'água, vias expressas, muros, ferrovias, diferenças de relevo que separam áreas..."></textarea>
+        </div>
+        <div class="form-field">
+          <label>Nós (nodes) — pontos de convergência e decisão</label>
+          <textarea id="p-nodes" placeholder="Praças, cruzamentos intensos, paradas de ônibus, pontos de encontro..."></textarea>
+        </div>
+        <div class="form-field span2">
+          <label>Bairros/Distritos (districts) — áreas com caráter homogêneo</label>
+          <textarea id="p-districts" placeholder="Áreas residenciais, comerciais, industriais, históricas com identidade própria..."></textarea>
+        </div>
+      </div>
+      <div class="info-box" style="margin:10px 0 8px;font-size:.62rem">Além de descrever acima, <strong>espacialize</strong> a imagem urbana no mapa — marcos, nós, caminhos, bordas e bairros (Lynch). As feições aparecem no <strong>Mapa de Análise (aba 08)</strong>.</div>
+      <div class="block-map-wrap" data-theme="lynch">
+        <div class="block-map"></div>
+        <div class="block-map-info">
+          <span>Mapa temático · pontos (marcos/nós), linhas (caminhos/bordas) e polígonos (bairros)</span>
+          <a class="block-map-link" onclick="goToFullMap('lynch')">✏️ Abrir no Mapa de Análise →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campos Visuais -->
+  <div class="block">
+    <div class="block-header"><span class="block-icon">👁️</span><span class="block-title">Campos visuais e paisagem</span></div>
+    <div class="block-body">
+      <div class="form-grid">
+        <div class="form-field span2">
+          <label>Eixos visuais do lote (vistas relevantes)</label>
+          <textarea id="p-eixos" placeholder="Para onde o terreno 'olha'? Há vista para Serra? Para praça? Para vale? Para massa arbórea?"></textarea>
+        </div>
+        <div class="form-field span2">
+          <label>Barreiras visuais (o que bloqueia a vista)</label>
+          <textarea id="p-barreiras" placeholder="Muros, edificações altas, taludes, vegetação densa que bloqueiam visuais..."></textarea>
+        </div>
+        <div class="form-field">
+          <label>Qualidade da paisagem visível do lote</label>
+          <div class="rating-group" id="r-paisagem"></div>
+        </div>
+        <div class="form-field">
+          <label>Visibilidade do lote a partir da rua</label>
+          <div class="rating-group" id="r-visib"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-header"><span class="block-icon">📌</span><span class="block-title">Achados — Uso, Ocupação, Morfologia e Paisagem</span></div>
     <div class="block-body">
       <div class="finding-list" id="findings-5"></div>
       <div class="add-finding">
-        <input type="text" id="inp-f5" placeholder="Achado sobre usos, ocupação ou serviços…" onkeydown="if(event.key==='Enter')addFinding(5)">
+        <input type="text" id="inp-f5" placeholder="Achado sobre usos, ocupação, morfologia ou paisagem…" onkeydown="if(event.key==='Enter')addFinding(5)">
         <button class="add-btn" onclick="addFinding(5)">+ Adicionar achado</button>
       </div>
     </div>
@@ -5649,7 +5553,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 14: DINÂMICA TERRITORIAL ════════════════════ -->
 <div class="panel" id="panel-14">
-  <div class="sec-title">Dinâmica Territorial — escala ampliada <div class="sec-line"></div>
+  <div class="sec-title">01 · Dinâmica Territorial — escala ampliada <div class="sec-line"></div>
     <span class="sec-ref">Leitura da mudança no tempo · cobertura do solo + mancha urbana</span>
   </div>
 
@@ -5719,7 +5623,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="block">
     <div class="block-header"><span class="block-icon">⚠️</span><span class="block-title">Suscetibilidade e riscos naturais</span></div>
     <div class="block-body">
-      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Áreas suscetíveis a inundação e a movimentos de massa (escorregamentos) — restrição direta de onde e como ocupar. <strong>Escala territorial</strong> (cartas de suscetibilidade do município). A avaliação no <strong>próprio lote/entorno</strong> fica em <strong>01 · Contexto Urbano → Áreas de risco — Inundação e Geológico</strong>; as duas se complementam.</div>
+      <div class="info-box" style="font-size:.6rem;margin-bottom:8px">Áreas suscetíveis a inundação e a movimentos de massa (escorregamentos) — restrição direta de onde e como ocupar. <strong>Escala territorial</strong> (cartas de suscetibilidade do município). A avaliação no <strong>próprio lote/entorno</strong> fica em <strong>02 · Contexto Urbano → Áreas de risco — Inundação e Geológico</strong>; as duas se complementam.</div>
       <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
         <a href="https://www.sgb.gov.br/" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">🌊 Cartas de suscetibilidade (SGB/CPRM) →</a>
         <a href="https://www.gov.br/cemaden/pt-br" target="_blank" rel="noopener" class="instr-btn" style="font-size:.6rem">📡 CEMADEN →</a>
@@ -5754,7 +5658,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
   <div class="block block-open">
     <div class="block-header"><span class="block-icon">💬</span><span class="block-title">Leitura da dinâmica → registro do projeto</span></div>
     <div class="block-body">
-      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Os mapas acima são externos e <strong>não entram no export</strong>. Registre aqui o que você leu deles — este texto viaja com o projeto e alimenta o SWOT. Cruze com os dados de <strong>01 · Contexto Urbano · IBGE/SIDRA</strong>.</div>
+      <div class="info-box" style="font-size:.6rem;margin-bottom:10px">Os mapas acima são externos e <strong>não entram no export</strong>. Registre aqui o que você leu deles — este texto viaja com o projeto e alimenta o SWOT. Cruze com os dados de <strong>02 · Contexto Urbano · IBGE/SIDRA</strong>.</div>
       <div class="form-field"><label>Números-chave lidos dos mapas (cobertura e mancha)</label>
         <textarea id="din-numeros" oninput="dinSetCampo('numeros', this.value)" placeholder="Ex.: floresta 55%→38% (1985→2022); área urbanizada ~120→260 ha (+117%); pastagem recuou; agricultura avançou…" style="min-height:54px"></textarea>
       </div>
@@ -5780,7 +5684,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 6: SWOT ════════════════════ -->
 <div class="panel" id="panel-7">
-  <div class="sec-title">Síntese SWOT do Diagnóstico <span class="conceito-i" onmouseenter="conceitoHover(this,'pfoa')" onmouseleave="hideInfo()" onclick="conceitoInfo(this,'pfoa')" title="O que é isto?">ⓘ</span><div class="sec-line"></div></div>
+  <div class="sec-title">10 · Síntese SWOT do Diagnóstico <span class="conceito-i" onmouseenter="conceitoHover(this,'pfoa')" onmouseleave="hideInfo()" onclick="conceitoInfo(this,'pfoa')" title="O que é isto?">ⓘ</span><div class="sec-line"></div></div>
 
   <div class="sum-row" id="swot-counters"></div>
 
@@ -5862,7 +5766,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 13: PROGRAMAÇÃO ARQUITETÔNICA ════════════════════ -->
 <div class="panel" id="panel-13">
-  <div class="sec-title">Programação Arquitetônica <div class="sec-line"></div>
+  <div class="sec-title">12 · Programação Arquitetônica <div class="sec-line"></div>
     <span class="sec-ref">Formalizar o problema antes de projetar · método Problem Seeking</span>
   </div>
 
@@ -5990,7 +5894,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 7: DIRETRIZES ════════════════════ -->
 <div class="panel" id="panel-8">
-  <div class="sec-title">Diretrizes Projetuais <div class="sec-line"></div>
+  <div class="sec-title">11 · Diretrizes Projetuais <div class="sec-line"></div>
     <span class="sec-ref">Do diagnóstico ao partido · 10 dimensões estratégicas</span>
   </div>
 
@@ -6135,7 +6039,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 15: GOVERNANÇA E PARTICIPAÇÃO ════════════════════ -->
 <div class="panel" id="panel-15">
-  <div class="sec-title">Governança e Participação Comunitária <div class="sec-line"></div>
+  <div class="sec-title">07 · Governança e Participação Comunitária <div class="sec-line"></div>
     <span class="sec-ref">Mansfeld · participação como pré-requisito de sustentabilidade</span>
   </div>
   <div class="info-box">
@@ -7752,7 +7656,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════════ PANEL 12: OBRAS ANÁLOGAS ════════════════════ -->
 <div class="panel" id="panel-12">
-  <div class="sec-title">07 · Estudo de Obras Análogas <div class="sec-line"></div>
+  <div class="sec-title">09 · Estudo de Obras Análogas <div class="sec-line"></div>
     <span class="sec-ref">Referências projetuais · análise gráfica decomposta · Clark &amp; Pause / Ching</span>
   </div>
 
@@ -7896,7 +7800,7 @@ html.modo-campo .instr-btn{padding-top:7px;padding-bottom:7px}
 
 <!-- ════════════════ PANEL 10: MAPA-SÍNTESE (base64 via iframe) ════════════════ -->
 <div class="panel" id="panel-10" style="padding:0">
-  <div class="sec-title" style="padding:18px 24px 0">Proposição — Partido (Mapa-Síntese) <div class="sec-line"></div></div>
+  <div class="sec-title" style="padding:18px 24px 0">13 · Proposição — Partido (Mapa-Síntese) <div class="sec-line"></div></div>
   <p style="padding:6px 24px 14px;color:var(--t2);font-size:13px;max-width:760px">Aqui você <strong>propõe</strong>: o partido (condicionantes PFOA + intenções projetuais) sobre a base real, com edificações 2D/3D, trajetória solar e relevo. A <strong>leitura/diagnóstico</strong> fica no <strong>Mapa de Análise</strong> e na <strong>Síntese SWOT</strong> — esta etapa é o passo seguinte, que materializa o partido.</p>
   <div style="padding:0 24px 28px">
     <div id="partido-resumo" style="margin-bottom:16px"></div>
@@ -8325,6 +8229,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   marcarNavComDados();
   setupBlockCollapse();
   setupCategorias();
+  aplicarSelosFonte();   // 📄 documental / 🚶 campo por bloco
   setupInfoBoxes();
   // Catálogo IPEA/IBGE — render inicial (com UF=MG default)
   if(typeof renderCatalogoIpea==='function') renderCatalogoIpea();
@@ -8727,8 +8632,7 @@ const TUT_PERCURSOS = {
       {n:1, lbl:'Contexto Urbano',             tag:'percorra os 7 grupos temáticos'},
       {n:2, lbl:'Legislação',                  tag:'parâmetros + normas técnicas'},
       {n:3, lbl:'Cond. Ambientais',            tag:'topografia, insolação, ventos, água'},
-      {n:4, lbl:'Paisagem e Morfologia',       tag:'leitura formal do entorno'},
-      {n:5, lbl:'Ocupação e Usos',             tag:'mapeamento do entorno construído'},
+      {n:5, lbl:'Uso, Ocupação, Morfologia e Paisagem', tag:'usos, morfologia e imagem urbana do entorno'},
       {n:9, lbl:'Instrumentos de Coleta',      tag:'escolha 1–2 (Gehl, Lynch, Rheingantz…)'},
       {n:12,lbl:'Obras Análogas',              tag:'cadastre 2–3 referências'},
       {n:6, lbl:'Mapa de Análise',             tag:'cruze achados georreferenciados'},
@@ -8749,8 +8653,7 @@ const TUT_PERCURSOS = {
       {n:1, lbl:'Contexto + SIDRA',            tag:'inclua dados socioeconômicos por setor (Censo)'},
       {n:2, lbl:'Legislação completa',         tag:'parâmetros + normas + síntese'},
       {n:3, lbl:'Cond. Ambientais',            tag:'todas as variáveis biofísicas'},
-      {n:4, lbl:'Paisagem e Morfologia',       tag:'figura-fundo, percursos, marcos'},
-      {n:5, lbl:'Ocupação e Usos',             tag:'caracterização do entorno construído'},
+      {n:5, lbl:'Uso, Ocupação, Morfologia e Paisagem', tag:'figura-fundo, percursos, marcos, usos'},
       {n:9, lbl:'Instrumentos de Coleta',      tag:'aplique 3–4 (mix instrumentos)'},
       {n:12,lbl:'Obras Análogas + Análise Gráfica', tag:'decompose cada obra por Clark&Pause (5 categorias, 23 sub-temas)'},
       {n:6, lbl:'Mapa de Análise',             tag:'use a legenda flutuante editável'},
@@ -8915,7 +8818,7 @@ function renderTutorial(){
     <div style="font-size:.7rem;font-weight:800;color:var(--t1);margin-bottom:8px">⚡ Início rápido — 5 passos</div>
     <ol style="margin:0;padding-left:18px;font-size:.62rem;line-height:1.6;color:var(--t2)">
       <li><strong>Identifique</strong> o projeto e <strong>defina o Escopo</strong> (aba Identificação).</li>
-      <li><strong>Diagnostique</strong> o território (Contexto, Legislação, Ambientais, Paisagem, Ocupação) — desenhe nos mini-mapas e registre <strong>achados</strong>.</li>
+      <li><strong>Diagnostique</strong> o território, do maior para o menor (Dinâmica Territorial, Contexto, Legislação, Ambientais, Uso/Ocupação/Morfologia) — desenhe nos mini-mapas e registre <strong>achados</strong>.</li>
       <li><strong>Colete em campo</strong> (Instrumentos: Gehl, Lynch, Rheingantz…) e reúna <strong>referências</strong>.</li>
       <li><strong>Analise e sintetize</strong>: junte as camadas no <strong>Mapa de Análise</strong> e classifique os achados na <strong>Síntese SWOT</strong>.</li>
       <li><strong>Proponha</strong>: escreva as <strong>Diretrizes</strong>, espacialize no <strong>Mapa-Síntese</strong> e gere o <strong>Relatório PDF</strong>.</li>
@@ -8944,6 +8847,29 @@ function renderTutorial(){
   // dica de fechamento
   html += `<div style="margin-top:18px;padding:10px 13px;background:#fff8e6;border-left:3px solid #d4a544;border-radius:5px;font-size:.6rem;color:var(--t2);line-height:1.5"><strong>Importante:</strong> os percursos não são lineares. A ABNT NBR 13531/13532 reconhece a <em>retroalimentação</em> entre as etapas — o programa, por exemplo, costuma se ajustar à medida que o diagnóstico amadurece. Volte às etapas anteriores quando precisar.</div>`;
   body.innerHTML = html;
+}
+
+
+// ── Selo de FONTE por bloco do diagnóstico: 📄 documental (fontes oficiais, mapas, legislação),
+//    🚶 campo (in loco) ou ambos. Ajuda a separar o levantamento de gabinete do de campo. ──
+const SELO_FONTE = {
+  doc:   ['dados socioeconômicos','catálogo de fontes','localização e inserção','análise da gleba','topografia — escala do entorno','áreas de risco','histórico e formação','pesquisa histórica','análise socioeconômica','grandes equipamentos','área do terreno','mapa de zoneamento','parâmetros urbanísticos','usos permitidos','código de obras','normas de acessibilidade','dados climáticos','cobertura do solo no tempo','evolução da mancha','meio físico regional','suscetibilidade','economia e atividades','turismo e atratividade'],
+  campo: ['acessibilidade urbana','mobiliário urbano','segurança urbana','levantamento de usos','vazios urbanos','leitura da imagem','campos visuais','ruído','sensações predominantes','inventário de vegetação','levantamento da edificação','mapeamento de patologias'],
+  ambos: ['sistema viário','infraestrutura urbana','hidrografia e vegetação','áreas livres','uso e ocupação do solo','análise de morfologia','morfologia e estrutura','patrimônio cultural','orientação solar','ventos','topografia do lote','sistema hídrico','diagnóstico de degradação'],
+};
+function aplicarSelosFonte(){
+  const norm=x=>(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const tipoDe=t=>{ t=norm(t); for(const k of ['ambos','doc','campo']) if(SELO_FONTE[k].some(m=>t.includes(norm(m)))) return k; return null; };
+  const ROT={doc:['📄 documental','Fontes oficiais, mapas e documentos (gabinete)'], campo:['🚶 campo','Observação in loco'], ambos:['📄🚶 documental + campo','Começa nas fontes e se confirma em campo']};
+  [1,2,3,5,14].forEach(n=>{
+    const p=document.getElementById('panel-'+n); if(!p) return;
+    p.querySelectorAll('.block').forEach(b=>{
+      const h=b.querySelector(':scope > .block-header'); if(!h || h.querySelector('.selo-fonte')) return;
+      const k=tipoDe(h.querySelector('.block-title')?.textContent); if(!k) return;
+      const sp=document.createElement('span'); sp.className='selo-fonte selo-'+k; sp.textContent=ROT[k][0]; sp.title=ROT[k][1];
+      const tt=h.querySelector('.block-title'); tt.insertAdjacentElement('afterend', sp);
+    });
+  });
 }
 
 // ── Função genérica: agrupa os .block de um painel em categorias colapsáveis ──
@@ -8990,14 +8916,22 @@ function setupCategorias(){
   // Categoria "socio" (dados oficiais) fica no topo — é o ponto de partida natural,
   // mas permanece fechada por padrão (é avançado). Quem abre é "Inserção".
   setupCategoriasPainel('panel-1', [
-    {id:'socio', icon:'📊', title:'Dados Socioeconômicos · IBGE / SIDRA + Fontes oficiais', match:['socioeconômicos','catálogo de fontes oficiais'], cls:'cat-socio'},
+    {id:'socio', icon:'📊', title:'Dados Socioeconômicos · IBGE / SIDRA + Fontes oficiais', match:['socioeconômicos','catálogo de fontes oficiais','análise socioeconômica e demanda'], cls:'cat-socio'},
     {id:'insercao', icon:'📍', title:'Inserção e Infraestrutura', match:['localização e inserção','sistema viário','infraestrutura urbana','análise da gleba','levantamento da edificação'], open:true},
     {id:'fisico', icon:'🌿', title:'Meio Físico e Ambiente', match:['hidrografia','topografia','áreas de risco']},
     {id:'publico', icon:'♿', title:'Qualidade do Espaço Público', match:['acessibilidade urbana','mobiliário urbano','áreas livres','segurança urbana']},
-    {id:'uso', icon:'🗺️', title:'Uso, Ocupação e Morfologia', match:['uso e ocupação','mapeamento temático','morfologia','análise socioeconômica e demanda','grandes equipamentos','empreendimentos de impacto']},
+    {id:'uso', icon:'🗺️', title:'Mapeamento temático do entorno', match:['mapeamento temático']},   // uso/morfologia/GEU foram para a aba 05
     {id:'historia', icon:'📜', title:'História e Patrimônio', match:['histórico e formação','patrimônio cultural','pesquisa histórica','mapeamento de patologias']},
     {id:'sintese', icon:'📌', title:'Síntese do Levantamento', match:['achados do levantamento','diagnóstico de degradação']},
   ], 'insercao');
+
+  // Aba 05 · Uso, Ocupação, Morfologia e Paisagem (fundida 04+05)
+  setupCategoriasPainel('panel-5', [
+    {id:'uso5', icon:'🏘️', title:'Uso e ocupação do solo', match:['uso e ocupação','levantamento de usos','vazios urbanos','grandes equipamentos'], open:true},
+    {id:'morfo5', icon:'🏛️', title:'Morfologia urbana', match:['análise de morfologia','morfologia e estrutura']},
+    {id:'paisagem5', icon:'👁️', title:'Paisagem e imagem urbana', match:['leitura da imagem','campos visuais']},
+    {id:'sintese5', icon:'📌', title:'Síntese', match:['achados']},
+  ], 'uso5');
 
   // Aba 03 · Legislação
   setupCategoriasPainel('panel-2', [
@@ -9066,6 +9000,7 @@ function irPara(n, el){
   if(n===9 || n===12) renderFindings(n);   // achados do campo / das análogas
   if(n===0 && typeof renderValores==='function') renderValores();
   if(typeof renderFluxoTrilho==='function') renderFluxoTrilho(n);
+  _persistRestaurar();   // campos gerados depois do carregamento
   if(typeof atualizarCompletude==='function') atualizarCompletude();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -9424,8 +9359,8 @@ function delFinding(sec,idx){
 // Abas que geram ACHADOS (insumo do SWOT/Diretrizes). 9 = campo (Instrumentos + Matriz de
 // Descobertas) e 12 = Obras Análogas entraram em 2026-10: antes eram becos sem saída (iam só
 // ao relatório). A ordem é a do fluxo: documental → campo → análogas → território.
-const FINDING_SECS = [1,2,3,4,5,9,12,14];
-const FINDING_SEC_LABEL = {1:'Contexto Urbano',2:'Legislação',3:'Condicionantes Ambientais',4:'Paisagem e Morfologia',5:'Ocupação e Usos',9:'Campo (Instrumentos)',12:'Obras Análogas',14:'Dinâmica Territorial'};
+const FINDING_SECS = [1,2,3,5,9,12,14];   // 4 fundida na 5 (2026-10)
+const FINDING_SEC_LABEL = {1:'Contexto Urbano',2:'Legislação',3:'Condicionantes Ambientais',5:'Uso, Ocupação, Morfologia e Paisagem',9:'Campo (Instrumentos)',12:'Obras Análogas',14:'Dinâmica Territorial'};
 function getAllFindings(){
   const all=[];
   FINDING_SECS.forEach(s=> (state.findings[s]||[]).forEach(f=>{ f.sec=s; all.push(f); }));
@@ -10355,7 +10290,7 @@ function renderViabCompara(){
   const leg = comScore.map(t=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:.58rem;color:var(--t2);margin-right:10px"><span style="width:10px;height:10px;border-radius:2px;background:${VIAB_CORES[list.indexOf(t)%VIAB_CORES.length]}"></span>${escHtml(t.nome)}</span>`).join('');
 
   // ponte para o T01 (passo downstream, depois de escolher)
-  const ponte = `<div style="margin-top:12px;font-size:.58rem;color:var(--t3);background:rgba(201,95,63,.06);border:1px solid rgba(201,95,63,.2);border-radius:6px;padding:7px 10px;line-height:1.5">🔗 <strong>Escolhido o terreno</strong>, o passo seguinte é o estudo de <strong>implantação</strong> (como assentar o edifício no lote): as condicionantes que você levantar nas abas 01–08 podem ir para o <strong>ATDAU T01 — Implantação</strong> via JSON (aba 03 · Condicionantes). Aqui é a <em>escolha</em>; lá é o <em>como implantar</em>.</div>`;
+  const ponte = `<div style="margin-top:12px;font-size:.58rem;color:var(--t3);background:rgba(201,95,63,.06);border:1px solid rgba(201,95,63,.2);border-radius:6px;padding:7px 10px;line-height:1.5">🔗 <strong>Escolhido o terreno</strong>, o passo seguinte é o estudo de <strong>implantação</strong> (como assentar o edifício no lote): as condicionantes que você levantar nas abas 01–08 podem ir para o <strong>ATDAU T01 — Implantação</strong> via JSON (aba 04 · Condicionantes). Aqui é a <em>escolha</em>; lá é o <em>como implantar</em>.</div>`;
 
   host.innerHTML = rankHtml + (vizHtml? `<div style="margin-top:12px"><div style="font-size:.6rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Radar comparativo</div><div style="margin-bottom:6px">${leg}</div>${vizHtml}</div>`:'') + ponte;
 }
@@ -12062,7 +11997,7 @@ const RECORTE_LOGICAS = {
     forma:'Circular — por proximidade (pedestrian shed)',
     estudo:'Inserção no bairro; anéis de caminhabilidade de 400 m (5 min), 800 m (10 min) e 1200 m (15 min).',
     projeto:'O lote e a testada; vizinhança imediata (50–200 m).',
-    enfase:['03 · Condicionantes Ambientais','04 · Paisagem e Morfologia','05 · Ocupação e Usos'],
+    enfase:['04 · Condicionantes Ambientais','05 · Uso, Ocupação e Morfologia'],
     enfaseTxt:'Predomina a escala micro: insolação, ventos, topografia do lote, gabaritos vizinhos e fluxo de pedestres na quadra.',
     ref:'Perry (1929); Moreno et al. (2021)'
   },
@@ -12070,7 +12005,7 @@ const RECORTE_LOGICAS = {
     forma:'Área de abrangência do serviço',
     estudo:'Definida pela população atendida e pela isócrona de acesso (≈ 800–1500 m), ou pelo setor de demanda — não por um raio fixo.',
     projeto:'O lote, os acessos e as paradas de transporte.',
-    enfase:['01 · Contexto Urbano','05 · Ocupação e Usos','06 · Instrumentos de Coleta'],
+    enfase:['02 · Contexto Urbano','05 · Uso, Ocupação e Morfologia','06 · Instrumentos de Coleta'],
     enfaseTxt:'A escala macro ganha peso: densidade populacional, déficit de cobertura do serviço, acessibilidade por transporte e equidade espacial.',
     ref:'Perry (1929); Moreno et al. (2021)'
   },
@@ -12078,7 +12013,7 @@ const RECORTE_LOGICAS = {
     forma:'De tecido — por morfologia',
     estudo:'Fragmento delimitado por vias arteriais e pela morfologia urbana (não por raio); tipicamente 1–3 km, mas seguindo bordas reais.',
     projeto:'A quadra ou o conjunto de quadras de intervenção.',
-    enfase:['04 · Paisagem e Morfologia','05 · Ocupação e Usos','02 · Legislação'],
+    enfase:['05 · Uso, Ocupação e Morfologia','03 · Legislação'],
     enfaseTxt:'Equilíbrio entre as escalas: morfologia, cheios e vazios, uso do solo, mobilidade estrutural e evolução da malha.',
     ref:'Lynch (1960), como leitura perceptiva; recorte pela malha estruturante'
   },
@@ -12086,7 +12021,7 @@ const RECORTE_LOGICAS = {
     forma:'Sistêmica — escalas encaixadas',
     estudo:'Sistema de espaços livres em escalas encaixadas (metropolitana → setor → lugar); conectividade verde.',
     projeto:'O espaço livre específico e suas bordas.',
-    enfase:['03 · Condicionantes Ambientais','04 · Paisagem e Morfologia'],
+    enfase:['04 · Condicionantes Ambientais','05 · Uso, Ocupação e Morfologia'],
     enfaseTxt:'Predomina o biofísico e o sistêmico: vegetação, drenagem, microclima e conexões entre espaços livres.',
     ref:'Forman (1995); McHarg (1969)'
   },
@@ -12094,7 +12029,7 @@ const RECORTE_LOGICAS = {
     forma:'De bacia / corredor — longitudinal',
     estudo:'Bacia hidrográfica ou corredor ecológico; recorte longitudinal pela água e pela conectividade, não circular.',
     projeto:'A faixa do curso d\u2019água e suas margens (largura, APP).',
-    enfase:['03 · Condicionantes Ambientais','04 · Paisagem e Morfologia'],
+    enfase:['04 · Condicionantes Ambientais','05 · Uso, Ocupação e Morfologia'],
     enfaseTxt:'Predomina o biofísico: hidrografia, várzea, APP, declividades, fragmentos de vegetação e conectividade de habitat.',
     ref:'Forman (1995); McHarg (1969)'
   },
@@ -12102,7 +12037,7 @@ const RECORTE_LOGICAS = {
     forma:'Linear por faixa de infraestrutura — eixo que é, ao mesmo tempo, conector e barreira',
     estudo:'Faixa longitudinal ao longo do eixo (avenida, estrada, ferrovia), com largura definida pela área de influência funcional do eixo: as quadras lindeiras de ambos os lados e os pontos de transposição. O recorte acompanha o eixo, não um raio; deve abranger os dois lados, porque o eixo conecta ao longo e separa no través.',
     projeto:'O trecho de intervenção e sua seção transversal (caixa viária, passeios, canteiro, faixas, travessias); nos pontos críticos, as transposições e as testadas.',
-    enfase:['04 · Paisagem e Morfologia','05 · Ocupação e Usos','01 · Contexto Urbano'],
+    enfase:['05 · Uso, Ocupação e Morfologia','02 · Contexto Urbano'],
     enfaseTxt:'Temas próprios do eixo: seções transversais em pontos-chave; permeabilidade transversal e travessias (o eixo como barreira que fragmenta bairros); hierarquia e fluxos (veicular, transporte coletivo, pedestre, ciclístico); ruído e impacto ambiental da via; usos e atividades lindeiras (fachadas ativas x muros cegos); descontinuidades e a relação entre os dois lados.',
     ref:'Lógica de corredor/faixa de infraestrutura; o eixo como conector e barreira (cf. Lynch, 1960, sobre vias e limites)'
   },
@@ -12110,7 +12045,7 @@ const RECORTE_LOGICAS = {
     forma:'Linear — por percurso',
     estudo:'Território do percurso e do conjunto de bens conectados; recorte linear/territorial definido pela narrativa patrimonial.',
     projeto:'Cada bem ou nó e seu entorno de ambiência.',
-    enfase:['04 · Paisagem e Morfologia','01 · Contexto Urbano'],
+    enfase:['05 · Uso, Ocupação e Morfologia','02 · Contexto Urbano'],
     enfaseTxt:'Predomina o histórico-cultural: bens protegidos, ambiências, marcos, percursos históricos e paisagem cultural.',
     ref:'Recorte pela paisagem cultural e pelos bens conectados'
   },
@@ -12127,16 +12062,16 @@ const RECORTE_LOGICAS = {
 // A tipologia SUGERE quais análises (painéis do Escopo) e módulos priorizar, e
 // aponta o campo de atuação na Resolução CAU/BR — sempre orientação, não decisão.
 // Híbrido: o usuário ajusta tudo depois no Escopo (reativação por bloco/campo).
-// paineis usam os números de ESCOPO_PANEIS = [1,2,3,4,5,9,11,12,14].
+// paineis usam os números de ESCOPO_PANEIS = [1,2,3,5,9,11,12,14].
 const TIPOLOGIA_PERCURSO = {
-  arq:    { paineis:[11,1,2,3,4,5,9,12],  modulos:'Programa de necessidades + matriz de relações entre ambientes; APO/obras análogas.', cau:'CAU: Arquitetura e Urbanismo de edificações (projeto arquitetônico).' },
+  arq:    { paineis:[11,1,2,3,5,9,12],  modulos:'Programa de necessidades + matriz de relações entre ambientes; APO/obras análogas.', cau:'CAU: Arquitetura e Urbanismo de edificações (projeto arquitetônico).' },
   equip:  { paineis:[11,1,2,5,9,12,14],   modulos:'Abrangência/demanda do serviço; participação da comunidade atendida.', cau:'CAU: AU de edificações — equipamentos públicos.' },
-  urb:    { paineis:[1,2,4,5,9,12,14],    modulos:'Leitura morfológica (cheios/vazios, malha); SWOT territorial.', cau:'CAU: Planejamento Urbano e Desenho Urbano.' },
-  pais:   { paineis:[3,4,5,9,14],         modulos:'Verbos de ação SEL (Tardim); categorias perceptivas no Mapa Anotado; exportar camadas p/ QGIS (SEL).', cau:'CAU: Arquitetura Paisagística (sistema de espaços livres).' },
-  linear: { paineis:[3,4,9,14],           modulos:'Leitura de bacia/corredor; SbN e resiliência (drenagem, APP, conectividade).', cau:'CAU: Paisagística + Meio Ambiente (corredor ecológico).' },
-  eixo:   { paineis:[1,4,5,9,14],         modulos:'Seções transversais; permeabilidade transversal e travessias.', cau:'CAU: Desenho Urbano / mobilidade.' },
-  rota:   { paineis:[1,4,9,12,14],        modulos:'Patrimônio imaterial e pontos de interpretação no Mapa Anotado; avaliação UNESCO/VUE; governança e participação (Mansfeld).', cau:'CAU: Patrimônio Histórico-Cultural e Artístico + Paisagem Cultural.' },
-  outro:  { paineis:[1,2,3,4,5,9,11,12,14], modulos:'Selecione manualmente os módulos conforme a natureza do objeto.', cau:'CAU: defina o campo de atuação conforme o objeto.' }
+  urb:    { paineis:[1,2,5,9,12,14],    modulos:'Leitura morfológica (cheios/vazios, malha); SWOT territorial.', cau:'CAU: Planejamento Urbano e Desenho Urbano.' },
+  pais:   { paineis:[3,5,9,14],         modulos:'Verbos de ação SEL (Tardim); categorias perceptivas no Mapa Anotado; exportar camadas p/ QGIS (SEL).', cau:'CAU: Arquitetura Paisagística (sistema de espaços livres).' },
+  linear: { paineis:[3,5,9,14],           modulos:'Leitura de bacia/corredor; SbN e resiliência (drenagem, APP, conectividade).', cau:'CAU: Paisagística + Meio Ambiente (corredor ecológico).' },
+  eixo:   { paineis:[1,5,9,14],         modulos:'Seções transversais; permeabilidade transversal e travessias.', cau:'CAU: Desenho Urbano / mobilidade.' },
+  rota:   { paineis:[1,5,9,12,14],        modulos:'Patrimônio imaterial e pontos de interpretação no Mapa Anotado; avaliação UNESCO/VUE; governança e participação (Mansfeld).', cau:'CAU: Patrimônio Histórico-Cultural e Artístico + Paisagem Cultural.' },
+  outro:  { paineis:[1,2,3,5,9,11,12,14], modulos:'Selecione manualmente os módulos conforme a natureza do objeto.', cau:'CAU: defina o campo de atuação conforme o objeto.' }
 };
 function renderRecorteOrientacao(){
   const sel=document.getElementById('proj-tipologia-recorte');
@@ -12486,6 +12421,44 @@ function coletarDados(){
     const el=document.getElementById(id);
     if(el) state[id]=el.value;
   });
+
+  // ── Camada D: todo campo com id dos formulários (ver _persistEls) ─
+  _persistEls().forEach(el=>{
+    const id=el.id, cur=state[id];
+    if(cur!==null && typeof cur==='object') return;               // chave estrutural do state
+    if((id in state) && !el.dataset.persistOk) return;            // ainda não restaurado: não sobrescreve o salvo com o padrão
+    state[id] = (el.type==='checkbox'||el.type==='radio') ? el.checked : el.value;
+  });
+}
+
+// ── Camada D (2026-10): persistência por varredura ───────────────────
+// FIELDS/EXTRA_PERSIST_IDS são listas feitas à mão e ~120 campos ficaram de fora desde a origem
+// (orientação solar e zona bioclimática — marcados como essenciais —, ventos, dados climáticos,
+// morfologia em 6 dimensões, imagem urbana, vazios, módulos de gleba/edificação/patologias, Código
+// de Obras…): eram preenchidos e se perdiam ao recarregar ou reabrir o projeto. A varredura cobre
+// qualquer campo novo desses formulários sem precisar lembrar de registrá-lo.
+const PERSIST_PANELS = [0,11,1,2,3,5];
+function _persistEls(){
+  const out=[];
+  PERSIST_PANELS.forEach(n=>{
+    const p=document.getElementById('panel-'+n); if(!p) return;
+    p.querySelectorAll('input[id], textarea[id], select[id]').forEach(el=>{
+      if(/^(file|hidden|button|submit|reset)$/.test(el.type)) return;
+      if(el.closest('.instr-card, .add-finding, .block-map-wrap, #escopo-block, .maplibregl-popup, [data-no-persist]')) return;
+      if(/^(inp-|equipe-novo|v-terr-|photo-input-|ref-crit-|patrim-csv-)/.test(el.id)) return;   // campos de "adicionar item"
+      out.push(el);
+    });
+  });
+  return out;
+}
+function _persistRestaurar(){
+  _persistEls().forEach(el=>{
+    if(el.dataset.persistOk) return;
+    el.dataset.persistOk='1';
+    const id=el.id; if(!(id in state)) return;
+    const v=state[id]; if(v===null || typeof v==='object') return;
+    if(el.type==='checkbox'||el.type==='radio') el.checked=!!v; else el.value=v;
+  });
 }
 
 function preencherDados(){
@@ -12524,6 +12497,9 @@ function preencherDados(){
     const el=document.getElementById(id);
     if(el && state[id]!=null) el.value=state[id];
   });
+
+  // ── Camada D: varredura dos formulários ─────────────────────────
+  _persistRestaurar();
 }
 
 // ══════════════════════════════════════════════════
@@ -12574,12 +12550,55 @@ function autoSave(){
   autoSaveTimer=setTimeout(salvar,1200);
 }
 
+
+// ══════════════════════════════════════════════════
+// MIGRAÇÃO DE ESTRUTURA (2026-10 · Fase 3): projetos salvos antes da fusão 04/05
+//  - campos de blocos fundidos → texto nas observações do bloco que ficou ("rótulo: valor")
+//  - achados da antiga aba 04 → aba 05
+//  - ids de escopo por posição ('esc-<aba>-<i>') → por título
+// Roda uma vez por projeto (state.migr_estrutura_2026_10).
+// ══════════════════════════════════════════════════
+const ESCOPO_IDS_ANTIGOS = {"esc-11-0":"Enquadramento inicial — de onde nasce o projeto","esc-11-1":"Proposta inicial e escolha do terreno","esc-11-2":"Viabilidade econômico-financeira (privado)","esc-11-3":"Viabilidade de interesse público","esc-11-4":"Síntese da viabilidade — sua conclusão","esc-1-23":"Dados socioeconômicos do território · IBGE / SIDRA","esc-1-24":"Catálogo de fontes oficiais — IPEA/geobr + IBGE/Censo 2022","esc-1-0":"Localização e inserção urbana","esc-1-1":"Sistema viário e mobilidade","esc-1-2":"Infraestrutura urbana disponível","esc-1-15":"Análise da gleba — parcelamento do solo urbano","esc-1-18":"Levantamento da edificação existente","esc-1-3":"Hidrografia e vegetação","esc-1-4":"Topografia — escala do entorno","esc-1-9":"Áreas de risco — Inundação e Geológico","esc-1-5":"Acessibilidade urbana (NBR 9050)","esc-1-6":"Mobiliário urbano e infraestrutura de permanência","esc-1-7":"Áreas livres, verdes e equipamentos públicos","esc-1-13":"Segurança urbana","esc-1-8":"Uso e ocupação do solo no entorno","esc-1-12":"Grandes equipamentos urbanos e empreendimentos de impacto","esc-1-16":"Morfologia e estrutura urbana","esc-1-17":"Análise socioeconômica e demanda","esc-1-21":"Mapeamento temático do entorno","esc-1-10":"Histórico e formação do lugar","esc-1-11":"Patrimônio cultural — material e imaterial","esc-1-19":"Mapeamento de patologias — edificação existente","esc-1-20":"Pesquisa histórica e análise de integridade","esc-1-14":"Diagnóstico de degradação e potencial de regeneração urbana","esc-1-22":"Achados do levantamento — Contexto Urbano","esc-2-0":"Área do terreno + Cálculos automáticos","esc-2-1":"Mapa de zoneamento","esc-2-2":"Parâmetros urbanísticos (zoneamento)","esc-2-3":"Usos permitidos e restrições","esc-2-4":"Código de Obras — Dimensões mínimas de compartimentos","esc-2-5":"Normas de acessibilidade e ambientais","esc-2-6":"Achados — Legislação","esc-3-0":"Orientação solar e insolação","esc-3-1":"Ventos","esc-3-2":"Dados climáticos","esc-3-3":"Ruído","esc-3-4":"Sensações predominantes","esc-3-5":"Topografia do lote","esc-3-6":"Inventário de vegetação e ecologia","esc-3-7":"Sistema hídrico e ciclo da água","esc-3-8":"Achados — Condicionantes Ambientais","esc-3-9":"Levar para o ATDAU T01 — Estudo de Implantação","esc-4-0":"Leitura da imagem urbana","esc-4-1":"Campos visuais e paisagem","esc-4-2":"Morfologia urbana do entorno","esc-4-3":"Achados — Paisagem e Morfologia","esc-5-0":"Altimetria e densidade construtiva","esc-5-1":"Levantamento de usos do solo","esc-5-2":"Vazios urbanos e terrenos subutilizados","esc-5-3":"Análise de Morfologia Urbana — 6 dimensões","esc-5-4":"Achados — Ocupação e Usos","esc-14-0":"Cobertura do solo no tempo (MapBiomas)","esc-14-1":"Evolução da mancha urbana (MapBiomas)","esc-14-2":"Meio físico regional","esc-14-3":"Suscetibilidade e riscos naturais","esc-14-4":"Economia e atividades produtivas","esc-14-5":"Turismo e atratividade","esc-14-6":"Leitura da dinâmica → registro do projeto","esc-14-7":"Achados — Dinâmica Territorial","esc-9-0":"Mapa da escala — Áreas livres","esc-9-1":"Mapa da escala — Lote/Terreno","esc-9-2":"Mapa da escala — Transversais","esc-9-3":"Mapa da escala — Síntese","esc-9-4":"Achados do levantamento de campo","esc-9-5":"Bibliografia de referência","esc-12-0":"1 · Cadastrar obra de referência","esc-12-1":"Onde buscar referências (acervos)","esc-12-2":"2 · Análise gráfica decomposta (por obra)","esc-12-3":"3 · Quadro comparativo das análogas","esc-12-4":"4 · Matriz de critérios (obras × seu projeto)","esc-12-5":"Achados — Obras Análogas"};
+function _migrarEstrutura2026_10(){
+  if(state.migr_estrutura_2026_10) return false;
+  const R=state.ratings||{};
+  const add=(alvo, rotulo, v)=>{
+    v=(v==null?'':String(v)).trim(); if(!v) return;
+    const linha=rotulo+': '+v; const cur=(state[alvo]||'').toString();
+    if(cur.indexOf(linha)>=0) return;
+    state[alvo]=cur?(cur.replace(/\s+$/,'')+'\n'+linha):linha;
+  };
+  add('morf-tracado-obs','Traçado urbano predominante', state['m-tracado']);
+  add('morf-parc-obs','Tipologia de lote predominante', state['m-lote']);
+  add('morf-fg-obs','Relação cheio-vazio', state['m-cheiovazio']);
+  add('morf-tipo-obs','Caráter e identidade do entorno', state['m-carater']);
+  add('morf-tipo-obs','Altura predominante das edificações vizinhas', state['o-alt']);
+  add('morf-fg-obs','Densidade construtiva do entorno', R['r-dens']);
+  add('morf-tipo-obs','Padrão construtivo predominante', state['o-padrao']);
+  add('morf-parc-obs','Tipologia predominante das quadras', state['mod-urb-quadra']);
+  add('morf-parc-obs','Tamanho médio das quadras', state['mod-urb-quadra-dim']);
+  add('morf-fg-obs','Proporção cheios/vazios (figura-fundo)', R['r-mod-figura-fundo']);
+  if(state.findings && Array.isArray(state.findings[4]) && state.findings[4].length){
+    if(!Array.isArray(state.findings[5])) state.findings[5]=[];
+    state.findings[4].forEach(f=>{ if(!state.findings[5].some(x=>x.text===f.text)) state.findings[5].push(Object.assign({}, f, {origem: f.origem||'antiga aba Paisagem e Morfologia'})); });
+    state.findings[4]=[];
+  }
+  if(state.escopo && state.escopo.blocos){
+    const nb={};
+    Object.entries(state.escopo.blocos).forEach(([k,v])=>{ const t=ESCOPO_IDS_ANTIGOS[k]; nb[t?_escopoIdDe(t):k]=v; });
+    state.escopo.blocos=nb;
+  }
+  state.migr_estrutura_2026_10=true;
+  return true;
+}
+
 function carregarDados(){
   try{
     const raw=localStorage.getItem('atdau-diag-v1');
     if(raw){
       const loaded=JSON.parse(raw);
       Object.assign(state,loaded);
+      if(_migrarEstrutura2026_10()) setTimeout(()=>{ try{ salvar(); }catch(e){} }, 0);
       preencherDados();
       // restoreModule roda num listener de 'document' que dispara ANTES deste (window),
       // quando o state ainda não foi carregado — reaplica aqui com o módulo já restaurado
@@ -12646,12 +12665,15 @@ function _marcarCamposEssenciais(){
 // passa a ser relativa ao escopo escolhido, não à ferramenta inteira. Bloco =
 // controle grosso; campo = ajuste fino que sobrescreve o bloco.
 // ══════════════════════════════════════════════════
-const ESCOPO_PANEIS = [1,2,3,4,5,9,11,12,14]; // painéis "analisáveis" (os demais são núcleo, sempre no escopo)
-const ESCOPO_PRESETS = { essencial:[1], aprofundado:[1,2,3,4,5,9,11,12], pleno:[1,2,3,4,5,9,11,12,14] };
+const ESCOPO_PANEIS = [1,2,3,5,9,11,12,14]; // painéis "analisáveis" (os demais são núcleo, sempre no escopo)
+const ESCOPO_PRESETS = { essencial:[1], aprofundado:[1,2,3,5,9,11,12], pleno:[1,2,3,5,9,11,12,14] };
 function _escopo(){ if(!state.escopo||typeof state.escopo!=='object') state.escopo={blocos:{},campos:{}}; state.escopo.blocos=state.escopo.blocos||{}; state.escopo.campos=state.escopo.campos||{}; return state.escopo; }
 function escopoBlocoAtivo(id){ return !id || _escopo().blocos[id]!==false; }      // default: ativo
 function escopoCampoAtivo(fieldId, blocoId){ const c=_escopo().campos; if(fieldId && Object.prototype.hasOwnProperty.call(c,fieldId)) return c[fieldId]!==false; return escopoBlocoAtivo(blocoId); }
 let _escopoIdsFeitos=false;
+// id de escopo derivado do título do bloco: mover um bloco entre abas não troca o id
+// (antes era 'esc-<aba>-<posição>' e a fusão 04/05 de 2026-10 bagunçaria os escopos salvos).
+function _escopoIdDe(titulo){ return 'esc-'+(titulo||'').toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
 function _escopoAtribuirIds(){
   if(_escopoIdsFeitos) return; _escopoIdsFeitos=true;
   ESCOPO_PANEIS.forEach(n=>{
@@ -12660,7 +12682,7 @@ function _escopoAtribuirIds(){
     panel.querySelectorAll('.block').forEach(bl=>{
       if(bl.id==='escopo-block') return;
       const t=bl.querySelector(':scope > .block-header .block-title'); if(!t) return;
-      bl.setAttribute('data-escopo-id','esc-'+n+'-'+(i++));
+      i++; bl.setAttribute('data-escopo-id', _escopoIdDe(t.textContent));   // por TÍTULO (estável quando o bloco muda de aba)
       bl.setAttribute('data-escopo-panel',String(n));
       bl.setAttribute('data-escopo-titulo',t.textContent.trim());
     });
@@ -13014,11 +13036,11 @@ function agendarCompletude(){ clearTimeout(_compTimer); _compTimer=setTimeout(at
 // DASHBOARD DE ENTRADA — panorama do progresso por fase (P2)
 // ══════════════════════════════════════════════════
 const DASH_FASES = [
-  { nome:'Preparação',           panels:[0,11] },
-  { nome:'Diagnóstico',          panels:[1,2,3,4,5,14] },
-  { nome:'Coleta & Referências', panels:[9,12,15] },
-  { nome:'Análise & Síntese',    panels:[6,7] },
-  { nome:'Proposição & Entrega', panels:[8,13,10] },
+  { nome:'Preparação',              panels:[0,11] },
+  { nome:'Levantamento documental', panels:[14,1,2,3,5] },
+  { nome:'Levantamento de campo',   panels:[9,15] },
+  { nome:'Análise & Síntese',       panels:[6,12,7] },
+  { nome:'Proposição & Entrega',    panels:[8,13,10] },
 ];
 const DASH_MAP_PANELS = new Set([6,10]);
 
@@ -13499,8 +13521,7 @@ function _emitirRelatorio(R, opts){
   dumpPainel(1,  'Contexto urbano');
   dumpPainel(2,  'Legislação urbanística');
   dumpPainel(3,  'Condicionantes ambientais e climáticas');
-  dumpPainel(4,  'Paisagem e morfologia urbana');
-  dumpPainel(5,  'Ocupação urbana e usos do solo');
+  dumpPainel(5,  'Uso, ocupação, morfologia e paisagem');
   dumpPainel(9,  'Instrumentos de coleta — registros de campo');
   _secReferencias();
 
@@ -22449,20 +22470,19 @@ function conceitoInfo(anchor,k){ const c=_conceito(k); if(c) showInfo(anchor, c.
 const FLUXO = {
   0:{vem:'', alimenta:'todo o diagnóstico'},
   11:{vem:'Identificação', alimenta:'Programa e partido'},
-  1:{vem:'Identificação', alimenta:'Síntese SWOT'},
-  2:{vem:'Identificação', alimenta:'Síntese SWOT'},
-  3:{vem:'Identificação', alimenta:'Síntese SWOT'},
-  4:{vem:'Identificação', alimenta:'Síntese SWOT'},
-  5:{vem:'Identificação', alimenta:'Síntese SWOT'},
-  14:{vem:'Identificação', alimenta:'Síntese SWOT'},
-  9:{vem:'Identificação', alimenta:'Síntese SWOT'},
-  12:{vem:'Identificação', alimenta:'Programa'},
+  14:{vem:'Identificação', alimenta:'achados → Síntese SWOT'},
+  1:{vem:'Identificação + Dinâmica Territorial', alimenta:'achados → Síntese SWOT'},
+  2:{vem:'Identificação', alimenta:'achados → Síntese SWOT'},
+  3:{vem:'Identificação', alimenta:'achados → Síntese SWOT'},
+  5:{vem:'Identificação', alimenta:'achados → Síntese SWOT'},
+  9:{vem:'lacunas do levantamento documental', alimenta:'achados de campo → Síntese SWOT'},
   15:{vem:'Identificação + campo', alimenta:'Síntese e Diretrizes'},
-  6:{vem:'Diagnóstico (01–07)', alimenta:'Síntese SWOT'},
-  10:{vem:'Diagnóstico', alimenta:'Síntese SWOT'},
-  7:{vem:'todo o diagnóstico', alimenta:'Programa e Diretrizes'},
-  13:{vem:'SWOT + Identificação', alimenta:'Diretrizes e partido'},
-  8:{vem:'SWOT + Programa', alimenta:'Estudo Preliminar / Implantação (T01)'}
+  6:{vem:'camadas do levantamento (01–07)', alimenta:'Síntese SWOT (camada SWOT)'},
+  12:{vem:'o problema já diagnosticado', alimenta:'achados e critérios → SWOT, Diretrizes e Programa'},
+  7:{vem:'todos os achados (documental, campo, análogas)', alimenta:'Diretrizes'},
+  8:{vem:'Síntese SWOT + Obras Análogas', alimenta:'Programação (eixo Programa e Funcionalidade)'},
+  13:{vem:'Diretrizes + necessidades (Identificação)', alimenta:'enunciado do problema → Mapa-Síntese'},
+  10:{vem:'diagnóstico, SWOT, Diretrizes e Programa', alimenta:'Estudo Preliminar / Implantação (T01)'}
 };
 function renderFluxoTrilho(n){
   const panel=document.getElementById('panel-'+n); if(!panel) return;

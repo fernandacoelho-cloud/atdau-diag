@@ -29,8 +29,8 @@ test.describe('P2 — dashboard de entrada', () => {
     }));
     expect(r.existe).toBe(true);
     expect(r.pct).toMatch(/^\d+%$/);
-    expect(r.fases).toEqual(['Preparação', 'Diagnóstico', 'Coleta & Referências', 'Análise & Síntese', 'Proposição & Entrega']);
-    expect(r.abas).toBe(16); // 14 + Dinâmica Territorial (14) + Governança (15), agora no DASH_FASES
+    expect(r.fases).toEqual(['Preparação', 'Levantamento documental', 'Levantamento de campo', 'Análise & Síntese', 'Proposição & Entrega']);
+    expect(r.abas).toBe(15); // 2026-10: aba 04 (Paisagem e Morfologia) fundida na 05
     // painéis de mapa não mostram %, mostram "mapa" ou contagem de feições
     expect(r.mapAbas.length).toBe(2);
     r.mapAbas.forEach(t => expect(t).not.toMatch(/%/));
